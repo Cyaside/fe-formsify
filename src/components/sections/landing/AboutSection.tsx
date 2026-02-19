@@ -11,37 +11,33 @@ const highlights = [
 
 export default function AboutSection() {
   return (
-    <section id="about" className="bg-page py-20 md:py-28">
-      <Container className="grid items-center gap-12 md:grid-cols-[1.1fr_0.9fr]">
-        <div className="relative">
-          <div className="absolute -left-6 -top-6 h-28 w-28 rounded-[30%] border border-lavender/30 bg-violet/40" />
-          <div className="relative flex h-[320px] items-center justify-center rounded-[36px] border border-white/10 bg-gradient-to-br from-violet-deep/80 via-violet/50 to-rose/40 p-8">
-            <div className="absolute left-8 top-8 h-12 w-12 rounded-2xl bg-sun" />
-            <div className="absolute bottom-8 right-8 h-12 w-12 rounded-2xl bg-rose" />
-            <div className="flex h-44 w-44 items-center justify-center rounded-[36px] border border-white/20 bg-surface/70 text-6xl font-display text-lavender">
-              F
-            </div>
-          </div>
-        </div>
-        <div className="flex flex-col gap-8">
+    <section id="about" className="bg-page py-16 md:py-24">
+      <Container className="grid items-center gap-8 md:grid-cols-[1fr_1fr]">
+        <div className="order-2 md:order-1">
           <SectionHeading
-            eyebrow="About Us"
-            title="Bangun form yang terasa hidup, cepat, dan konsisten di semua perangkat."
+            eyebrow="About"
+            title="Buat form cepat dan terintegrasi"
             description={
-              "Formsify membantu tim membuat webform modern dalam hitungan menit. Fokus pada pengalaman pengguna, otomatisasi alur, dan data yang siap dianalisis."
+              "Formsify membantu tim membuat form yang konsisten, cepat, dan siap dipakai — tanpa kompleksitas desain."
             }
           />
-          <div className="grid gap-4">
+
+          <div className="mt-6 space-y-4">
             {highlights.map((item) => (
-              <div
-                key={item.title}
-                className="rounded-3xl border border-white/10 bg-surface/60 p-5 transition hover:-translate-y-1 hover:border-lavender/40"
-              >
+              <div key={item.title}>
                 <h3 className="text-base font-semibold text-ink">{item.title}</h3>
-                <p className="mt-2 text-sm leading-6 text-ink-muted">{item.desc}</p>
+                <p className="mt-1 text-sm leading-6 text-ink-muted">{item.desc}</p>
               </div>
             ))}
           </div>
+        </div>
+
+        <div className="order-1 md:order-2 flex items-center justify-center">
+          <img
+            src="/formss.png"
+            alt="Forms preview"
+            className="w-full max-w-[540px] rounded-2xl object-cover shadow-lg"
+          />
         </div>
       </Container>
     </section>

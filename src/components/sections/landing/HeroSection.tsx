@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import Container from "@/components/ui/Container";
 import Navbar from "@/components/sections/landing/Navbar";
+import Link from "next/link";
 
 export default function HeroSection() {
   const [progress, setProgress] = useState(0);
@@ -59,13 +60,27 @@ export default function HeroSection() {
               looking for.
             </p>
 
-            <div className="mt-8 flex items-center justify-center">
-              <button
-                type="button"
+            <div className="mt-8 flex items-center justify-center gap-3">
+              <Link
+                href="/login"
                 className="inline-flex items-center rounded-full bg-blue-600 px-6 py-3 text-sm font-semibold text-white shadow hover:bg-blue-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
               >
                 Login
-              </button>
+              </Link>
+
+              <Link
+                href="/register"
+                className="inline-flex items-center rounded-full border border-white/20 bg-transparent px-5 py-2 text-sm font-semibold text-white hover:bg-white/10 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
+              >
+                Register
+              </Link>
+
+              <Link
+                href="/forms"
+                className="inline-flex items-center rounded-full px-4 py-2 text-sm font-medium text-white/80 hover:text-white focus:outline-none"
+              >
+                Form list
+              </Link>
             </div>
 
             <p className="mt-3 text-sm text-ink-muted">Login to create your forms</p>

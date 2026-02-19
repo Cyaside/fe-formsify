@@ -4,6 +4,8 @@ import { AnimatePresence, motion } from "framer-motion";
 import { useEffect, useState } from "react";
 import ThemeToggle from "@/components/theme/ThemeToggle";
 import Container from "@/components/ui/Container";
+import Link from "next/link";
+import { useAuth } from "@/components/auth/AuthProvider";
 
 const NAV_ITEMS = [
   { id: "top", label: "Home" },
@@ -16,6 +18,7 @@ const NAV_ITEMS = [
 export default function Navbar() {
   const [isOpen, setIsOpen] = useState(false);
   const [activeSection, setActiveSection] = useState<string>("top");
+  const { user } = useAuth();
 
   useEffect(() => {
     const handleScroll = () => {
@@ -86,12 +89,29 @@ export default function Navbar() {
                 );
               })}
             </ul>
-            <a
-              href="/dashboard"
-              className="rounded-full border border-lavender/40 px-4 py-2 text-xs font-semibold uppercase tracking-[0.25em] text-lavender transition hover:bg-lavender hover:text-violet-deep"
-            >
-              Dashboard
-            </a>
+            {user ? (
+              <Link
+                href="/dashboard"
+                className="rounded-full border border-lavender/40 px-4 py-2 text-xs font-semibold uppercase tracking-[0.25em] text-lavender transition hover:bg-lavender hover:text-violet-deep"
+              >
+                Dashboard
+              </Link>
+            ) : (
+              <div className="flex items-center gap-2">
+                <Link
+                  href="/login"
+                  className="rounded-full border border-white/10 px-4 py-2 text-xs font-semibold uppercase tracking-[0.25em] text-ink-muted transition hover:text-ink"
+                >
+                  Login
+                </Link>
+                <Link
+                  href="/register"
+                  className="rounded-full border border-lavender/40 px-4 py-2 text-xs font-semibold uppercase tracking-[0.25em] text-lavender transition hover:bg-lavender hover:text-violet-deep"
+                >
+                  Register
+                </Link>
+              </div>
+            )}
             <ThemeToggle />
           </div>
         </motion.div>
@@ -150,16 +170,42 @@ export default function Navbar() {
                   {item.label}
                 </motion.button>
               ))}
-              <motion.a
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: 20 }}
-                transition={{ delay: NAV_ITEMS.length * 0.08 }}
-                href="/dashboard"
-                className="rounded-full border border-lavender/40 px-6 py-3 text-sm font-semibold uppercase tracking-[0.25em] text-lavender"
-              >
-                Dashboard
-              </motion.a>
+              {user ? (
+                <motion.div
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: 20 }}
+                  transition={{ delay: NAV_ITEMS.length * 0.08 }}
+                >
+                  <Link
+                    href="/dashboard"
+                    className="rounded-full border border-lavender/40 px-6 py-3 text-sm font-semibold uppercase tracking-[0.25em] text-lavender"
+                  >
+                    Dashboard
+                  </Link>
+                </motion.div>
+              ) : (
+                <motion.div
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: 20 }}
+                  transition={{ delay: NAV_ITEMS.length * 0.08 }}
+                  className="flex flex-col gap-3"
+                >
+                  <Link
+                    href="/login"
+                    className="rounded-full border border-white/10 px-6 py-3 text-sm font-semibold uppercase tracking-[0.25em] text-ink-muted"
+                  >
+                    Login
+                  </Link>
+                  <Link
+                    href="/register"
+                    className="rounded-full border border-lavender/40 px-6 py-3 text-sm font-semibold uppercase tracking-[0.25em] text-lavender"
+                  >
+                    Register
+                  </Link>
+                </motion.div>
+              )}
             </Container>
           </motion.div>
         ) : null}
