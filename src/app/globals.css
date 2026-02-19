@@ -1,26 +1,98 @@
 @import "tailwindcss";
 
+@custom-variant dark (&:where(.dark, .dark *));
+
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  color-scheme: dark;
+  --page-bg: #0a0614;
+  --surface: #130b21;
+  --surface-2: #1b1030;
+  --ink: #f6f2ff;
+  --ink-muted: #b9a7d8;
+  --border: rgba(246, 242, 255, 0.12);
+  --violet-deep: #2d155a;
+  --violet: #6f3cff;
+  --lavender: #caa6ff;
+  --sun: #ffd166;
+  --rose: #ff6fb1;
+  --berry: #ff4d6d;
+}
+
+.light {
+  color-scheme: light;
+  --page-bg: #f7f4ff;
+  --surface: #ffffff;
+  --surface-2: #efe9ff;
+  --ink: #1b112c;
+  --ink-muted: #5d4b7b;
+  --border: rgba(38, 22, 70, 0.12);
+  --violet-deep: #2b155b;
+  --violet: #6f3cff;
+  --lavender: #9d7bff;
+  --sun: #ffc857;
+  --rose: #ff6fb1;
+  --berry: #ff4d6d;
 }
 
 @theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --color-page: var(--page-bg);
+  --color-surface: var(--surface);
+  --color-surface-2: var(--surface-2);
+  --color-ink: var(--ink);
+  --color-ink-muted: var(--ink-muted);
+  --color-border: var(--border);
+  --color-violet-deep: var(--violet-deep);
+  --color-violet: var(--violet);
+  --color-lavender: var(--lavender);
+  --color-sun: var(--sun);
+  --color-rose: var(--rose);
+  --color-berry: var(--berry);
+  --font-sans: var(--font-body);
+  --font-display: var(--font-display);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+html {
+  scroll-behavior: smooth;
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  background: var(--page-bg);
+  color: var(--ink);
+  font-family: var(--font-body), system-ui, sans-serif;
+  transition: background 0.3s ease, color 0.3s ease;
+}
+
+.marquee-mask {
+  mask-image: linear-gradient(90deg, transparent 0%, black 12%, black 88%, transparent 100%);
+  -webkit-mask-image: linear-gradient(90deg, transparent 0%, black 12%, black 88%, transparent 100%);
+}
+
+.step-card {
+  clip-path: polygon(0 0, 88% 0, 100% 50%, 88% 100%, 0 100%, 12% 50%);
+}
+
+@media (max-width: 768px) {
+  .step-card {
+    clip-path: none;
+    border-radius: 24px;
+  }
+}
+
+@keyframes float {
+  0%,
+  100% {
+    transform: translateY(0px);
+  }
+  50% {
+    transform: translateY(-12px);
+  }
+}
+
+@keyframes marquee {
+  0% {
+    transform: translateX(0);
+  }
+  100% {
+    transform: translateX(-50%);
+  }
 }
