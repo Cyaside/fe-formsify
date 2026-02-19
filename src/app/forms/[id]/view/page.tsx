@@ -241,8 +241,7 @@ export default function RespondentViewPage() {
                           />
                         ) : null}
 
-                        {question.type === "MULTIPLE_CHOICE" ||
-                        question.type === "DROPDOWN" ? (
+                        {question.type === "DROPDOWN" ? (
                           <select
                             value={(answers[question.id] as string) ?? ""}
                             onChange={(event) => {
@@ -261,6 +260,33 @@ export default function RespondentViewPage() {
                               </option>
                             ))}
                           </select>
+                        ) : null}
+
+                        {question.type === "MULTIPLE_CHOICE" ? (
+                          <div className="grid gap-2">
+                            {question.options.map((option) => (
+                              <label
+                                key={option.id}
+                                className="flex items-center gap-3 text-sm text-ink"
+                              >
+                                <input
+                                  type="radio"
+                                  name={`question-${question.id}`}
+                                  value={option.id}
+                                  checked={answers[question.id] === option.id}
+                                  onChange={(event) => {
+                                    setAnswers((prev) => ({
+                                      ...prev,
+                                      [question.id]: event.target.value,
+                                    }));
+                                    clearValidationError(question.id);
+                                  }}
+                                  className="h-4 w-4 rounded-full border border-white/20 bg-page/80 text-lavender focus:ring-lavender"
+                                />
+                                {option.label}
+                              </label>
+                            ))}
+                          </div>
                         ) : null}
 
                         {question.type === "CHECKBOX" ? (
