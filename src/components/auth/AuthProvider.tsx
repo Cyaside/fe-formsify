@@ -29,7 +29,6 @@ type AuthContextValue = {
 };
 
 const AuthContext = createContext<AuthContextValue | undefined>(undefined);
-const TOKEN_KEY = "formsify_token";
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<AuthUser | null>(null);
@@ -39,40 +38,26 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const saveSession = useCallback((nextToken: string, nextUser: AuthUser) => {
     setToken(nextToken);
     setUser(nextUser);
-    localStorage.setItem(TOKEN_KEY, nextToken);
   }, []);
 
   const clearSession = useCallback(() => {
     setToken(null);
     setUser(null);
-    localStorage.removeItem(TOKEN_KEY);
   }, []);
 
   const refresh = useCallback(async () => {
-    if (!token) {
-      clearSession();
-      return null;
-    }
     try {
-      const data = await apiRequest<{ user: AuthUser }>("/api/auth/me", {
-        token,
-      });
+      const data = await apiRequest<{ user: AuthUser }>("/api/auth/me");
       setUser(data.user);
       return data.user;
     } catch (error) {
       clearSession();
       return null;
     }
-  }, [clearSession, token]);
+  }, [clearSession]);
 
   useEffect(() => {
-    const storedToken = localStorage.getItem(TOKEN_KEY);
-    if (!storedToken) {
-      setLoading(false);
-      return;
-    }
-    setToken(storedToken);
-    apiRequest<{ user: AuthUser }>("/api/auth/me", { token: storedToken })
+    apiRequest<{ user: AuthUser }>("/api/auth/me")
       .then((data) => {
         setUser(data.user);
       })
@@ -109,6 +94,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   );
 
   const logout = useCallback(() => {
+    apiRequest("/api/auth/logout", { method: "POST" }).catch(() => null);
     clearSession();
   }, [clearSession]);
 

@@ -19,16 +19,16 @@ type FormSummary = {
 };
 
 export default function DashboardPage() {
-  const { token } = useAuth();
+  const { user } = useAuth();
   const [forms, setForms] = useState<FormSummary[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    if (!token) return;
+    if (!user) return;
     setLoading(true);
     setError(null);
-    apiRequest<{ data: FormSummary[] }>("/api/forms", { token })
+    apiRequest<{ data: FormSummary[] }>("/api/forms")
       .then((data) => {
         setForms(data.data);
       })
@@ -39,7 +39,7 @@ export default function DashboardPage() {
       .finally(() => {
         setLoading(false);
       });
-  }, [token]);
+  }, [user]);
 
   const latestForms = forms.slice(0, 4);
 
