@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { Moon, Sun } from "lucide-react";
 
 const STORAGE_KEY = "formsify-theme";
 
@@ -13,19 +14,20 @@ function applyTheme(mode: ThemeMode) {
 }
 
 export default function ThemeToggle() {
-  const [mode, setMode] = useState<ThemeMode>("dark");
+  const [mode, setMode] = useState<ThemeMode>(() => {
+    if (globalThis.window === undefined) return "dark";
+    const stored = globalThis.localStorage.getItem(STORAGE_KEY);
+    return stored === "light" ? "light" : "dark";
+  });
 
   useEffect(() => {
-    const stored = window.localStorage.getItem(STORAGE_KEY);
-    const initial = stored === "light" ? "light" : "dark";
-    setMode(initial);
-    applyTheme(initial);
-  }, []);
+    applyTheme(mode);
+  }, [mode]);
 
   const handleToggle = () => {
     const next = mode === "dark" ? "light" : "dark";
     setMode(next);
-    window.localStorage.setItem(STORAGE_KEY, next);
+    globalThis.localStorage.setItem(STORAGE_KEY, next);
     applyTheme(next);
   };
 
@@ -33,19 +35,11 @@ export default function ThemeToggle() {
     <button
       type="button"
       onClick={handleToggle}
-      className="group inline-flex h-10 items-center gap-2 rounded-full border border-border/70 bg-surface/70 px-4 text-xs font-semibold uppercase tracking-[0.2em] text-ink transition hover:border-lavender hover:text-lavender"
+      className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-border/70 bg-surface/80 text-ink transition hover:border-lavender hover:text-lavender"
       aria-label="Toggle light or dark mode"
+      title={mode === "dark" ? "Switch to light mode" : "Switch to dark mode"}
     >
-      <span className="relative inline-flex h-4 w-8 items-center rounded-full bg-page">
-        <span
-          className={`absolute left-1 top-1 h-2 w-2 rounded-full transition-all duration-300 ${
-            mode === "dark" ? "translate-x-0 bg-lavender" : "translate-x-4 bg-sun"
-          }`}
-        />
-      </span>
-      <span className="hidden text-[10px] font-semibold uppercase tracking-[0.32em] sm:inline">
-        {mode === "dark" ? "Dark" : "Light"}
-      </span>
+      {mode === "dark" ? <Sun size={18} /> : <Moon size={18} />}
     </button>
   );
 }

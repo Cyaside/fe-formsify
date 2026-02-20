@@ -5,6 +5,7 @@ import Link from "next/link";
 import { ArrowUpDown, Plus } from "lucide-react";
 import RequireAuth from "@/components/auth/RequireAuth";
 import { useAuth } from "@/components/auth/AuthProvider";
+import ThemeToggle from "@/components/theme/ThemeToggle";
 import Badge from "@/components/ui/Badge";
 import Button from "@/components/ui/Button";
 import Card from "@/components/ui/Card";
@@ -81,13 +82,27 @@ export default function FormsPage() {
   return (
     <RequireAuth>
       <div className="min-h-screen bg-page text-ink">
-        <header className="border-b border-border bg-surface/60">
-          <Container className="flex flex-col gap-4 py-6 md:flex-row md:items-center md:justify-between">
-            <div>
-              <p className="text-xs uppercase tracking-[0.24em] text-lavender">Form List</p>
-              <h1 className="mt-2 text-2xl font-semibold">Your forms</h1>
+        <section className="relative overflow-hidden bg-linear-to-b from-violet-deep via-violet/70 to-violet-deep">
+          <Container className="relative py-16 md:py-20">
+            <div className="absolute -left-12 top-8 h-44 w-44 rounded-full bg-lavender/20 blur-2xl" />
+            <div className="absolute -right-10 bottom-4 h-52 w-52 rounded-full bg-rose/20 blur-2xl" />
+
+            <div className="relative z-10 mx-auto max-w-4xl text-center">
+              <p className="text-xs font-semibold uppercase tracking-[0.3em] text-lavender">
+                Form Workspace
+              </p>
+              <h1 className="mt-3 text-4xl font-bold tracking-tight md:text-5xl">
+                Your Forms
+              </h1>
+              <p className="mt-3 text-sm text-ink-muted md:text-base">
+                Manage your forms in one place.
+              </p>
             </div>
-            <div className="flex items-center gap-2">
+
+            <div className="relative z-10 mt-8 flex flex-wrap items-center justify-center gap-2">
+              <Link href="/dashboard">
+                <Button variant="secondary">Dashboard</Button>
+              </Link>
               <Link href="/forms/new">
                 <Button className="gap-2">
                   <Plus size={16} />
@@ -97,9 +112,24 @@ export default function FormsPage() {
               <Button variant="secondary" onClick={logout}>
                 Logout
               </Button>
+              <ThemeToggle />
             </div>
           </Container>
-        </header>
+
+          <div className="pointer-events-none absolute inset-x-0 bottom-0">
+            <svg
+              viewBox="0 0 1440 220"
+              preserveAspectRatio="none"
+              className="h-16 w-full md:h-24"
+              aria-hidden="true"
+            >
+              <path
+                d="M0 140L120 120C240 100 480 60 720 80C960 100 1200 180 1320 190L1440 200V220H0Z"
+                fill="var(--page-bg)"
+              />
+            </svg>
+          </div>
+        </section>
 
         <Container className="py-6">
           <Card className="mb-4 grid gap-3 p-4 md:grid-cols-[1fr_180px_180px]">
