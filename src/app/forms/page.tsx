@@ -1,394 +1,167 @@
 "use client";
 
-import { useEffect, useMemo, useState, type FormEvent } from "react";
+import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
-import Container from "@/components/ui/Container";
+import { ArrowUpDown, Plus } from "lucide-react";
 import RequireAuth from "@/components/auth/RequireAuth";
 import { useAuth } from "@/components/auth/AuthProvider";
+import Badge from "@/components/ui/Badge";
+import Button from "@/components/ui/Button";
+import Card from "@/components/ui/Card";
+import Container from "@/components/ui/Container";
+import Input from "@/components/ui/Input";
+import Select from "@/components/ui/Select";
 import { apiRequest, ApiError } from "@/lib/api";
+import { getFormStatusMap } from "@/lib/formPersistence";
 
 type FormSummary = {
   id: string;
   title: string;
   description?: string | null;
-  updatedAt: string;
   createdAt: string;
+  updatedAt: string;
 };
 
-function normalizeDescription(value: string) {
-  const trimmed = value.trim();
-  return trimmed.length === 0 ? null : trimmed;
-}
-
-function validateTitle(value: string) {
-  if (!value.trim()) {
-    return "Judul wajib diisi.";
-  }
-  return null;
-}
+type SortType = "newest" | "oldest";
+type FilterType = "all" | "draft" | "published";
 
 export default function FormsPage() {
-  const { user, logout } = useAuth();
+  const { logout } = useAuth();
   const [forms, setForms] = useState<FormSummary[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-
-  const [createTitle, setCreateTitle] = useState("");
-  const [createDescription, setCreateDescription] = useState("");
-  const [createLoading, setCreateLoading] = useState(false);
-  const [createError, setCreateError] = useState<string | null>(null);
-
-  const [editingId, setEditingId] = useState<string | null>(null);
-  const [editTitle, setEditTitle] = useState("");
-  const [editDescription, setEditDescription] = useState("");
-  const [editLoadingId, setEditLoadingId] = useState<string | null>(null);
-  const [editError, setEditError] = useState<string | null>(null);
-
-  const [deleteLoadingId, setDeleteLoadingId] = useState<string | null>(null);
-  const [deleteError, setDeleteError] = useState<string | null>(null);
+  const [query, setQuery] = useState("");
+  const [filter, setFilter] = useState<FilterType>("all");
+  const [sort, setSort] = useState<SortType>("newest");
 
   useEffect(() => {
-    if (!user) return;
-    setLoading(true);
-    setError(null);
     apiRequest<{ data: FormSummary[] }>("/api/forms")
-      .then((data) => {
-        setForms(data.data);
+      .then((response) => {
+        setForms(response.data);
       })
       .catch((err) => {
-        const message = err instanceof ApiError ? err.message : "Gagal memuat form.";
+        const message = err instanceof ApiError ? err.message : "Failed to load forms";
         setError(message);
       })
       .finally(() => {
         setLoading(false);
       });
-  }, [user]);
+  }, []);
 
-  const formattedForms = useMemo(() => {
-    const formatter = new Intl.DateTimeFormat("id-ID", { dateStyle: "medium" });
-    return forms.map((form) => ({
-      ...form,
-      updatedLabel: formatter.format(new Date(form.updatedAt)),
-    }));
-  }, [forms]);
+  const displayedForms = useMemo(() => {
+    const formatter = new Intl.DateTimeFormat("id-ID", {
+      dateStyle: "medium",
+      timeStyle: "short",
+    });
 
-  const handleCreate = async (event: FormEvent<HTMLFormElement>) => {
-    event.preventDefault();
-    setCreateError(null);
-    setDeleteError(null);
+    const statusMap = getFormStatusMap();
 
-    const titleError = validateTitle(createTitle);
-    if (titleError) {
-      setCreateError(titleError);
-      return;
-    }
-
-    setCreateLoading(true);
-    try {
-      const payload = {
-        title: createTitle.trim(),
-        description: normalizeDescription(createDescription),
-      };
-      const data = await apiRequest<{ data: FormSummary }>("/api/forms", {
-        method: "POST",
-        body: payload,
+    return forms
+      .map((form) => ({
+        ...form,
+        status: statusMap[form.id] ?? "draft",
+        updatedLabel: formatter.format(new Date(form.updatedAt)),
+      }))
+      .filter((form) => {
+        if (filter !== "all" && form.status !== filter) return false;
+        const keyword = query.trim().toLowerCase();
+        if (!keyword) return true;
+        return (
+          form.title.toLowerCase().includes(keyword) ||
+          (form.description ?? "").toLowerCase().includes(keyword)
+        );
+      })
+      .sort((a, b) => {
+        const left = new Date(a.updatedAt).getTime();
+        const right = new Date(b.updatedAt).getTime();
+        return sort === "newest" ? right - left : left - right;
       });
-      setForms((prev) => [data.data, ...prev]);
-      setCreateTitle("");
-      setCreateDescription("");
-    } catch (err) {
-      const message = err instanceof ApiError ? err.message : "Gagal membuat form.";
-      setCreateError(message);
-    } finally {
-      setCreateLoading(false);
-    }
-  };
-
-  const startEdit = (form: FormSummary) => {
-    setEditingId(form.id);
-    setEditTitle(form.title);
-    setEditDescription(form.description ?? "");
-    setEditError(null);
-  };
-
-  const cancelEdit = () => {
-    setEditingId(null);
-    setEditTitle("");
-    setEditDescription("");
-    setEditError(null);
-  };
-
-  const handleUpdate = async (formId: string) => {
-    setEditError(null);
-    setDeleteError(null);
-
-    const titleError = validateTitle(editTitle);
-    if (titleError) {
-      setEditError(titleError);
-      return;
-    }
-
-    setEditLoadingId(formId);
-    try {
-      const payload = {
-        title: editTitle.trim(),
-        description: normalizeDescription(editDescription),
-      };
-      const data = await apiRequest<{ data: FormSummary }>(`/api/forms/${formId}`, {
-        method: "PUT",
-        body: payload,
-      });
-      setForms((prev) => prev.map((form) => (form.id === formId ? data.data : form)));
-      cancelEdit();
-    } catch (err) {
-      const message = err instanceof ApiError ? err.message : "Gagal memperbarui form.";
-      setEditError(message);
-    } finally {
-      setEditLoadingId(null);
-    }
-  };
-
-  const handleDelete = async (formId: string) => {
-    setDeleteError(null);
-    const confirmed = window.confirm("Yakin ingin menghapus form ini?");
-    if (!confirmed) return;
-
-    setDeleteLoadingId(formId);
-    try {
-      await apiRequest(`/api/forms/${formId}`, { method: "DELETE" });
-      setForms((prev) => prev.filter((form) => form.id !== formId));
-      if (editingId === formId) {
-        cancelEdit();
-      }
-    } catch (err) {
-      const message = err instanceof ApiError ? err.message : "Gagal menghapus form.";
-      setDeleteError(message);
-    } finally {
-      setDeleteLoadingId(null);
-    }
-  };
+  }, [filter, forms, query, sort]);
 
   return (
     <RequireAuth>
       <div className="min-h-screen bg-page text-ink">
-        <header className="border-b border-white/10 bg-surface/70 py-8">
-          <Container className="flex flex-col gap-6 md:flex-row md:items-center md:justify-between">
+        <header className="border-b border-border bg-surface/60">
+          <Container className="flex flex-col gap-4 py-6 md:flex-row md:items-center md:justify-between">
             <div>
-              <p className="text-xs font-semibold uppercase tracking-[0.32em] text-lavender">
-                Form List
-              </p>
-              <h1 className="mt-3 text-3xl font-semibold text-ink font-display">
-                Daftar form kamu
-              </h1>
-              <p className="mt-2 text-sm text-ink-muted">
-                Buat, edit, dan hapus form langsung dari halaman ini.
-              </p>
+              <p className="text-xs uppercase tracking-[0.24em] text-lavender">Form List</p>
+              <h1 className="mt-2 text-2xl font-semibold">Your forms</h1>
             </div>
-            <div className="flex flex-wrap items-center gap-3">
-              <Link
-                href="/dashboard"
-                className="rounded-full border border-white/10 px-5 py-2 text-xs font-semibold uppercase tracking-[0.25em] text-ink-muted transition hover:text-ink"
-              >
-                Dashboard
+            <div className="flex items-center gap-2">
+              <Link href="/forms/new">
+                <Button className="gap-2">
+                  <Plus size={16} />
+                  Create Form
+                </Button>
               </Link>
-              <button
-                type="button"
-                onClick={logout}
-                className="rounded-full border border-lavender/40 px-5 py-2 text-xs font-semibold uppercase tracking-[0.25em] text-lavender transition hover:bg-lavender hover:text-violet-deep"
-              >
+              <Button variant="secondary" onClick={logout}>
                 Logout
-              </button>
+              </Button>
             </div>
           </Container>
         </header>
 
-        <Container className="py-12">
-          <div className="grid gap-6 lg:grid-cols-[0.9fr_1.1fr]">
-            <section className="rounded-3xl border border-white/10 bg-surface/70 p-6">
-              <h2 className="text-lg font-semibold text-ink font-display">
-                Buat form baru
-              </h2>
-              <p className="mt-2 text-sm text-ink-muted">
-                Isi judul dan deskripsi singkat sebelum menambahkan pertanyaan.
-              </p>
-              <form onSubmit={handleCreate} className="mt-6 flex flex-col gap-4">
-                <label className="text-xs font-semibold uppercase tracking-[0.28em] text-lavender">
-                  Judul form
-                  <input
-                    type="text"
-                    name="title"
-                    value={createTitle}
-                    onChange={(event) => setCreateTitle(event.target.value)}
-                    placeholder="Contoh: Feedback Event 2026"
-                    className="mt-3 w-full rounded-2xl border border-white/10 bg-page/80 px-4 py-3 text-sm text-ink placeholder:text-ink-muted focus:border-lavender focus:outline-none"
-                    required
-                  />
-                </label>
-                <label className="text-xs font-semibold uppercase tracking-[0.28em] text-lavender">
-                  Deskripsi (opsional)
-                  <textarea
-                    name="description"
-                    value={createDescription}
-                    onChange={(event) => setCreateDescription(event.target.value)}
-                    placeholder="Deskripsi singkat untuk membantu responden."
-                    className="mt-3 min-h-[120px] w-full rounded-2xl border border-white/10 bg-page/80 px-4 py-3 text-sm text-ink placeholder:text-ink-muted focus:border-lavender focus:outline-none"
-                  />
-                </label>
+        <Container className="py-6">
+          <Card className="mb-4 grid gap-3 p-4 md:grid-cols-[1fr_180px_180px]">
+            <Input
+              value={query}
+              onChange={(event) => setQuery(event.target.value)}
+              placeholder="Search form"
+            />
+            <Select value={filter} onChange={(event) => setFilter(event.target.value as FilterType)}>
+              <option value="all">All Status</option>
+              <option value="draft">Draft</option>
+              <option value="published">Published</option>
+            </Select>
+            <Button variant="secondary" className="gap-2" onClick={() => setSort((prev) => (prev === "newest" ? "oldest" : "newest"))}>
+              <ArrowUpDown size={15} />
+              {sort === "newest" ? "Newest" : "Oldest"}
+            </Button>
+          </Card>
 
-                {createError ? (
-                  <div className="rounded-2xl border border-rose/40 bg-rose/10 px-4 py-3 text-sm text-rose">
-                    {createError}
-                  </div>
-                ) : null}
+          {loading ? <Card className="text-sm text-ink-muted">Loading forms...</Card> : null}
+          {error ? <Card className="border-rose/40 bg-rose/10 text-sm text-rose">{error}</Card> : null}
+          {!loading && !error && displayedForms.length === 0 ? (
+            <Card className="text-sm text-ink-muted">No forms found.</Card>
+          ) : null}
 
-                <button
-                  type="submit"
-                  disabled={createLoading}
-                  className="inline-flex items-center justify-center rounded-full bg-lavender px-6 py-3 text-sm font-semibold text-violet-deep transition hover:-translate-y-0.5 hover:bg-sun disabled:cursor-not-allowed disabled:opacity-70"
-                >
-                  {createLoading ? "Membuat..." : "Buat Form"}
-                </button>
-              </form>
-            </section>
-
-            <section className="rounded-3xl border border-white/10 bg-surface/70 p-6">
-              <div className="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
+          <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+            {displayedForms.map((form) => (
+              <Card key={form.id} className="flex h-full flex-col justify-between gap-4 p-5">
                 <div>
-                  <h2 className="text-lg font-semibold text-ink font-display">
-                    Form kamu
-                  </h2>
-                  <p className="text-sm text-ink-muted">
-                    Kelola status dan metadata form yang sudah dibuat.
+                  <div className="mb-2 flex items-center justify-between gap-2">
+                    <h2 className="line-clamp-1 text-base font-semibold">{form.title}</h2>
+                    <Badge variant={form.status === "published" ? "published" : "draft"}>
+                      {form.status}
+                    </Badge>
+                  </div>
+                  <p className="line-clamp-3 text-sm text-ink-muted">
+                    {form.description || "No description"}
                   </p>
                 </div>
-                <span className="text-xs font-semibold uppercase tracking-[0.28em] text-ink-muted">
-                  Total: {forms.length}
-                </span>
-              </div>
 
-              {deleteError ? (
-                <div className="mt-4 rounded-2xl border border-rose/40 bg-rose/10 px-4 py-3 text-sm text-rose">
-                  {deleteError}
+                <div>
+                  <p className="text-xs text-ink-muted">Last edited: {form.updatedLabel}</p>
+                  <div className="mt-3 flex flex-wrap gap-2">
+                    <Link href={`/forms/${form.id}/edit`}>
+                      <Button size="sm" variant="secondary">
+                        Edit
+                      </Button>
+                    </Link>
+                    <Link href={`/forms/${form.id}/view`}>
+                      <Button size="sm" variant="ghost">
+                        View
+                      </Button>
+                    </Link>
+                    <Link href={`/forms/${form.id}/responses`}>
+                      <Button size="sm" variant="ghost">
+                        Responses
+                      </Button>
+                    </Link>
+                  </div>
                 </div>
-              ) : null}
-
-              <div className="mt-6 grid gap-4">
-                {loading ? (
-                  <div className="rounded-2xl border border-white/10 bg-page/70 p-4 text-sm text-ink-muted">
-                    Memuat daftar form...
-                  </div>
-                ) : error ? (
-                  <div className="rounded-2xl border border-rose/40 bg-rose/10 p-4 text-sm text-rose">
-                    {error}
-                  </div>
-                ) : formattedForms.length === 0 ? (
-                  <div className="rounded-2xl border border-white/10 bg-page/70 p-4 text-sm text-ink-muted">
-                    Belum ada form. Buat form baru untuk mulai.
-                  </div>
-                ) : (
-                  formattedForms.map((form) => {
-                    const isEditing = editingId === form.id;
-                    const isUpdating = editLoadingId === form.id;
-                    const isDeleting = deleteLoadingId === form.id;
-
-                    return (
-                      <div
-                        key={form.id}
-                        className="rounded-2xl border border-white/10 bg-page/70 p-4"
-                      >
-                        {isEditing ? (
-                          <div className="flex flex-col gap-3">
-                            <label className="text-xs font-semibold uppercase tracking-[0.28em] text-lavender">
-                              Judul form
-                              <input
-                                type="text"
-                                value={editTitle}
-                                onChange={(event) => setEditTitle(event.target.value)}
-                                className="mt-2 w-full rounded-2xl border border-white/10 bg-page/80 px-4 py-3 text-sm text-ink placeholder:text-ink-muted focus:border-lavender focus:outline-none"
-                              />
-                            </label>
-                            <label className="text-xs font-semibold uppercase tracking-[0.28em] text-lavender">
-                              Deskripsi (opsional)
-                              <textarea
-                                value={editDescription}
-                                onChange={(event) => setEditDescription(event.target.value)}
-                                className="mt-2 min-h-[90px] w-full rounded-2xl border border-white/10 bg-page/80 px-4 py-3 text-sm text-ink placeholder:text-ink-muted focus:border-lavender focus:outline-none"
-                              />
-                            </label>
-
-                            {editError ? (
-                              <div className="rounded-2xl border border-rose/40 bg-rose/10 px-4 py-3 text-sm text-rose">
-                                {editError}
-                              </div>
-                            ) : null}
-
-                            <div className="flex flex-wrap gap-3">
-                              <button
-                                type="button"
-                                onClick={() => handleUpdate(form.id)}
-                                disabled={isUpdating}
-                                className="rounded-full bg-lavender px-5 py-2 text-xs font-semibold uppercase tracking-[0.28em] text-violet-deep transition hover:bg-sun disabled:cursor-not-allowed disabled:opacity-70"
-                              >
-                                {isUpdating ? "Menyimpan..." : "Simpan"}
-                              </button>
-                              <button
-                                type="button"
-                                onClick={cancelEdit}
-                                disabled={isUpdating}
-                                className="rounded-full border border-white/10 px-5 py-2 text-xs font-semibold uppercase tracking-[0.28em] text-ink-muted transition hover:text-ink disabled:cursor-not-allowed disabled:opacity-70"
-                              >
-                                Batal
-                              </button>
-                            </div>
-                          </div>
-                        ) : (
-                          <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-                            <div>
-                              <p className="text-sm font-semibold text-ink">{form.title}</p>
-                              <p className="mt-1 text-xs uppercase tracking-[0.28em] text-ink-muted">
-                                Diupdate {form.updatedLabel}
-                              </p>
-                              <p className="mt-3 text-sm text-ink-muted">
-                                {form.description || "Tanpa deskripsi"}
-                              </p>
-                            </div>
-                            <div className="flex flex-wrap gap-3 text-xs uppercase tracking-[0.28em]">
-                              <Link
-                                href={`/forms/${form.id}/edit`}
-                                className="rounded-full border border-white/10 px-4 py-2 font-semibold text-ink-muted transition hover:text-ink"
-                              >
-                                Builder
-                              </Link>
-                              <Link
-                                href={`/forms/${form.id}/view`}
-                                className="rounded-full border border-white/10 px-4 py-2 font-semibold text-ink-muted transition hover:text-ink"
-                              >
-                                Preview
-                              </Link>
-                              <button
-                                type="button"
-                                onClick={() => startEdit(form)}
-                                className="rounded-full border border-lavender/40 px-4 py-2 font-semibold text-lavender transition hover:bg-lavender hover:text-violet-deep"
-                              >
-                                Edit
-                              </button>
-                              <button
-                                type="button"
-                                onClick={() => handleDelete(form.id)}
-                                disabled={isDeleting}
-                                className="rounded-full border border-rose/40 px-4 py-2 font-semibold text-rose transition hover:bg-rose hover:text-white disabled:cursor-not-allowed disabled:opacity-70"
-                              >
-                                {isDeleting ? "Menghapus..." : "Hapus"}
-                              </button>
-                            </div>
-                          </div>
-                        )}
-                      </div>
-                    );
-                  })
-                )}
-              </div>
-            </section>
+              </Card>
+            ))}
           </div>
         </Container>
       </div>

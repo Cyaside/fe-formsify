@@ -1,17 +1,23 @@
 "use client";
 
-import { useEffect, useMemo, useState, type FormEvent } from "react";
-import Link from "next/link";
+import { useEffect, useMemo, useState } from "react";
 import { useParams } from "next/navigation";
+import Card from "@/components/ui/Card";
 import Container from "@/components/ui/Container";
+import Button from "@/components/ui/Button";
+import Input from "@/components/ui/Input";
+import Select from "@/components/ui/Select";
 import { apiRequest, ApiError } from "@/lib/api";
-import type { QuestionType } from "@/store/formEditor";
+
+type QuestionType = "SHORT_ANSWER" | "MCQ" | "CHECKBOX" | "DROPDOWN";
 
 type FormDetail = {
   id: string;
   title: string;
   description?: string | null;
 };
+
+type QuestionOption = { id: string; label: string; order: number };
 
 type QuestionResponse = {
   id: string;
@@ -20,26 +26,55 @@ type QuestionResponse = {
   type: QuestionType;
   required: boolean;
   order: number;
-  options: { id: string; label: string; order: number }[];
+  options: QuestionOption[];
+};
+
+type AnswerState = Record<string, unknown>;
+
+const sortByOrder = <T extends { order: number }>(items: T[]) => {
+  return items.toSorted((a, b) => a.order - b.order);
 };
 
 export default function RespondentViewPage() {
   const params = useParams();
   const formId = Array.isArray(params?.id) ? params.id[0] : params?.id;
+  const invalidFormId = !formId;
 
   const [form, setForm] = useState<FormDetail | null>(null);
   const [questions, setQuestions] = useState<QuestionResponse[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [answers, setAnswers] = useState<AnswerState>({});
+  const [validationErrors, setValidationErrors] = useState<Record<string, string>>({});
+  const [loading, setLoading] = useState(Boolean(formId));
   const [error, setError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
-  const [submitError, setSubmitError] = useState<string | null>(null);
-  const [submitSuccess, setSubmitSuccess] = useState(false);
-  const [answers, setAnswers] = useState<Record<string, unknown>>({});
-  const [validationErrors, setValidationErrors] = useState<Record<string, string>>(
-    {},
+  const [submitMessage, setSubmitMessage] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!formId) return;
+
+    Promise.all([
+      apiRequest<{ data: FormDetail }>(`/api/forms/${formId}`),
+      apiRequest<{ data: QuestionResponse[] }>(`/api/forms/${formId}/questions`),
+    ])
+      .then(([formResponse, questionResponse]) => {
+        setForm(formResponse.data);
+        setQuestions(sortByOrder(questionResponse.data));
+      })
+      .catch((err) => {
+        const message = err instanceof ApiError ? err.message : "Failed to load form";
+        setError(message);
+      })
+      .finally(() => {
+        setLoading(false);
+      });
+  }, [formId]);
+
+  const orderedQuestions = useMemo(
+    () => questions.map((question) => ({ ...question, options: sortByOrder(question.options) })),
+    [questions],
   );
 
-  const clearValidationError = (questionId: string) => {
+  const clearQuestionError = (questionId: string) => {
     setValidationErrors((prev) => {
       if (!prev[questionId]) return prev;
       const next = { ...prev };
@@ -48,305 +83,203 @@ export default function RespondentViewPage() {
     });
   };
 
-  useEffect(() => {
-    if (!formId) {
-      setLoading(false);
-      setError("ID form tidak valid.");
-      return;
-    }
-
-    setLoading(true);
-    setError(null);
-    Promise.all([
-      apiRequest<{ data: FormDetail }>(`/api/forms/${formId}`),
-      apiRequest<{ data: QuestionResponse[] }>(`/api/forms/${formId}/questions`),
-    ])
-      .then(([formResponse, questionsResponse]) => {
-        setForm(formResponse.data);
-        setQuestions(
-          questionsResponse.data.sort((a, b) => a.order - b.order),
-        );
-      })
-      .catch((err) => {
-        const message =
-          err instanceof ApiError ? err.message : "Gagal memuat form.";
-        setError(message);
-      })
-      .finally(() => {
-        setLoading(false);
-      });
-  }, [formId]);
-
-  const formattedQuestions = useMemo(() => {
-    return questions.map((question) => ({
-      ...question,
-      options: question.options.sort((a, b) => a.order - b.order),
-    }));
-  }, [questions]);
-
-  const handleCheckboxChange = (questionId: string, optionId: string) => {
-    setAnswers((prev) => {
-      const current = Array.isArray(prev[questionId]) ? (prev[questionId] as string[]) : [];
-      const exists = current.includes(optionId);
-      const next = exists
-        ? current.filter((item) => item !== optionId)
-        : [...current, optionId];
-      return { ...prev, [questionId]: next };
-    });
-    clearValidationError(questionId);
+  const setAnswer = (questionId: string, value: unknown) => {
+    setAnswers((prev) => ({ ...prev, [questionId]: value }));
+    clearQuestionError(questionId);
   };
 
-  const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
-    event.preventDefault();
-    if (!formId) return;
-    setSubmitError(null);
-    setSubmitSuccess(false);
+  const toggleCheckboxAnswer = (questionId: string, optionId: string) => {
+    const selected = Array.isArray(answers[questionId])
+      ? (answers[questionId] as string[])
+      : [];
+    const next = selected.includes(optionId)
+      ? selected.filter((item) => item !== optionId)
+      : [...selected, optionId];
+    setAnswer(questionId, next);
+  };
 
+  const isRequiredMissing = (question: QuestionResponse, value: unknown) => {
+    if (!question.required) return false;
+    return (
+      value === undefined ||
+      value === null ||
+      value === "" ||
+      (Array.isArray(value) && value.length === 0)
+    );
+  };
+
+  const validateAnswers = () => {
     const nextErrors: Record<string, string> = {};
-    formattedQuestions.forEach((question) => {
-      const value = answers[question.id];
-      if (question.required) {
-        if (
-          value === undefined ||
-          value === null ||
-          value === "" ||
-          (Array.isArray(value) && value.length === 0)
-        ) {
-          nextErrors[question.id] = "Pertanyaan ini wajib diisi.";
-        }
+    orderedQuestions.forEach((question) => {
+      if (isRequiredMissing(question, answers[question.id])) {
+        nextErrors[question.id] = "This question is required";
       }
     });
-
     setValidationErrors(nextErrors);
-    if (Object.keys(nextErrors).length > 0) return;
+    return Object.keys(nextErrors).length === 0;
+  };
 
-    setSubmitting(true);
-    try {
-      const payload = {
+  const submitAnswers = async () => {
+    await apiRequest(`/api/forms/${formId}/submit`, {
+      method: "POST",
+      body: {
         answers: Object.entries(answers).map(([questionId, value]) => ({
           questionId,
           value,
         })),
-      };
-      await apiRequest(`/api/forms/${formId}/submit`, {
-        method: "POST",
-        body: payload,
-      });
-      setSubmitSuccess(true);
+      },
+    });
+  };
+
+  const handleSubmit = async (event: React.SyntheticEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    if (!formId || !validateAnswers()) return;
+
+    setSubmitting(true);
+    setSubmitMessage(null);
+    try {
+      await submitAnswers();
       setAnswers({});
+      setSubmitMessage("Response submitted successfully.");
     } catch (err) {
-      const message =
-        err instanceof ApiError ? err.message : "Gagal mengirim jawaban.";
-      setSubmitError(message);
+      const message = err instanceof ApiError ? err.message : "Failed to submit response";
+      setSubmitMessage(message);
     } finally {
       setSubmitting(false);
     }
   };
 
-  return (
-    <div className="min-h-screen bg-page text-ink">
-      <header className="border-b border-white/10 bg-surface/70 py-8">
-        <Container className="flex flex-col gap-6 md:flex-row md:items-center md:justify-between">
-          <div>
-            <p className="text-xs font-semibold uppercase tracking-[0.32em] text-lavender">
-              Form View
-            </p>
-            <h1 className="mt-3 text-3xl font-semibold text-ink font-display">
-              Isi formulir
-            </h1>
-            <p className="mt-2 text-sm text-ink-muted">
-              Jawaban kamu akan langsung tersimpan di sistem.
-            </p>
-          </div>
-          <Link
-            href="/form-list"
-            className="rounded-full border border-white/10 px-5 py-2 text-xs font-semibold uppercase tracking-[0.25em] text-ink-muted transition hover:text-ink"
+  const renderQuestionInput = (question: QuestionResponse) => {
+    switch (question.type) {
+      case "SHORT_ANSWER":
+        return (
+          <Input
+            value={(answers[question.id] as string) ?? ""}
+            onChange={(event) => setAnswer(question.id, event.target.value)}
+            placeholder="Your answer"
+          />
+        );
+
+      case "DROPDOWN":
+        return (
+          <Select
+            value={(answers[question.id] as string) ?? ""}
+            onChange={(event) => setAnswer(question.id, event.target.value)}
           >
-            Kembali ke Form List
-          </Link>
-        </Container>
-      </header>
+            <option value="">Select an option</option>
+            {question.options.map((option) => (
+              <option key={option.id} value={option.id}>
+                {option.label}
+              </option>
+            ))}
+          </Select>
+        );
 
-      <Container className="py-12">
-        {loading ? (
-          <div className="rounded-3xl border border-white/10 bg-surface/70 p-6 text-sm text-ink-muted">
-            Memuat form...
+      case "MCQ":
+        return (
+          <div className="space-y-2">
+            {question.options.map((option) => (
+              <label key={option.id} className="flex items-center gap-2 text-sm">
+                <input
+                  type="radio"
+                  name={question.id}
+                  checked={answers[question.id] === option.id}
+                  onChange={() => setAnswer(question.id, option.id)}
+                  className="h-4 w-4"
+                />
+                {option.label}
+              </label>
+            ))}
           </div>
-        ) : error ? (
-          <div className="rounded-3xl border border-rose/40 bg-rose/10 p-6 text-sm text-rose">
-            {error}
-          </div>
-        ) : !form ? (
-          <div className="rounded-3xl border border-white/10 bg-surface/70 p-6 text-sm text-ink-muted">
-            Form tidak ditemukan.
-          </div>
-        ) : (
-          <form onSubmit={handleSubmit} className="grid gap-6">
-            <section className="rounded-3xl border border-white/10 bg-surface/70 p-6">
-              <h2 className="text-lg font-semibold text-ink font-display">
-                {form.title}
-              </h2>
-              <p className="mt-2 text-sm text-ink-muted">
-                {form.description || "Tanpa deskripsi"}
-              </p>
-            </section>
+        );
 
-            <section className="rounded-3xl border border-white/10 bg-surface/70 p-6">
-              <h3 className="text-lg font-semibold text-ink font-display">
-                Pertanyaan
-              </h3>
-              <div className="mt-6 grid gap-5">
-                {formattedQuestions.length === 0 ? (
-                  <div className="rounded-2xl border border-white/10 bg-page/70 p-4 text-sm text-ink-muted">
-                    Belum ada pertanyaan untuk form ini.
+      case "CHECKBOX":
+        return (
+          <div className="space-y-2">
+            {question.options.map((option) => {
+              const selected = Array.isArray(answers[question.id])
+                ? (answers[question.id] as string[])
+                : [];
+
+              return (
+                <label key={option.id} className="flex items-center gap-2 text-sm">
+                  <input
+                    type="checkbox"
+                    checked={selected.includes(option.id)}
+                    onChange={() => toggleCheckboxAnswer(question.id, option.id)}
+                    className="h-4 w-4"
+                  />
+                  {option.label}
+                </label>
+              );
+            })}
+          </div>
+        );
+
+      default:
+        return null;
+    }
+  };
+
+  return (
+    <div className="min-h-screen bg-page py-8 text-ink">
+      <Container className="max-w-3xl">
+        {invalidFormId ? (
+          <Card className="border-rose/40 bg-rose/10 text-sm text-rose">Invalid form ID</Card>
+        ) : null}
+        {loading ? <Card className="text-sm text-ink-muted">Loading form...</Card> : null}
+        {error ? <Card className="border-rose/40 bg-rose/10 text-sm text-rose">{error}</Card> : null}
+
+        {form ? (
+          <form onSubmit={handleSubmit} className="space-y-4">
+            <Card className="border-l-4 border-l-violet p-6">
+              <h1 className="text-2xl font-semibold">{form.title}</h1>
+              <p className="mt-2 text-sm text-ink-muted">{form.description || "No description"}</p>
+              <p className="mt-4 text-xs text-ink-muted">* Required</p>
+            </Card>
+
+            {orderedQuestions.length === 0 ? (
+              <Card className="text-sm text-ink-muted">This form has no questions yet.</Card>
+            ) : (
+              orderedQuestions.map((question, index) => (
+                <Card key={question.id} className="space-y-3 p-5">
+                  <div>
+                    <h2 className="text-base font-medium">
+                      {index + 1}. {question.title}
+                      {question.required ? <span className="ml-1 text-rose">*</span> : null}
+                    </h2>
+                    {question.description ? (
+                      <p className="mt-1 text-sm text-ink-muted">{question.description}</p>
+                    ) : null}
                   </div>
-                ) : (
-                  formattedQuestions.map((question, index) => (
-                    <div
-                      key={question.id}
-                      className="rounded-2xl border border-white/10 bg-page/70 p-4"
-                    >
-                      <div className="flex flex-wrap items-start justify-between gap-3">
-                        <div>
-                          <p className="text-sm font-semibold text-ink">
-                            {index + 1}. {question.title}
-                          </p>
-                          {question.description ? (
-                            <p className="mt-2 text-sm text-ink-muted">
-                              {question.description}
-                            </p>
-                          ) : null}
-                        </div>
-                        {question.required ? (
-                          <span className="rounded-full border border-rose/40 px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.28em] text-rose">
-                            Wajib
-                          </span>
-                        ) : null}
-                      </div>
 
-                      <div className="mt-4">
-                        {question.type === "SHORT_TEXT" ? (
-                          <input
-                            type="text"
-                            value={(answers[question.id] as string) ?? ""}
-                            onChange={(event) => {
-                              setAnswers((prev) => ({
-                                ...prev,
-                                [question.id]: event.target.value,
-                              }));
-                              clearValidationError(question.id);
-                            }}
-                            className="w-full rounded-2xl border border-white/10 bg-page/80 px-4 py-3 text-sm text-ink placeholder:text-ink-muted focus:border-lavender focus:outline-none"
-                            placeholder="Tulis jawaban kamu"
-                          />
-                        ) : null}
+                  {renderQuestionInput(question)}
 
-                        {question.type === "DROPDOWN" ? (
-                          <select
-                            value={(answers[question.id] as string) ?? ""}
-                            onChange={(event) => {
-                              setAnswers((prev) => ({
-                                ...prev,
-                                [question.id]: event.target.value,
-                              }));
-                              clearValidationError(question.id);
-                            }}
-                            className="w-full rounded-2xl border border-white/10 bg-page/80 px-4 py-3 text-sm text-ink focus:border-lavender focus:outline-none"
-                          >
-                            <option value="">Pilih jawaban</option>
-                            {question.options.map((option) => (
-                              <option key={option.id} value={option.id}>
-                                {option.label}
-                              </option>
-                            ))}
-                          </select>
-                        ) : null}
+                  {validationErrors[question.id] ? (
+                    <p className="text-sm text-rose">{validationErrors[question.id]}</p>
+                  ) : null}
+                </Card>
+              ))
+            )}
 
-                        {question.type === "MULTIPLE_CHOICE" ? (
-                          <div className="grid gap-2">
-                            {question.options.map((option) => (
-                              <label
-                                key={option.id}
-                                className="flex items-center gap-3 text-sm text-ink"
-                              >
-                                <input
-                                  type="radio"
-                                  name={`question-${question.id}`}
-                                  value={option.id}
-                                  checked={answers[question.id] === option.id}
-                                  onChange={(event) => {
-                                    setAnswers((prev) => ({
-                                      ...prev,
-                                      [question.id]: event.target.value,
-                                    }));
-                                    clearValidationError(question.id);
-                                  }}
-                                  className="h-4 w-4 rounded-full border border-white/20 bg-page/80 text-lavender focus:ring-lavender"
-                                />
-                                {option.label}
-                              </label>
-                            ))}
-                          </div>
-                        ) : null}
-
-                        {question.type === "CHECKBOX" ? (
-                          <div className="grid gap-2">
-                            {question.options.map((option) => {
-                              const selected = Array.isArray(answers[question.id])
-                                ? (answers[question.id] as string[])
-                                : [];
-                              return (
-                                <label
-                                  key={option.id}
-                                  className="flex items-center gap-3 text-sm text-ink"
-                                >
-                                  <input
-                                    type="checkbox"
-                                    checked={selected.includes(option.id)}
-                                    onChange={() =>
-                                      handleCheckboxChange(question.id, option.id)
-                                    }
-                                    className="h-4 w-4 rounded border border-white/20 bg-page/80 text-lavender focus:ring-lavender"
-                                  />
-                                  {option.label}
-                                </label>
-                              );
-                            })}
-                          </div>
-                        ) : null}
-
-                        {validationErrors[question.id] ? (
-                          <p className="mt-3 text-sm text-rose">
-                            {validationErrors[question.id]}
-                          </p>
-                        ) : null}
-                      </div>
-                    </div>
-                  ))
-                )}
-              </div>
-            </section>
-
-            {submitError ? (
-              <div className="rounded-2xl border border-rose/40 bg-rose/10 px-4 py-3 text-sm text-rose">
-                {submitError}
+            {orderedQuestions.length > 0 ? (
+              <div className="flex items-center justify-between">
+                <Button type="submit" disabled={submitting}>
+                  {submitting ? "Submitting..." : "Submit"}
+                </Button>
+                {submitMessage ? (
+                  <p
+                    className={`text-sm ${
+                      submitMessage.includes("success") ? "text-lavender" : "text-rose"
+                    }`}
+                  >
+                    {submitMessage}
+                  </p>
+                ) : null}
               </div>
             ) : null}
-            {submitSuccess ? (
-              <div className="rounded-2xl border border-emerald-400/40 bg-emerald-400/10 px-4 py-3 text-sm text-emerald-200">
-                Jawaban berhasil dikirim. Terima kasih!
-              </div>
-            ) : null}
-
-            <button
-              type="submit"
-              disabled={submitting}
-              className="w-full rounded-full bg-lavender px-6 py-3 text-sm font-semibold text-violet-deep transition hover:-translate-y-0.5 hover:bg-sun disabled:cursor-not-allowed disabled:opacity-70"
-            >
-              {submitting ? "Mengirim..." : "Kirim Jawaban"}
-            </button>
           </form>
-        )}
+        ) : null}
       </Container>
     </div>
   );
