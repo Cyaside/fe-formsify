@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
-import { ArrowUpDown, Plus } from "lucide-react";
+import { ArrowUpDown, Plus, Trash2 } from "lucide-react";
 import RequireAuth from "@/components/auth/RequireAuth";
 import { useAuth } from "@/components/auth/AuthProvider";
 import ThemeToggle from "@/components/theme/ThemeToggle";
@@ -11,6 +11,7 @@ import Button from "@/components/ui/Button";
 import Card from "@/components/ui/Card";
 import Container from "@/components/ui/Container";
 import Input from "@/components/ui/Input";
+import Modal from "@/components/ui/Modal";
 import Select from "@/components/ui/Select";
 import { apiRequest, ApiError } from "@/lib/api";
 import { getFormStatusMap } from "@/lib/formPersistence";
@@ -34,6 +35,8 @@ export default function FormsPage() {
   const [query, setQuery] = useState("");
   const [filter, setFilter] = useState<FilterType>("all");
   const [sort, setSort] = useState<SortType>("newest");
+  const [deleteTarget, setDeleteTarget] = useState<FormSummary | null>(null);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
 
   useEffect(() => {
     apiRequest<{ data: FormSummary[] }>("/api/forms")
@@ -78,6 +81,22 @@ export default function FormsPage() {
         return sort === "newest" ? right - left : left - right;
       });
   }, [filter, forms, query, sort]);
+
+  const handleDeleteForm = async () => {
+    if (!deleteTarget) return;
+
+    setDeletingId(deleteTarget.id);
+    try {
+      await apiRequest(`/api/forms/${deleteTarget.id}`, { method: "DELETE" });
+      setForms((prev) => prev.filter((form) => form.id !== deleteTarget.id));
+      setDeleteTarget(null);
+    } catch (err) {
+      const message = err instanceof ApiError ? err.message : "Failed to delete form";
+      setError(message);
+    } finally {
+      setDeletingId(null);
+    }
+  };
 
   return (
     <RequireAuth>
@@ -188,12 +207,49 @@ export default function FormsPage() {
                         Responses
                       </Button>
                     </Link>
+                    <Button
+                      size="sm"
+                      variant="danger"
+                      className="gap-1.5"
+                      onClick={() => setDeleteTarget(form)}
+                      disabled={deletingId === form.id}
+                    >
+                      <Trash2 size={14} />
+                      Delete
+                    </Button>
                   </div>
                 </div>
               </Card>
             ))}
           </div>
         </Container>
+
+        <Modal
+          open={Boolean(deleteTarget)}
+          title="Delete form"
+          description={`Are you sure you want to delete "${deleteTarget?.title ?? ""}"?`}
+          onClose={() => {
+            if (deletingId) return;
+            setDeleteTarget(null);
+          }}
+        >
+          <div className="flex justify-end gap-2">
+            <Button
+              variant="secondary"
+              onClick={() => setDeleteTarget(null)}
+              disabled={Boolean(deletingId)}
+            >
+              Cancel
+            </Button>
+            <Button
+              variant="danger"
+              onClick={handleDeleteForm}
+              disabled={Boolean(deletingId)}
+            >
+              {deletingId ? "Deleting..." : "Delete"}
+            </Button>
+          </div>
+        </Modal>
       </div>
     </RequireAuth>
   );
