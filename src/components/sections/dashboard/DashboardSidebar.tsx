@@ -1,13 +1,20 @@
+"use client";
+
+import Link from "next/link";
+import { usePathname } from "next/navigation";
+
 const navItems = [
-  { label: "Overview" },
-  { label: "Forms" },
-  { label: "Templates" },
-  { label: "Responses" },
-  { label: "Integrations" },
-  { label: "Settings" },
+  { label: "Overview", href: "/dashboard" },
+  { label: "Forms", href: "/dashboard/forms" },
+  { label: "Templates", href: "#" },
+  { label: "Responses", href: "#" },
+  { label: "Integrations", href: "#" },
+  { label: "Settings", href: "#" },
 ];
 
 export default function DashboardSidebar() {
+  const pathname = usePathname();
+
   return (
     <aside className="hidden w-64 shrink-0 border-r border-white/10 bg-surface/80 p-6 lg:flex lg:flex-col">
       <div className="flex items-center gap-3">
@@ -20,18 +27,34 @@ export default function DashboardSidebar() {
         </span>
       </div>
       <div className="mt-10 flex flex-1 flex-col gap-2 text-sm font-semibold text-ink-muted">
-        {navItems.map((item, index) => (
-          <button
+        {navItems.map((item) => {
+          const isActive = pathname === item.href;
+          const isPlaceholder = item.href === "#";
+
+          return isPlaceholder ? (
+            <button
             key={item.label}
             type="button"
             className={`flex items-center justify-between rounded-2xl px-4 py-3 text-left transition hover:bg-page/40 hover:text-ink ${
-              index === 0 ? "bg-page/50 text-ink" : ""
+              isActive ? "bg-page/50 text-ink" : ""
             }`}
           >
             <span>{item.label}</span>
             <span className="h-2 w-2 rounded-full bg-lavender/60" />
           </button>
-        ))}
+          ) : (
+            <Link
+              key={item.label}
+              href={item.href}
+              className={`flex items-center justify-between rounded-2xl px-4 py-3 text-left transition hover:bg-page/40 hover:text-ink ${
+                isActive ? "bg-page/50 text-ink" : ""
+              }`}
+            >
+              <span>{item.label}</span>
+              <span className="h-2 w-2 rounded-full bg-lavender/60" />
+            </Link>
+          );
+        })}
       </div>
       <div className="rounded-3xl border border-lavender/30 bg-page/60 p-4 text-xs text-ink-muted">
         Upgrade ke Pro untuk akses logic lanjutan dan kolaborasi tim.

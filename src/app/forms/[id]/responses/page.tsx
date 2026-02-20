@@ -137,9 +137,22 @@ export default function FormResponsesPage() {
     <div className="min-h-screen bg-page py-8 text-ink">
       <Container className="max-w-4xl space-y-4">
         <div className="flex items-center justify-between">
-          <Link href="/forms">
-            <Button variant="secondary">Back to Forms</Button>
-          </Link>
+          <div className="flex items-center gap-2">
+            <Link href="/dashboard/forms">
+              <Button variant="secondary">Back to Forms</Button>
+            </Link>
+            {formId ? (
+              <>
+                <Link href={`/forms/${formId}/view`}>
+                  <Button variant="ghost" size="sm">Form</Button>
+                </Link>
+                <Button size="sm">Responses</Button>
+                <Link href={`/forms/${formId}/summary`}>
+                  <Button variant="ghost" size="sm">Summary</Button>
+                </Link>
+              </>
+            ) : null}
+          </div>
           {activeResponse ? (
             <Button variant="danger" className="gap-2" onClick={() => setDeleteOpen(true)}>
               <Trash2 size={15} />

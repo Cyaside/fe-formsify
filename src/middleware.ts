@@ -5,9 +5,6 @@ const isProtectedPath = (pathname: string) => {
   if (pathname.startsWith("/dashboard")) {
     return true;
   }
-  if (pathname === "/forms") {
-    return true;
-  }
   if (pathname.startsWith("/forms/") && !pathname.endsWith("/view")) {
     return true;
   }

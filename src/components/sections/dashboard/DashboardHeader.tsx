@@ -22,7 +22,7 @@ export default function DashboardHeader() {
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
         <div className="flex items-center gap-2 rounded-full border border-white/10 bg-surface/70 px-4 py-2 text-sm text-ink-muted">
           <span className="h-2 w-2 rounded-full bg-lavender" />
-          Cari form, template, atau respon
+          <span>Cari form, template, atau respon</span>
         </div>
         <div className="flex items-center gap-3">
           <ThemeToggle />
@@ -35,12 +35,6 @@ export default function DashboardHeader() {
             className="rounded-full border border-lavender/40 px-4 py-2 text-xs font-semibold uppercase tracking-[0.25em] text-lavender transition hover:bg-lavender hover:text-violet-deep"
           >
             Logout
-          </button>
-          <button
-            type="button"
-            className="rounded-full bg-lavender px-5 py-2 text-sm font-semibold text-violet-deep transition hover:-translate-y-0.5 hover:bg-sun"
-          >
-            Buat Form Baru
           </button>
         </div>
       </div>

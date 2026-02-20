@@ -73,7 +73,7 @@ export default function PublicFormDetailPage() {
             <Button variant="secondary">Back to Form List</Button>
           </Link>
           {formId ? (
-            <Link href={`/forms/${formId}/view`}>
+            <Link href={`/form-list/${formId}/fill`}>
               <Button>Fill Form</Button>
             </Link>
           ) : null}

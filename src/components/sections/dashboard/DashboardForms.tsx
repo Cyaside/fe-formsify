@@ -28,7 +28,7 @@ export default function DashboardForms({ forms, loading, error }: DashboardForms
       <div className="flex items-center justify-between">
         <h2 className="text-lg font-semibold text-ink font-display">Form Terbaru</h2>
         <Link
-          href="/forms"
+          href="/dashboard/forms"
           className="rounded-full border border-lavender/40 px-4 py-2 text-xs font-semibold uppercase tracking-[0.25em] text-lavender transition hover:bg-lavender hover:text-violet-deep"
         >
           Lihat Semua
@@ -62,7 +62,7 @@ export default function DashboardForms({ forms, loading, error }: DashboardForms
               <div className="flex items-center gap-4 text-sm text-ink-muted">
                 <span className="text-xs">{form.description || "Tanpa deskripsi"}</span>
                 <Link
-                  href="/forms"
+                  href="/dashboard/forms"
                   className="rounded-full bg-lavender px-4 py-2 text-xs font-semibold text-violet-deep transition hover:bg-sun"
                 >
                   Buka

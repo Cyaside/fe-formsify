@@ -450,7 +450,7 @@ export default function FormBuilderPage({ initialFormId }: Readonly<FormBuilderP
         setFormStatus(formId, "draft");
       }
       setSaveMessage("Draft saved");
-      router.push("/forms");
+      router.push("/dashboard/forms");
     } catch {
       setSaveMessage("Failed to save draft");
     } finally {
@@ -460,7 +460,7 @@ export default function FormBuilderPage({ initialFormId }: Readonly<FormBuilderP
 
   const handleCancelDraft = () => {
     clearDraft(draftKey);
-    router.push("/forms");
+    router.push("/dashboard/forms");
   };
 
   const content = (() => {

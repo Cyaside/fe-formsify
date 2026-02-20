@@ -33,7 +33,7 @@ export default function FormPreviewPage() {
   const formId = Array.isArray(params?.id) ? params.id[0] : params?.id;
   const returnTo = searchParams.get("returnTo") === "builder" && formId
     ? `/forms/${formId}/edit`
-    : "/forms";
+    : "/dashboard/forms";
 
   const [form, setForm] = useState<FormDetail | null>(null);
   const [questions, setQuestions] = useState<QuestionResponse[]>([]);
@@ -74,7 +74,20 @@ export default function FormPreviewPage() {
           <Link href={returnTo}>
             <Button variant="secondary">Back</Button>
           </Link>
-          <Badge variant="muted">Preview only</Badge>
+          <div className="flex items-center gap-2">
+            {formId ? (
+              <>
+                <Button size="sm">Form</Button>
+                <Link href={`/forms/${formId}/responses`}>
+                  <Button variant="ghost" size="sm">Responses</Button>
+                </Link>
+                <Link href={`/forms/${formId}/summary`}>
+                  <Button variant="ghost" size="sm">Summary</Button>
+                </Link>
+              </>
+            ) : null}
+            <Badge variant="muted">Preview only</Badge>
+          </div>
         </div>
 
         {loading ? <Card className="text-sm text-ink-muted">Loading preview...</Card> : null}
