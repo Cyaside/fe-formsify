@@ -1,6 +1,8 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
 import {
   closestCenter,
   DndContext,
@@ -16,9 +18,14 @@ import {
   verticalListSortingStrategy,
 } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
+import { Eye, Loader2, Plus, Save, Send, XCircle } from "lucide-react";
 import RequireAuth from "@/components/auth/RequireAuth";
 import Container from "@/components/ui/Container";
 import Card from "@/components/ui/Card";
+import Button from "@/components/ui/Button";
+import Input from "@/components/ui/Input";
+import Textarea from "@/components/ui/Textarea";
+import ThemeToggle from "@/components/theme/ThemeToggle";
 import { apiRequest, ApiError } from "@/lib/api";
 import {
   clearDraft,
@@ -31,13 +38,12 @@ import {
   type EditorQuestion,
   type QuestionType,
 } from "@/store/formEditor";
-import BuilderHeader from "./BuilderHeader";
-import FloatingAddQuestion from "./FloatingAddQuestion";
 import QuestionCard from "./QuestionCard";
 import {
   createTempId,
   DEFAULT_FORM_TITLE,
   DEFAULT_QUESTION_TITLE,
+  QUESTION_TYPE_OPTIONS,
   mapUiTypeToApiType,
   requiresOptions,
 } from "./constants";
@@ -57,8 +63,6 @@ type QuestionResponse = {
   order: number;
   options: { id: string; label: string; order: number }[];
 };
-
-type SaveState = "idle" | "saving" | "saved" | "error";
 
 type FormBuilderPageProps = {
   initialFormId?: string;
@@ -171,13 +175,15 @@ export default function FormBuilderPage({ initialFormId }: Readonly<FormBuilderP
     replaceQuestionId,
     reset,
   } = useFormEditorStore();
+  const router = useRouter();
 
   const sensors = useSensors(useSensor(PointerSensor));
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [saveState, setSaveState] = useState<SaveState>("idle");
   const [saveMessage, setSaveMessage] = useState("Ready");
   const [publishing, setPublishing] = useState(false);
+  const [savingDraft, setSavingDraft] = useState(false);
+  const [addMenuOpen, setAddMenuOpen] = useState(false);
 
   const queueRef = useRef<null | {
     title: string;
@@ -267,7 +273,6 @@ export default function FormBuilderPage({ initialFormId }: Readonly<FormBuilderP
 
       let activeFormId = formId;
 
-      setSaveState("saving");
       setSaveMessage("Saving changes...");
 
       if (!activeFormId) {
@@ -338,7 +343,6 @@ export default function FormBuilderPage({ initialFormId }: Readonly<FormBuilderP
       clearRemovedQuestionIds();
       clearDraft(draftKey);
 
-      setSaveState("saved");
       setSaveMessage("All changes saved");
     },
     [
@@ -376,7 +380,6 @@ export default function FormBuilderPage({ initialFormId }: Readonly<FormBuilderP
         await performSave(snapshot);
       } catch (err) {
         const message = err instanceof ApiError ? err.message : "Failed to autosave";
-        setSaveState("error");
         setSaveMessage(message);
       } finally {
         savingRef.current = false;
@@ -431,14 +434,33 @@ export default function FormBuilderPage({ initialFormId }: Readonly<FormBuilderP
       if (formId) {
         setFormStatus(formId, "published");
       }
-      setSaveState("saved");
       setSaveMessage("Published");
     } catch {
-      setSaveState("error");
       setSaveMessage("Failed to publish");
     } finally {
       setPublishing(false);
     }
+  };
+
+  const handleSaveDraft = async () => {
+    try {
+      setSavingDraft(true);
+      await enqueueSave(savePayload);
+      if (formId) {
+        setFormStatus(formId, "draft");
+      }
+      setSaveMessage("Draft saved");
+      router.push("/forms");
+    } catch {
+      setSaveMessage("Failed to save draft");
+    } finally {
+      setSavingDraft(false);
+    }
+  };
+
+  const handleCancelDraft = () => {
+    clearDraft(draftKey);
+    router.push("/forms");
   };
 
   const content = (() => {
@@ -483,26 +505,101 @@ export default function FormBuilderPage({ initialFormId }: Readonly<FormBuilderP
   return (
     <RequireAuth>
       <div className="min-h-screen bg-page text-ink">
-        <BuilderHeader
-          title={title}
-          description={description}
-          saveState={saveState}
-          saveMessage={saveMessage}
-          canPreview={Boolean(formId)}
-          previewHref={formId ? `/forms/${formId}/view` : "#"}
-          onChangeTitle={(value) => setFormMeta(value, description)}
-          onChangeDescription={(value) => setFormMeta(title, value)}
-          onPublish={handlePublish}
-          publishing={publishing}
-        />
+        <Container className="max-w-4xl py-6 md:py-8">
+          <Card className="mb-4 border-t-4 border-t-lavender p-6">
+            <div className="space-y-3">
+              <Input
+                value={title}
+                onChange={(event) => setFormMeta(event.target.value, description)}
+                className="h-12 border-none bg-transparent px-0 text-3xl font-semibold shadow-none focus:border-none"
+                placeholder="Form title"
+              />
+              <Textarea
+                value={description}
+                onChange={(event) => setFormMeta(title, event.target.value)}
+                className="min-h-20 resize-none border-none bg-transparent px-0 py-0 text-sm text-ink-muted shadow-none focus:border-none"
+                placeholder="Form description"
+              />
+            </div>
+          </Card>
 
-        <Container className="max-w-4xl py-6 md:py-8">{content}</Container>
+          <nav className="sticky top-3 z-20 mb-4 rounded-2xl border border-border bg-surface/90 p-3 shadow-[0_14px_32px_rgba(8,6,20,0.2)] backdrop-blur">
+            <div className="flex flex-wrap items-center justify-between gap-3">
+              <div className="relative">
+                <Button
+                  variant="secondary"
+                  className="gap-2"
+                  onClick={() => setAddMenuOpen((prev) => !prev)}
+                >
+                  <Plus size={16} />
+                  Add Question
+                </Button>
+                {addMenuOpen ? (
+                  <div className="absolute left-0 top-12 z-30 w-52 rounded-xl border border-border bg-surface p-2">
+                    {QUESTION_TYPE_OPTIONS.map((type) => (
+                      <button
+                        key={type.value}
+                        type="button"
+                        onClick={() => {
+                          addQuestion(createDefaultQuestion(type.value));
+                          setAddMenuOpen(false);
+                        }}
+                        className="flex w-full rounded-lg px-3 py-2 text-left text-sm text-ink-muted transition hover:bg-surface-2 hover:text-ink"
+                      >
+                        {type.label}
+                      </button>
+                    ))}
+                  </div>
+                ) : null}
+              </div>
 
-        <FloatingAddQuestion
-          onAdd={(type) => {
-            addQuestion(createDefaultQuestion(type));
-          }}
-        />
+              <div className="flex items-center gap-4">
+                {formId ? (
+                  <Link href={`/forms/${formId}/view?returnTo=builder`}>
+                    <Button variant="secondary" className="gap-2">
+                      <Eye size={16} />
+                      Preview
+                    </Button>
+                  </Link>
+                ) : (
+                  <Button variant="secondary" className="gap-2" disabled>
+                    <Eye size={16} />
+                    Preview
+                  </Button>
+                )}
+
+                <div className="text-center">
+                  <p className="text-sm font-semibold">Formsify Builder</p>
+                  <p className="text-xs text-ink-muted">{saveMessage}</p>
+                </div>
+
+                <Button className="gap-2" onClick={handlePublish} disabled={publishing}>
+                  <Send size={16} />
+                  {publishing ? "Publishing..." : "Publish"}
+                </Button>
+
+                <Button variant="ghost" className="gap-2" onClick={handleCancelDraft}>
+                  <XCircle size={16} />
+                  Cancel Draft
+                </Button>
+
+                <Button
+                  variant="secondary"
+                  className="gap-2"
+                  onClick={handleSaveDraft}
+                  disabled={savingDraft}
+                >
+                  {savingDraft ? <Loader2 size={16} className="animate-spin" /> : <Save size={16} />}
+                  {savingDraft ? "Saving..." : "Save Draft"}
+                </Button>
+
+                <ThemeToggle />
+              </div>
+            </div>
+          </nav>
+
+          {content}
+        </Container>
       </div>
     </RequireAuth>
   );
