@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, type FormEvent } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import Container from "@/components/ui/Container";
@@ -10,7 +10,7 @@ import { useAuth } from "@/components/auth/AuthProvider";
 export default function LoginPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const next = searchParams.get("next") ?? "/dashboard";
+  const next = searchParams.get("next") ?? "/";
   const { login, user } = useAuth();
 
   const [email, setEmail] = useState("");
@@ -24,7 +24,7 @@ export default function LoginPage() {
     }
   }, [next, router, user]);
 
-  const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
+  const handleSubmit = async (event: React.SyntheticEvent<HTMLFormElement>) => {
     event.preventDefault();
     setError(null);
     setLoading(true);
@@ -42,7 +42,7 @@ export default function LoginPage() {
   return (
     <div className="min-h-screen bg-page text-ink">
       <Container className="flex min-h-screen items-center justify-center py-16">
-        <div className="w-full max-w-md rounded-[32px] border border-white/10 bg-surface/70 p-8 shadow-[0_24px_60px_rgba(8,6,20,0.4)]">
+        <div className="w-full max-w-md rounded-4xl border border-white/10 bg-surface/70 p-8 shadow-[0_24px_60px_rgba(8,6,20,0.4)]">
           <div className="mb-8 text-center">
             <p className="text-xs font-semibold uppercase tracking-[0.32em] text-lavender">
               Login
@@ -57,7 +57,7 @@ export default function LoginPage() {
 
           <form onSubmit={handleSubmit} className="flex flex-col gap-4">
             <label className="text-xs font-semibold uppercase tracking-[0.28em] text-lavender">
-              Email
+              <span>Email</span>
               <input
                 type="email"
                 name="email"
@@ -70,7 +70,7 @@ export default function LoginPage() {
               />
             </label>
             <label className="text-xs font-semibold uppercase tracking-[0.28em] text-lavender">
-              Password
+              <span>Password</span>
               <input
                 type="password"
                 name="password"

@@ -58,6 +58,27 @@ const getValidationErrors = (questions: QuestionResponse[], answers: AnswerState
 const submitMessageClassName = (submitMessage: string) =>
   `text-sm ${submitMessage.includes("success") ? "text-lavender" : "text-rose"}`;
 
+const buildSubmitAnswers = (questions: QuestionResponse[], answers: AnswerState) => {
+  return questions.flatMap((question) => {
+    const value = answers[question.id];
+
+    if (question.type === "SHORT_ANSWER") {
+      const text = typeof value === "string" ? value.trim() : "";
+      return text ? [{ questionId: question.id, text }] : [];
+    }
+
+    if (question.type === "CHECKBOX") {
+      const optionIds = Array.isArray(value)
+        ? value.filter((item): item is string => typeof item === "string" && item.length > 0)
+        : [];
+      return optionIds.map((optionId) => ({ questionId: question.id, optionId }));
+    }
+
+    const optionId = typeof value === "string" && value.length > 0 ? value : null;
+    return optionId ? [{ questionId: question.id, optionId }] : [];
+  });
+};
+
 function QuestionInputField({
   question,
   answer,
@@ -279,10 +300,7 @@ export default function PublicFillFormPage() {
     await apiRequest(`/api/forms/${formId}/submit`, {
       method: "POST",
       body: {
-        answers: Object.entries(answers).map(([questionId, value]) => ({
-          questionId,
-          value,
-        })),
+        answers: buildSubmitAnswers(orderedQuestions, answers),
       },
     });
   };

@@ -13,12 +13,12 @@ import Select from "@/components/ui/Select";
 import DashboardHeader from "@/components/sections/dashboard/DashboardHeader";
 import DashboardSidebar from "@/components/sections/dashboard/DashboardSidebar";
 import { apiRequest, ApiError } from "@/lib/api";
-import { getFormStatusMap } from "@/lib/formPersistence";
 
 type FormSummary = {
   id: string;
   title: string;
   description?: string | null;
+  isPublished: boolean;
   createdAt: string;
   updatedAt: string;
 };
@@ -56,12 +56,10 @@ export default function DashboardFormsPage() {
       timeStyle: "short",
     });
 
-    const statusMap = getFormStatusMap();
-
     return forms
       .map((form) => ({
         ...form,
-        status: statusMap[form.id] ?? "draft",
+        status: form.isPublished ? "published" : "draft",
         updatedLabel: formatter.format(new Date(form.updatedAt)),
       }))
       .filter((form) => {

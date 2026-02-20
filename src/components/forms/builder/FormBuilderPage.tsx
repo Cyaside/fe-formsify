@@ -31,7 +31,6 @@ import {
   clearDraft,
   loadDraft,
   saveDraft,
-  setFormStatus,
 } from "@/lib/formPersistence";
 import {
   useFormEditorStore,
@@ -281,11 +280,11 @@ export default function FormBuilderPage({ initialFormId }: Readonly<FormBuilderP
           body: {
             title: snapshot.title.trim(),
             description: snapshot.description.trim() || null,
+            isPublished: false,
           },
         });
         activeFormId = created.data.id;
         setFormId(activeFormId);
-        setFormStatus(activeFormId, "draft");
       }
 
       await apiRequest(`/api/forms/${activeFormId}`, {
@@ -431,10 +430,15 @@ export default function FormBuilderPage({ initialFormId }: Readonly<FormBuilderP
     try {
       setPublishing(true);
       await enqueueSave(savePayload);
-      if (formId) {
-        setFormStatus(formId, "published");
+      const latestFormId = formId ?? useFormEditorStore.getState().formId;
+      if (latestFormId) {
+        await apiRequest(`/api/forms/${latestFormId}`, {
+          method: "PUT",
+          body: { isPublished: true },
+        });
       }
       setSaveMessage("Published");
+      router.push("/dashboard/forms");
     } catch {
       setSaveMessage("Failed to publish");
     } finally {
@@ -446,8 +450,12 @@ export default function FormBuilderPage({ initialFormId }: Readonly<FormBuilderP
     try {
       setSavingDraft(true);
       await enqueueSave(savePayload);
-      if (formId) {
-        setFormStatus(formId, "draft");
+      const latestFormId = formId ?? useFormEditorStore.getState().formId;
+      if (latestFormId) {
+        await apiRequest(`/api/forms/${latestFormId}`, {
+          method: "PUT",
+          body: { isPublished: false },
+        });
       }
       setSaveMessage("Draft saved");
       router.push("/dashboard/forms");
