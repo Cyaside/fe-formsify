@@ -1,55 +1,39 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
+import { useQuery } from "@tanstack/react-query";
 import Link from "next/link";
 import { ArrowUpDown } from "lucide-react";
-import ThemeToggle from "@/components/theme/ThemeToggle";
-import Badge from "@/components/ui/Badge";
-import Button from "@/components/ui/Button";
-import Card from "@/components/ui/Card";
-import Container from "@/components/ui/Container";
-import Input from "@/components/ui/Input";
-import Select from "@/components/ui/Select";
-import { apiRequest, ApiError } from "@/lib/api";
-import { useAuth } from "@/components/auth/AuthProvider";
-
-type PublicFormSummary = {
-  id: string;
-  title: string;
-  description?: string | null;
-  updatedAt: string;
-  createdAt: string;
-  owner?: {
-    id: string;
-    email: string;
-    name?: string | null;
-  } | null;
-};
+import ThemeToggle from "@/shared/theme/ThemeToggle";
+import Badge from "@/shared/ui/Badge";
+import Button from "@/shared/ui/Button";
+import Card from "@/shared/ui/Card";
+import Container from "@/shared/ui/Container";
+import Input from "@/shared/ui/Input";
+import Select from "@/shared/ui/Select";
+import { ApiError } from "@/shared/api/client";
+import { formsApi } from "@/shared/api/forms";
+import { useAuth } from "@/features/auth/AuthProvider";
 
 type SortType = "newest" | "oldest";
 
 export default function PublicFormListPage() {
   const { user, loading: authLoading } = useAuth();
-  const [forms, setForms] = useState<PublicFormSummary[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
   const [query, setQuery] = useState("");
   const [authorFilter, setAuthorFilter] = useState("all");
   const [sort, setSort] = useState<SortType>("newest");
 
-  useEffect(() => {
-    apiRequest<{ data: PublicFormSummary[] }>("/api/forms/public")
-      .then((response) => {
-        setForms(response.data);
-      })
-      .catch((err) => {
-        const message = err instanceof ApiError ? err.message : "Failed to load public forms";
-        setError(message);
-      })
-      .finally(() => {
-        setLoading(false);
-      });
-  }, []);
+  const { data, isLoading, error } = useQuery({
+    queryKey: ["forms", "public"],
+    queryFn: () => formsApi.listPublic(),
+  });
+
+  const forms = useMemo(() => data?.data ?? [], [data]);
+
+  const errorMessage = useMemo(() => {
+    if (!error) return null;
+    return error instanceof ApiError ? error.message : "Failed to load public forms";
+  }, [error]);
 
   const authorOptions = useMemo(() => {
     const labels = new Set(
@@ -171,9 +155,13 @@ export default function PublicFormListPage() {
           </Button>
         </Card>
 
-        {loading ? <Card className="text-sm text-ink-muted">Loading public forms...</Card> : null}
-        {error ? <Card className="border-rose/40 bg-rose/10 text-sm text-rose">{error}</Card> : null}
-        {!loading && !error && displayedForms.length === 0 ? (
+        {isLoading ? <Card className="text-sm text-ink-muted">Loading public forms...</Card> : null}
+        {errorMessage ? (
+          <Card className="border-rose/40 bg-rose/10 text-sm text-rose">
+            {errorMessage}
+          </Card>
+        ) : null}
+        {!isLoading && !errorMessage && displayedForms.length === 0 ? (
           <Card className="text-sm text-ink-muted">No public forms found.</Card>
         ) : null}
 

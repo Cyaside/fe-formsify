@@ -1,6 +1,6 @@
 "use client";
 
-import FormBuilderPage from "@/components/forms/builder/FormBuilderPage";
+import FormBuilderPage from "@/features/forms/builder/FormBuilderPage";
 
 export default function NewFormPage() {
   return <FormBuilderPage />;

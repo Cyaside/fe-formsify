@@ -3,53 +3,17 @@
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useParams } from "next/navigation";
-import Button from "@/components/ui/Button";
-import Card from "@/components/ui/Card";
-import Container from "@/components/ui/Container";
-import { apiRequest, ApiError } from "@/lib/api";
-
-type QuestionType = "SHORT_ANSWER" | "MCQ" | "CHECKBOX" | "DROPDOWN";
-
-type FormOwnerDetail = {
-  id: string;
-  title: string;
-  description?: string | null;
-};
-
-type QuestionOption = { id: string; label: string; order: number };
-
-type QuestionResponse = {
-  id: string;
-  title: string;
-  description?: string | null;
-  type: QuestionType;
-  required: boolean;
-  order: number;
-  options: QuestionOption[];
-};
-
-type ResponseRecord = {
-  id: string;
-  formId: string;
-  createdAt: string;
-  answers: Array<{
-    id: string;
-    questionId: string;
-    optionId?: string | null;
-    text?: string | null;
-    question: {
-      id: string;
-      title: string;
-      type: QuestionType;
-      options: Array<{ id: string; label: string }>;
-    };
-  }>;
-};
-
-type ResponsesPayload = {
-  data: ResponseRecord[];
-  form: FormOwnerDetail;
-};
+import Button from "@/shared/ui/Button";
+import Card from "@/shared/ui/Card";
+import Container from "@/shared/ui/Container";
+import { ApiError } from "@/shared/api/client";
+import {
+  formsApi,
+  type Question,
+  type QuestionType,
+  type ResponseRecord,
+  type ResponsesPayload,
+} from "@/shared/api/forms";
 
 type OptionSummary = {
   optionId: string;
@@ -72,19 +36,16 @@ export default function FormSummaryPage() {
   const params = useParams();
   const formId = Array.isArray(params?.id) ? params.id[0] : params?.id;
 
-  const [form, setForm] = useState<FormOwnerDetail | null>(null);
+  const [form, setForm] = useState<ResponsesPayload["form"] | null>(null);
   const [responses, setResponses] = useState<ResponseRecord[]>([]);
-  const [questions, setQuestions] = useState<QuestionResponse[]>([]);
+  const [questions, setQuestions] = useState<Question[]>([]);
   const [loading, setLoading] = useState(Boolean(formId));
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     if (!formId) return;
 
-    Promise.all([
-      apiRequest<ResponsesPayload>(`/api/forms/${formId}/responses`),
-      apiRequest<{ data: QuestionResponse[] }>(`/api/forms/${formId}/questions`),
-    ])
+    Promise.all([formsApi.responses(formId), formsApi.questions(formId)])
       .then(([responsesPayload, questionsPayload]) => {
         setForm(responsesPayload.form);
         setResponses(responsesPayload.data);

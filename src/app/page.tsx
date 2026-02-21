@@ -1,8 +1,8 @@
-import AboutSection from "@/components/sections/landing/AboutSection";
-import ContactSection from "@/components/sections/landing/ContactSection";
-import HeroSection from "@/components/sections/landing/HeroSection";
-import StepsSection from "@/components/sections/landing/StepsSection";
-import TestimonialsSection from "@/components/sections/landing/TestimonialsSection";
+import AboutSection from "@/widgets/landing/AboutSection";
+import ContactSection from "@/widgets/landing/ContactSection";
+import HeroSection from "@/widgets/landing/HeroSection";
+import StepsSection from "@/widgets/landing/StepsSection";
+import TestimonialsSection from "@/widgets/landing/TestimonialsSection";
 
 export default function Home() {
   return (

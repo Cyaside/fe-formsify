@@ -3,39 +3,25 @@
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
-import Button from "@/components/ui/Button";
-import Card from "@/components/ui/Card";
-import Container from "@/components/ui/Container";
-import Input from "@/components/ui/Input";
-import Select from "@/components/ui/Select";
-import { apiRequest, ApiError } from "@/lib/api";
-
-type QuestionType = "SHORT_ANSWER" | "MCQ" | "CHECKBOX" | "DROPDOWN";
-
-type FormDetail = {
-  id: string;
-  title: string;
-  description?: string | null;
-};
-
-type QuestionOption = { id: string; label: string; order: number };
-
-type QuestionResponse = {
-  id: string;
-  title: string;
-  description?: string | null;
-  type: QuestionType;
-  required: boolean;
-  order: number;
-  options: QuestionOption[];
-};
+import Button from "@/shared/ui/Button";
+import Card from "@/shared/ui/Card";
+import Container from "@/shared/ui/Container";
+import Input from "@/shared/ui/Input";
+import Select from "@/shared/ui/Select";
+import { ApiError } from "@/shared/api/client";
+import {
+  formsApi,
+  type FormDetail,
+  type Question,
+  type SubmitAnswer,
+} from "@/shared/api/forms";
 
 type AnswerState = Record<string, unknown>;
 
 const sortByOrder = <T extends { order: number }>(items: T[]) =>
   [...items].sort((a, b) => a.order - b.order);
 
-const isRequiredMissing = (question: QuestionResponse, value: unknown) => {
+const isRequiredMissing = (question: Question, value: unknown) => {
   if (!question.required) return false;
   return (
     value === undefined ||
@@ -45,7 +31,7 @@ const isRequiredMissing = (question: QuestionResponse, value: unknown) => {
   );
 };
 
-const getValidationErrors = (questions: QuestionResponse[], answers: AnswerState) => {
+const getValidationErrors = (questions: Question[], answers: AnswerState) => {
   const nextErrors: Record<string, string> = {};
   questions.forEach((question) => {
     if (isRequiredMissing(question, answers[question.id])) {
@@ -60,7 +46,7 @@ const submitMessageClassName = (submitMessage: string) =>
 
 type SubmitAnswer = { questionId: string; optionId?: string; text?: string };
 
-const buildSubmitAnswers = (questions: QuestionResponse[], answers: AnswerState): SubmitAnswer[] => {
+const buildSubmitAnswers = (questions: Question[], answers: AnswerState): SubmitAnswer[] => {
   return questions.flatMap<SubmitAnswer>((question) => {
     const value = answers[question.id];
 
@@ -87,7 +73,7 @@ function QuestionInputField({
   onSetAnswer,
   onToggleCheckbox,
 }: Readonly<{
-  question: QuestionResponse;
+  question: Question;
   answer: unknown;
   onSetAnswer: (questionId: string, value: unknown) => void;
   onToggleCheckbox: (questionId: string, optionId: string) => void;
@@ -169,7 +155,7 @@ function FillFormContent({
   onToggleCheckbox,
 }: Readonly<{
   form: FormDetail | null;
-  orderedQuestions: QuestionResponse[];
+  orderedQuestions: Question[];
   answers: AnswerState;
   validationErrors: Record<string, string>;
   submitting: boolean;
@@ -236,7 +222,7 @@ export default function PublicFillFormPage() {
   const invalidFormId = !formId;
 
   const [form, setForm] = useState<FormDetail | null>(null);
-  const [questions, setQuestions] = useState<QuestionResponse[]>([]);
+  const [questions, setQuestions] = useState<Question[]>([]);
   const [answers, setAnswers] = useState<AnswerState>({});
   const [validationErrors, setValidationErrors] = useState<Record<string, string>>({});
   const [loading, setLoading] = useState(Boolean(formId));
@@ -250,10 +236,7 @@ export default function PublicFillFormPage() {
     setError(null);
     setUnpublished(false);
 
-    Promise.all([
-      apiRequest<{ data: FormDetail }>(`/api/forms/${formId}`),
-      apiRequest<{ data: QuestionResponse[] }>(`/api/forms/${formId}/questions`),
-    ])
+    Promise.all([formsApi.detail(formId), formsApi.questions(formId)])
       .then(([formResponse, questionResponse]) => {
         setForm(formResponse.data);
         setQuestions(sortByOrder(questionResponse.data));
@@ -309,13 +292,11 @@ export default function PublicFillFormPage() {
   };
 
   const submitAnswers = async () => {
-    await apiRequest(`/api/forms/${formId}/submit`, {
-      method: "POST",
-      body: {
-        answers: buildSubmitAnswers(orderedQuestions, answers),
-      },
-      showGlobalLoading: true,
-    });
+    await formsApi.submit(
+      formId!,
+      { answers: buildSubmitAnswers(orderedQuestions, answers) },
+      { showGlobalLoading: true },
+    );
   };
 
   const handleSubmit = async (event: React.SyntheticEvent<HTMLFormElement>) => {

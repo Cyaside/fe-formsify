@@ -3,9 +3,9 @@
 import { useEffect, useState, type FormEvent } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
-import Container from "@/components/ui/Container";
-import { ApiError } from "@/lib/api";
-import { useAuth } from "@/components/auth/AuthProvider";
+import Container from "@/shared/ui/Container";
+import { ApiError } from "@/shared/api/client";
+import { useAuth } from "@/features/auth/AuthProvider";
 
 export default function RegisterPage() {
   const router = useRouter();

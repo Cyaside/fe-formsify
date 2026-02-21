@@ -1,79 +1,64 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useMemo } from "react";
+import { useQuery } from "@tanstack/react-query";
 import Link from "next/link";
 import { useParams } from "next/navigation";
-import Badge from "@/components/ui/Badge";
-import Button from "@/components/ui/Button";
-import Card from "@/components/ui/Card";
-import Container from "@/components/ui/Container";
-import { apiRequest, ApiError } from "@/lib/api";
-
-type QuestionType = "SHORT_ANSWER" | "MCQ" | "CHECKBOX" | "DROPDOWN";
-
-type FormDetail = {
-  id: string;
-  title: string;
-  description?: string | null;
-  updatedAt: string;
-};
-
-type QuestionResponse = {
-  id: string;
-  title: string;
-  description?: string | null;
-  type: QuestionType;
-  required: boolean;
-  order: number;
-  options: { id: string; label: string; order: number }[];
-};
+import Badge from "@/shared/ui/Badge";
+import Button from "@/shared/ui/Button";
+import Card from "@/shared/ui/Card";
+import Container from "@/shared/ui/Container";
+import { ApiError } from "@/shared/api/client";
+import { formsApi } from "@/shared/api/forms";
 
 export default function PublicFormDetailPage() {
   const params = useParams();
   const formId = Array.isArray(params?.id) ? params.id[0] : params?.id;
   const invalidFormId = !formId;
 
-  const [form, setForm] = useState<FormDetail | null>(null);
-  const [questions, setQuestions] = useState<QuestionResponse[]>([]);
-  const [loading, setLoading] = useState(Boolean(formId));
-  const [error, setError] = useState<string | null>(null);
-  const [unpublished, setUnpublished] = useState(false);
+  const formQuery = useQuery({
+    queryKey: ["forms", "public", formId],
+    queryFn: () => formsApi.detail(formId!),
+    enabled: Boolean(formId),
+    retry: false,
+  });
 
-  useEffect(() => {
-    if (!formId) return;
-    setError(null);
-    setUnpublished(false);
-    Promise.all([
-      apiRequest<{ data: FormDetail }>(`/api/forms/${formId}`),
-      apiRequest<{ data: QuestionResponse[] }>(`/api/forms/${formId}/questions`),
-    ])
-      .then(([formResponse, questionResponse]) => {
-        setForm(formResponse.data);
-        setQuestions(questionResponse.data.toSorted((a, b) => a.order - b.order));
-      })
-      .catch((err) => {
-        if (err instanceof ApiError && err.status === 404) {
-          setUnpublished(true);
-          setForm(null);
-          setQuestions([]);
-          return;
-        }
-        const message = err instanceof ApiError ? err.message : "Failed to load form";
-        setError(message);
-      })
-      .finally(() => {
-        setLoading(false);
-      });
-  }, [formId]);
+  const unpublished =
+    formQuery.error instanceof ApiError && formQuery.error.status === 404;
+
+  const error =
+    formQuery.error && !unpublished
+      ? formQuery.error instanceof ApiError
+        ? formQuery.error.message
+        : "Failed to load form"
+      : null;
+
+  const questionsQuery = useQuery({
+    queryKey: ["forms", "public", formId, "questions"],
+    queryFn: () => formsApi.questions(formId!),
+    enabled: Boolean(formId) && !unpublished,
+    retry: false,
+  });
+
+  const form = formQuery.data?.data ?? null;
+  const questions = useMemo(
+    () => questionsQuery.data?.data ?? [],
+    [questionsQuery.data],
+  );
+  const loading = formQuery.isLoading || questionsQuery.isLoading;
 
   const updatedLabel = useMemo(() => {
-    if (!form) return "-";
+    if (!form?.updatedAt) return "-";
     return new Intl.DateTimeFormat("id-ID", {
       dateStyle: "medium",
       timeStyle: "short",
     }).format(new Date(form.updatedAt));
   }, [form]);
   const canFill = Boolean(formId) && !unpublished;
+  const orderedQuestions = useMemo(
+    () => questions.toSorted((a, b) => a.order - b.order),
+    [questions],
+  );
 
   return (
     <div className="min-h-screen bg-page py-8 text-ink">
@@ -117,7 +102,7 @@ export default function PublicFormDetailPage() {
             </Card>
 
             <div className="space-y-3">
-              {questions.map((question, index) => (
+              {orderedQuestions.map((question, index) => (
                 <Card key={question.id} className="space-y-3 p-5">
                   <div className="flex items-start justify-between gap-3">
                     <div>
@@ -132,11 +117,11 @@ export default function PublicFormDetailPage() {
                   </div>
 
                   {question.options.length > 0 ? (
-                    <ul className="space-y-1 text-sm text-ink-muted">
+                    <ul className="list-disc space-y-1 pl-4 text-sm text-ink-muted">
                       {question.options
                         .toSorted((a, b) => a.order - b.order)
                         .map((option) => (
-                          <li key={option.id}>• {option.label}</li>
+                          <li key={option.id}>{option.label}</li>
                         ))}
                     </ul>
                   ) : null}

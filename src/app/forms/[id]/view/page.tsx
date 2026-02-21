@@ -3,29 +3,12 @@
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useParams, useSearchParams } from "next/navigation";
-import Badge from "@/components/ui/Badge";
-import Button from "@/components/ui/Button";
-import Card from "@/components/ui/Card";
-import Container from "@/components/ui/Container";
-import { apiRequest, ApiError } from "@/lib/api";
-
-type QuestionType = "SHORT_ANSWER" | "MCQ" | "CHECKBOX" | "DROPDOWN";
-
-type FormDetail = {
-  id: string;
-  title: string;
-  description?: string | null;
-};
-
-type QuestionResponse = {
-  id: string;
-  title: string;
-  description?: string | null;
-  type: QuestionType;
-  required: boolean;
-  order: number;
-  options: { id: string; label: string; order: number }[];
-};
+import Badge from "@/shared/ui/Badge";
+import Button from "@/shared/ui/Button";
+import Card from "@/shared/ui/Card";
+import Container from "@/shared/ui/Container";
+import { ApiError } from "@/shared/api/client";
+import { formsApi, type FormDetail, type Question } from "@/shared/api/forms";
 
 export default function FormPreviewPage() {
   const params = useParams();
@@ -36,15 +19,15 @@ export default function FormPreviewPage() {
     : "/dashboard/forms";
 
   const [form, setForm] = useState<FormDetail | null>(null);
-  const [questions, setQuestions] = useState<QuestionResponse[]>([]);
+  const [questions, setQuestions] = useState<Question[]>([]);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     if (!formId) return;
 
     Promise.all([
-      apiRequest<{ data: FormDetail }>(`/api/forms/${formId}`),
-      apiRequest<{ data: QuestionResponse[] }>(`/api/forms/${formId}/questions`),
+      formsApi.detail(formId),
+      formsApi.questions(formId),
     ])
       .then(([formResponse, questionResponse]) => {
         setForm(formResponse.data);
@@ -114,9 +97,9 @@ export default function FormPreviewPage() {
                     </div>
 
                     {question.options.length > 0 ? (
-                      <ul className="space-y-1 text-sm text-ink-muted">
+                      <ul className="list-disc space-y-1 pl-4 text-sm text-ink-muted">
                         {question.options.map((option) => (
-                          <li key={option.id}>• {option.label}</li>
+                          <li key={option.id}>{option.label}</li>
                         ))}
                       </ul>
                     ) : (

@@ -1,34 +1,26 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import Link from "next/link";
 import { ArrowUpDown, Copy, Plus, Trash2 } from "lucide-react";
-import RequireAuth from "@/components/auth/RequireAuth";
-import Badge from "@/components/ui/Badge";
-import Button from "@/components/ui/Button";
-import Card from "@/components/ui/Card";
-import Input from "@/components/ui/Input";
-import Modal from "@/components/ui/Modal";
-import Select from "@/components/ui/Select";
-import DashboardHeader from "@/components/sections/dashboard/DashboardHeader";
-import DashboardSidebar from "@/components/sections/dashboard/DashboardSidebar";
-import { apiRequest, ApiError } from "@/lib/api";
-
-type FormSummary = {
-  id: string;
-  title: string;
-  description?: string | null;
-  isPublished: boolean;
-  createdAt: string;
-  updatedAt: string;
-};
+import RequireAuth from "@/features/auth/RequireAuth";
+import Badge from "@/shared/ui/Badge";
+import Button from "@/shared/ui/Button";
+import Card from "@/shared/ui/Card";
+import Input from "@/shared/ui/Input";
+import Modal from "@/shared/ui/Modal";
+import Select from "@/shared/ui/Select";
+import DashboardHeader from "@/widgets/dashboard/DashboardHeader";
+import DashboardSidebar from "@/widgets/dashboard/DashboardSidebar";
+import { ApiError } from "@/shared/api/client";
+import { formsApi, type FormSummary } from "@/shared/api/forms";
 
 type SortType = "newest" | "oldest";
 type FilterType = "all" | "draft" | "published";
 
 export default function DashboardFormsPage() {
-  const [forms, setForms] = useState<FormSummary[]>([]);
-  const [loading, setLoading] = useState(true);
+  const queryClient = useQueryClient();
   const [error, setError] = useState<string | null>(null);
   const [query, setQuery] = useState("");
   const [filter, setFilter] = useState<FilterType>("all");
@@ -37,19 +29,20 @@ export default function DashboardFormsPage() {
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [copiedShareId, setCopiedShareId] = useState<string | null>(null);
 
-  useEffect(() => {
-    apiRequest<{ data: FormSummary[] }>("/api/forms")
-      .then((response) => {
-        setForms(response.data);
-      })
-      .catch((err) => {
-        const message = err instanceof ApiError ? err.message : "Failed to load forms";
-        setError(message);
-      })
-      .finally(() => {
-        setLoading(false);
-      });
-  }, []);
+  const { data, isLoading, error: queryError } = useQuery({
+    queryKey: ["forms", "mine"],
+    queryFn: () => formsApi.list(),
+  });
+
+  const forms = useMemo(() => data?.data ?? [], [data]);
+  const errorMessage =
+    error ??
+    (queryError
+      ? queryError instanceof ApiError
+        ? queryError.message
+        : "Failed to load forms"
+      : null);
+
 
   const displayedForms = useMemo(() => {
     const formatter = new Intl.DateTimeFormat("id-ID", {
@@ -84,8 +77,11 @@ export default function DashboardFormsPage() {
 
     setDeletingId(deleteTarget.id);
     try {
-      await apiRequest(`/api/forms/${deleteTarget.id}`, { method: "DELETE" });
-      setForms((prev) => prev.filter((form) => form.id !== deleteTarget.id));
+      await formsApi.remove(deleteTarget.id);
+      queryClient.setQueryData<{ data: FormSummary[] }>(["forms", "mine"], (prev) => {
+        if (!prev) return prev;
+        return { ...prev, data: prev.data.filter((form) => form.id !== deleteTarget.id) };
+      });
       setDeleteTarget(null);
     } catch (err) {
       const message = err instanceof ApiError ? err.message : "Failed to delete form";
@@ -147,9 +143,13 @@ export default function DashboardFormsPage() {
                 </Button>
               </Card>
 
-              {loading ? <Card className="text-sm text-ink-muted">Loading forms...</Card> : null}
-              {error ? <Card className="border-rose/40 bg-rose/10 text-sm text-rose">{error}</Card> : null}
-              {!loading && !error && displayedForms.length === 0 ? (
+              {isLoading ? <Card className="text-sm text-ink-muted">Loading forms...</Card> : null}
+              {errorMessage ? (
+                <Card className="border-rose/40 bg-rose/10 text-sm text-rose">
+                  {errorMessage}
+                </Card>
+              ) : null}
+              {!isLoading && !errorMessage && displayedForms.length === 0 ? (
                 <Card className="text-sm text-ink-muted">No forms found.</Card>
               ) : null}
 

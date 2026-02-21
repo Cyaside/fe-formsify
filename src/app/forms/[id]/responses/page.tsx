@@ -4,42 +4,17 @@ import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useParams } from "next/navigation";
 import { ChevronLeft, ChevronRight, Trash2 } from "lucide-react";
-import Button from "@/components/ui/Button";
-import Card from "@/components/ui/Card";
-import Container from "@/components/ui/Container";
-import Modal from "@/components/ui/Modal";
-import { apiRequest, ApiError } from "@/lib/api";
-
-type QuestionType = "SHORT_ANSWER" | "MCQ" | "CHECKBOX" | "DROPDOWN";
-
-type FormOwnerDetail = {
-  id: string;
-  title: string;
-  description?: string | null;
-};
-
-type ResponseRecord = {
-  id: string;
-  formId: string;
-  createdAt: string;
-  answers: Array<{
-    id: string;
-    questionId: string;
-    optionId?: string | null;
-    text?: string | null;
-    question: {
-      id: string;
-      title: string;
-      type: QuestionType;
-      options: Array<{ id: string; label: string }>;
-    };
-  }>;
-};
-
-type ResponsesPayload = {
-  data: ResponseRecord[];
-  form: FormOwnerDetail;
-};
+import Button from "@/shared/ui/Button";
+import Card from "@/shared/ui/Card";
+import Container from "@/shared/ui/Container";
+import Modal from "@/shared/ui/Modal";
+import { ApiError } from "@/shared/api/client";
+import {
+  formsApi,
+  type QuestionType,
+  type ResponseRecord,
+  type ResponsesPayload,
+} from "@/shared/api/forms";
 
 const formatDate = (value: string) =>
   new Intl.DateTimeFormat("id-ID", { dateStyle: "medium", timeStyle: "short" }).format(
@@ -50,7 +25,7 @@ export default function FormResponsesPage() {
   const params = useParams();
   const formId = Array.isArray(params?.id) ? params.id[0] : params?.id;
 
-  const [form, setForm] = useState<FormOwnerDetail | null>(null);
+  const [form, setForm] = useState<ResponsesPayload["form"] | null>(null);
   const [responses, setResponses] = useState<ResponseRecord[]>([]);
   const [activeIndex, setActiveIndex] = useState(0);
   const [loading, setLoading] = useState(Boolean(formId));
@@ -61,7 +36,8 @@ export default function FormResponsesPage() {
   useEffect(() => {
     if (!formId) return;
 
-    apiRequest<ResponsesPayload>(`/api/forms/${formId}/responses`)
+    formsApi
+      .responses(formId)
       .then((payload) => {
         setForm(payload.form);
         setResponses(payload.data);
@@ -119,9 +95,7 @@ export default function FormResponsesPage() {
     setError(null);
 
     try {
-      await apiRequest(`/api/forms/${formId}/responses/${activeResponse.id}`, {
-        method: "DELETE",
-      });
+      await formsApi.deleteResponse(formId, activeResponse.id);
       setResponses((prev) => prev.filter((item) => item.id !== activeResponse.id));
       setActiveIndex((prev) => Math.max(0, prev - 1));
       setDeleteOpen(false);
@@ -212,11 +186,11 @@ export default function FormResponsesPage() {
               {groupedAnswers.map((item, index) => (
                 <Card key={`${item.questionTitle}-${index}`} className="space-y-2 p-5">
                   <h2 className="text-base font-medium">{item.questionTitle}</h2>
-                  <div className="space-y-1 text-sm text-ink-muted">
+                  <ul className="list-disc space-y-1 pl-4 text-sm text-ink-muted">
                     {item.entries.map((entry, entryIndex) => (
-                      <p key={`${item.questionTitle}-${entryIndex}`}>• {entry}</p>
+                      <li key={`${item.questionTitle}-${entryIndex}`}>{entry}</li>
                     ))}
-                  </div>
+                  </ul>
                 </Card>
               ))}
             </div>

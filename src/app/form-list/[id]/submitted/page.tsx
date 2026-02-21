@@ -3,16 +3,11 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useParams } from "next/navigation";
-import Button from "@/components/ui/Button";
-import Card from "@/components/ui/Card";
-import Container from "@/components/ui/Container";
-import { apiRequest, ApiError } from "@/lib/api";
-
-type FormThankYou = {
-  id: string;
-  thankYouTitle?: string | null;
-  thankYouMessage?: string | null;
-};
+import Button from "@/shared/ui/Button";
+import Card from "@/shared/ui/Card";
+import Container from "@/shared/ui/Container";
+import { ApiError } from "@/shared/api/client";
+import { formsApi, type FormDetail } from "@/shared/api/forms";
 
 const DEFAULT_THANK_YOU_TITLE = "Terima kasih!";
 const DEFAULT_THANK_YOU_MESSAGE = "Respons kamu sudah terekam.";
@@ -22,14 +17,15 @@ export default function SubmissionThankYouPage() {
   const formId = Array.isArray(params?.id) ? params.id[0] : params?.id;
   const invalidFormId = !formId;
 
-  const [form, setForm] = useState<FormThankYou | null>(null);
+  const [form, setForm] = useState<FormDetail | null>(null);
   const [loading, setLoading] = useState(Boolean(formId));
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     if (!formId) return;
 
-    apiRequest<{ data: FormThankYou }>(`/api/forms/${formId}`)
+    formsApi
+      .detail(formId)
       .then((response) => {
         setForm(response.data);
       })

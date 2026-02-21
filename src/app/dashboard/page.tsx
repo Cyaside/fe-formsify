@@ -1,45 +1,30 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import DashboardActivity from "@/components/sections/dashboard/DashboardActivity";
-import DashboardForms from "@/components/sections/dashboard/DashboardForms";
-import DashboardHeader from "@/components/sections/dashboard/DashboardHeader";
-import DashboardSidebar from "@/components/sections/dashboard/DashboardSidebar";
-import DashboardStats from "@/components/sections/dashboard/DashboardStats";
-import RequireAuth from "@/components/auth/RequireAuth";
-import { useAuth } from "@/components/auth/AuthProvider";
-import { apiRequest, ApiError } from "@/lib/api";
-
-type FormSummary = {
-  id: string;
-  title: string;
-  description?: string | null;
-  updatedAt: string;
-  createdAt: string;
-};
+import { useMemo } from "react";
+import { useQuery } from "@tanstack/react-query";
+import DashboardActivity from "@/widgets/dashboard/DashboardActivity";
+import DashboardForms from "@/widgets/dashboard/DashboardForms";
+import DashboardHeader from "@/widgets/dashboard/DashboardHeader";
+import DashboardSidebar from "@/widgets/dashboard/DashboardSidebar";
+import DashboardStats from "@/widgets/dashboard/DashboardStats";
+import RequireAuth from "@/features/auth/RequireAuth";
+import { useAuth } from "@/features/auth/AuthProvider";
+import { ApiError } from "@/shared/api/client";
+import { formsApi } from "@/shared/api/forms";
 
 export default function DashboardPage() {
   const { user } = useAuth();
-  const [forms, setForms] = useState<FormSummary[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const { data, isLoading, error } = useQuery({
+    queryKey: ["forms", "mine", user?.id],
+    queryFn: () => formsApi.list(),
+    enabled: Boolean(user),
+  });
 
-  useEffect(() => {
-    if (!user) return;
-    setLoading(true);
-    setError(null);
-    apiRequest<{ data: FormSummary[] }>("/api/forms")
-      .then((data) => {
-        setForms(data.data);
-      })
-      .catch((err) => {
-        const message = err instanceof ApiError ? err.message : "Gagal memuat form.";
-        setError(message);
-      })
-      .finally(() => {
-        setLoading(false);
-      });
-  }, [user]);
+  const forms = data?.data ?? [];
+  const errorMessage = useMemo(() => {
+    if (!error) return null;
+    return error instanceof ApiError ? error.message : "Gagal memuat form.";
+  }, [error]);
 
   const latestForms = forms.slice(0, 4);
 
@@ -53,7 +38,11 @@ export default function DashboardPage() {
             <main className="flex-1 space-y-8 px-6 py-8">
               <DashboardStats />
               <div className="grid gap-6 xl:grid-cols-[1.2fr_0.8fr]">
-                <DashboardForms forms={latestForms} loading={loading} error={error} />
+                <DashboardForms
+                  forms={latestForms}
+                  loading={isLoading}
+                  error={errorMessage}
+                />
                 <DashboardActivity />
               </div>
             </main>
