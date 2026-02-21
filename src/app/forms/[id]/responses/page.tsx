@@ -161,7 +161,6 @@ export default function FormResponsesPage() {
           ) : null}
         </div>
 
-        {loading ? <Card className="text-sm text-ink-muted">Loading responses...</Card> : null}
         {error ? <Card className="border-rose/40 bg-rose/10 text-sm text-rose">{error}</Card> : null}
 
         {form ? (

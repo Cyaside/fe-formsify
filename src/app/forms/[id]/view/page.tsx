@@ -37,7 +37,6 @@ export default function FormPreviewPage() {
 
   const [form, setForm] = useState<FormDetail | null>(null);
   const [questions, setQuestions] = useState<QuestionResponse[]>([]);
-  const [loading, setLoading] = useState(Boolean(formId));
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
@@ -54,9 +53,6 @@ export default function FormPreviewPage() {
       .catch((err) => {
         const message = err instanceof ApiError ? err.message : "Failed to load preview";
         setError(message);
-      })
-      .finally(() => {
-        setLoading(false);
       });
   }, [formId]);
 
@@ -90,7 +86,6 @@ export default function FormPreviewPage() {
           </div>
         </div>
 
-        {loading ? <Card className="text-sm text-ink-muted">Loading preview...</Card> : null}
         {error ? <Card className="border-rose/40 bg-rose/10 text-sm text-rose">{error}</Card> : null}
 
         {form ? (

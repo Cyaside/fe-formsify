@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Manrope, Space_Grotesk } from "next/font/google";
 import "./globals.css";
 import { AuthProvider } from "@/components/auth/AuthProvider";
+import GlobalLoading from "@/components/ui/GlobalLoading";
 
 const spaceGrotesk = Space_Grotesk({
   variable: "--font-display",
@@ -28,7 +29,10 @@ export default function RootLayout({
       <body
         className={`${spaceGrotesk.variable} ${manrope.variable} antialiased`}
       >
-        <AuthProvider>{children}</AuthProvider>
+        <AuthProvider>
+          {children}
+          <GlobalLoading />
+        </AuthProvider>
       </body>
     </html>
   );

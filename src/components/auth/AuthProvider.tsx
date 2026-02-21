@@ -73,6 +73,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const data = await apiRequest<{ token: string; user: AuthUser }>("/api/auth/login", {
       method: "POST",
       body: { email, password },
+      showGlobalLoading: true,
     });
     saveSession(data.token, data.user);
     return data.user;
@@ -85,6 +86,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         {
           method: "POST",
           body: { name, email, password },
+          showGlobalLoading: true,
         },
       );
       saveSession(data.token, data.user);

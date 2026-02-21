@@ -242,12 +242,15 @@ export default function SharedPublicFormPage() {
   const [validationErrors, setValidationErrors] = useState<Record<string, string>>({});
   const [loading, setLoading] = useState(Boolean(formId));
   const [error, setError] = useState<string | null>(null);
+  const [unpublished, setUnpublished] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [submitMessage, setSubmitMessage] = useState<string | null>(null);
   const [submitted, setSubmitted] = useState(false);
 
   useEffect(() => {
     if (!formId) return;
+    setError(null);
+    setUnpublished(false);
 
     Promise.all([
       apiRequest<{ data: FormDetail }>(`/api/forms/${formId}`),
@@ -258,6 +261,12 @@ export default function SharedPublicFormPage() {
         setQuestions(sortByOrder(questionResponse.data));
       })
       .catch((err) => {
+        if (err instanceof ApiError && err.status === 404) {
+          setUnpublished(true);
+          setForm(null);
+          setQuestions([]);
+          return;
+        }
         const message = err instanceof ApiError ? err.message : "Failed to load form";
         setError(message);
       })
@@ -307,6 +316,7 @@ export default function SharedPublicFormPage() {
       body: {
         answers: buildSubmitAnswers(orderedQuestions, answers),
       },
+      showGlobalLoading: true,
     });
   };
 
@@ -336,14 +346,19 @@ export default function SharedPublicFormPage() {
           <Card className="border-rose/40 bg-rose/10 text-sm text-rose">Invalid form ID</Card>
         ) : null}
         {loading ? <Card className="text-sm text-ink-muted">Loading form...</Card> : null}
+        {unpublished ? (
+          <Card className="border-rose/40 bg-rose/10 text-sm text-rose">
+            Sorry the Forms you search isnt published yet
+          </Card>
+        ) : null}
         {error ? <Card className="border-rose/40 bg-rose/10 text-sm text-rose">{error}</Card> : null}
 
-        {submitted ? (
+        {submitted && !unpublished ? (
           <Card className="space-y-3 border-l-4 border-l-lavender p-6 text-center">
             <h1 className="text-2xl font-semibold">{form?.thankYouTitle || DEFAULT_THANK_YOU_TITLE}</h1>
             <p className="text-sm text-ink-muted">{form?.thankYouMessage || DEFAULT_THANK_YOU_MESSAGE}</p>
           </Card>
-        ) : (
+        ) : !unpublished ? (
           <FillFormContent
             form={form}
             orderedQuestions={orderedQuestions}
@@ -355,7 +370,7 @@ export default function SharedPublicFormPage() {
             onSetAnswer={setAnswer}
             onToggleCheckbox={toggleCheckboxAnswer}
           />
-        )}
+        ) : null}
       </Container>
     </div>
   );

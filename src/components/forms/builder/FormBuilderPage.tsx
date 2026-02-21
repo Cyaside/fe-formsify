@@ -71,6 +71,8 @@ type FormBuilderPageProps = {
 
 const DEFAULT_THANK_YOU_TITLE = "Terima kasih!";
 const DEFAULT_THANK_YOU_MESSAGE = "Respons kamu sudah terekam.";
+const QUESTION_LOCK_MESSAGE =
+  "Sorry the forms already has submission you cant edit, create and delete the questions it anymore";
 
 const mapOptionLabels = (options: QuestionResponse["options"]) => {
   return options.toSorted((a, b) => a.order - b.order).map((item) => item.label);
@@ -113,6 +115,7 @@ type SortableQuestionItemProps = Readonly<{
   onUpdateOption: (id: string, optionIndex: number, label: string) => void;
   onRemoveOption: (id: string, optionIndex: number) => void;
   onMoveOption: (id: string, fromIndex: number, toIndex: number) => void;
+  readOnly?: boolean;
 }>;
 
 function SortableQuestionItem({
@@ -125,9 +128,11 @@ function SortableQuestionItem({
   onUpdateOption,
   onRemoveOption,
   onMoveOption,
+  readOnly = false,
 }: SortableQuestionItemProps) {
   const { attributes, listeners, setNodeRef, transform, transition } = useSortable({
     id: question.id,
+    disabled: readOnly,
   });
 
   return (
@@ -150,6 +155,7 @@ function SortableQuestionItem({
         onUpdateOption={onUpdateOption}
         onRemoveOption={onRemoveOption}
         onMoveOption={onMoveOption}
+        readOnly={readOnly}
       />
     </div>
   );
@@ -190,14 +196,19 @@ export default function FormBuilderPage({ initialFormId }: Readonly<FormBuilderP
   const [addMenuOpen, setAddMenuOpen] = useState(false);
   const [thankYouTitle, setThankYouTitle] = useState(DEFAULT_THANK_YOU_TITLE);
   const [thankYouMessage, setThankYouMessage] = useState(DEFAULT_THANK_YOU_MESSAGE);
+  const [questionsLocked, setQuestionsLocked] = useState(false);
+  const [questionsLockNote, setQuestionsLockNote] = useState<string | null>(null);
 
   const queueRef = useRef<null | {
-    title: string;
-    description: string;
-    thankYouTitle: string;
-    thankYouMessage: string;
-    questions: EditorQuestion[];
-    removedQuestionIds: string[];
+    snapshot: {
+      title: string;
+      description: string;
+      thankYouTitle: string;
+      thankYouMessage: string;
+      questions: EditorQuestion[];
+      removedQuestionIds: string[];
+    };
+    showGlobalLoading?: boolean;
   }>(null);
   const savingRef = useRef(false);
 
@@ -209,6 +220,8 @@ export default function FormBuilderPage({ initialFormId }: Readonly<FormBuilderP
     const bootstrap = async () => {
       setLoading(true);
       setError(null);
+      setQuestionsLocked(false);
+      setQuestionsLockNote(null);
 
       const localDraft = loadDraft(draftKey);
       if (localDraft) {
@@ -275,6 +288,12 @@ export default function FormBuilderPage({ initialFormId }: Readonly<FormBuilderP
     };
   }, [draftKey, initialFormId, reset, setSnapshot]);
 
+  useEffect(() => {
+    if (questionsLocked) {
+      setAddMenuOpen(false);
+    }
+  }, [questionsLocked]);
+
   const performSave = useCallback(
     async (snapshot: {
       title: string;
@@ -283,9 +302,11 @@ export default function FormBuilderPage({ initialFormId }: Readonly<FormBuilderP
       thankYouMessage: string;
       questions: EditorQuestion[];
       removedQuestionIds: string[];
-    }) => {
+    }, options?: { showGlobalLoading?: boolean }) => {
       if (!hydrated) return;
       if (!snapshot.title.trim()) return;
+
+      const requestOptions = { showGlobalLoading: options?.showGlobalLoading };
 
       let activeFormId = formId;
 
@@ -301,6 +322,7 @@ export default function FormBuilderPage({ initialFormId }: Readonly<FormBuilderP
             thankYouMessage: snapshot.thankYouMessage.trim() || DEFAULT_THANK_YOU_MESSAGE,
             isPublished: false,
           },
+          ...requestOptions,
         });
         activeFormId = created.data.id;
         setFormId(activeFormId);
@@ -314,10 +336,31 @@ export default function FormBuilderPage({ initialFormId }: Readonly<FormBuilderP
           thankYouTitle: snapshot.thankYouTitle.trim() || DEFAULT_THANK_YOU_TITLE,
           thankYouMessage: snapshot.thankYouMessage.trim() || DEFAULT_THANK_YOU_MESSAGE,
         },
+        ...requestOptions,
       });
 
+      if (questionsLocked) {
+        clearRemovedQuestionIds();
+        clearDraft(draftKey);
+        setSaveMessage(questionsLockNote ?? QUESTION_LOCK_MESSAGE);
+        return;
+      }
+
       for (const questionId of snapshot.removedQuestionIds) {
-        await apiRequest(`/api/questions/${questionId}`, { method: "DELETE" });
+        try {
+          await apiRequest(`/api/questions/${questionId}`, {
+            method: "DELETE",
+            ...requestOptions,
+          });
+        } catch (err) {
+          if (err instanceof ApiError && err.status === 409) {
+            setQuestionsLocked(true);
+            setQuestionsLockNote(QUESTION_LOCK_MESSAGE);
+            setSaveMessage(QUESTION_LOCK_MESSAGE);
+            return;
+          }
+          throw err;
+        }
       }
 
       const normalizedQuestions = snapshot.questions.map((question, index) => ({
@@ -325,39 +368,51 @@ export default function FormBuilderPage({ initialFormId }: Readonly<FormBuilderP
         order: index,
       }));
 
-      for (const question of normalizedQuestions) {
-        const payload = {
-          title: question.title.trim() || DEFAULT_QUESTION_TITLE,
-          description: question.description.trim() || null,
-          type: mapUiTypeToApiType(question.type),
-          required: question.required,
-          order: question.order,
-          options: requiresOptions(question.type)
-            ? question.options
-                .map((item) => item.trim())
-                .filter((item) => item.length > 0)
-            : [],
-        };
+      try {
+        for (const question of normalizedQuestions) {
+          const payload = {
+            title: question.title.trim() || DEFAULT_QUESTION_TITLE,
+            description: question.description.trim() || null,
+            type: mapUiTypeToApiType(question.type),
+            required: question.required,
+            order: question.order,
+            options: requiresOptions(question.type)
+              ? question.options
+                  .map((item) => item.trim())
+                  .filter((item) => item.length > 0)
+              : [],
+          };
 
-        if (requiresOptions(question.type) && payload.options.length === 0) {
-          payload.options = ["Option 1"];
-        }
+          if (requiresOptions(question.type) && payload.options.length === 0) {
+            payload.options = ["Option 1"];
+          }
 
-        if (question.id.startsWith("temp_")) {
-          const createdQuestion = await apiRequest<{ data: { id: string } }>(
-            `/api/forms/${activeFormId}/questions`,
-            {
-              method: "POST",
+          if (question.id.startsWith("temp_")) {
+            const createdQuestion = await apiRequest<{ data: { id: string } }>(
+              `/api/forms/${activeFormId}/questions`,
+              {
+                method: "POST",
+                body: payload,
+                ...requestOptions,
+              },
+            );
+            replaceQuestionId(question.id, createdQuestion.data.id);
+          } else {
+            await apiRequest(`/api/questions/${question.id}`, {
+              method: "PUT",
               body: payload,
-            },
-          );
-          replaceQuestionId(question.id, createdQuestion.data.id);
-        } else {
-          await apiRequest(`/api/questions/${question.id}`, {
-            method: "PUT",
-            body: payload,
-          });
+              ...requestOptions,
+            });
+          }
         }
+      } catch (err) {
+        if (err instanceof ApiError && err.status === 409) {
+          setQuestionsLocked(true);
+          setQuestionsLockNote(QUESTION_LOCK_MESSAGE);
+          setSaveMessage(QUESTION_LOCK_MESSAGE);
+          return;
+        }
+        throw err;
       }
 
       clearRemovedQuestionIds();
@@ -370,6 +425,8 @@ export default function FormBuilderPage({ initialFormId }: Readonly<FormBuilderP
       draftKey,
       formId,
       hydrated,
+      questionsLockNote,
+      questionsLocked,
       replaceQuestionId,
       setFormId,
     ],
@@ -383,7 +440,7 @@ export default function FormBuilderPage({ initialFormId }: Readonly<FormBuilderP
       thankYouMessage: string;
       questions: EditorQuestion[];
       removedQuestionIds: string[];
-    }) => {
+    }, options?: { showGlobalLoading?: boolean }) => {
       saveDraft(draftKey, {
         formId,
         title: snapshot.title,
@@ -395,13 +452,16 @@ export default function FormBuilderPage({ initialFormId }: Readonly<FormBuilderP
       });
 
       if (savingRef.current) {
-        queueRef.current = snapshot;
+        queueRef.current = {
+          snapshot,
+          showGlobalLoading: options?.showGlobalLoading,
+        };
         return;
       }
 
       savingRef.current = true;
       try {
-        await performSave(snapshot);
+        await performSave(snapshot, options);
       } catch (err) {
         const message = err instanceof ApiError ? err.message : "Failed to autosave";
         setSaveMessage(message);
@@ -412,7 +472,9 @@ export default function FormBuilderPage({ initialFormId }: Readonly<FormBuilderP
       if (queueRef.current) {
         const queued = queueRef.current;
         queueRef.current = null;
-        await enqueueSave(queued);
+        await enqueueSave(queued.snapshot, {
+          showGlobalLoading: queued.showGlobalLoading,
+        });
       }
     },
     [draftKey, formId, performSave],
@@ -433,12 +495,13 @@ export default function FormBuilderPage({ initialFormId }: Readonly<FormBuilderP
   useEffect(() => {
     if (!hydrated || loading || error) return;
     const timeout = globalThis.setTimeout(() => {
-      void enqueueSave(savePayload);
+      void enqueueSave(savePayload, { showGlobalLoading: false });
     }, 500);
     return () => globalThis.clearTimeout(timeout);
   }, [enqueueSave, error, hydrated, loading, savePayload]);
 
   const handleDragEnd = (event: DragEndEvent) => {
+    if (questionsLocked) return;
     const { active, over } = event;
     if (!over || active.id === over.id) return;
 
@@ -456,12 +519,13 @@ export default function FormBuilderPage({ initialFormId }: Readonly<FormBuilderP
   const handlePublish = async () => {
     try {
       setPublishing(true);
-      await enqueueSave(savePayload);
+      await enqueueSave(savePayload, { showGlobalLoading: true });
       const latestFormId = formId ?? useFormEditorStore.getState().formId;
       if (latestFormId) {
         await apiRequest(`/api/forms/${latestFormId}`, {
           method: "PUT",
           body: { isPublished: true },
+          showGlobalLoading: true,
         });
       }
       setSaveMessage("Published");
@@ -476,12 +540,13 @@ export default function FormBuilderPage({ initialFormId }: Readonly<FormBuilderP
   const handleSaveDraft = async () => {
     try {
       setSavingDraft(true);
-      await enqueueSave(savePayload);
+      await enqueueSave(savePayload, { showGlobalLoading: true });
       const latestFormId = formId ?? useFormEditorStore.getState().formId;
       if (latestFormId) {
         await apiRequest(`/api/forms/${latestFormId}`, {
           method: "PUT",
           body: { isPublished: false },
+          showGlobalLoading: true,
         });
       }
       setSaveMessage("Draft saved");
@@ -529,6 +594,7 @@ export default function FormBuilderPage({ initialFormId }: Readonly<FormBuilderP
                 onUpdateOption={updateOption}
                 onRemoveOption={removeOption}
                 onMoveOption={moveOption}
+                readOnly={questionsLocked}
               />
             ))}
           </SortableContext>
@@ -571,13 +637,23 @@ export default function FormBuilderPage({ initialFormId }: Readonly<FormBuilderP
             </div>
           </Card>
 
+          {questionsLockNote ? (
+            <Card className="mb-4 border-rose/40 bg-rose/10 text-sm text-rose">
+              {questionsLockNote}
+            </Card>
+          ) : null}
+
           <nav className="sticky top-3 z-20 mb-4 rounded-2xl border border-border bg-surface/90 p-3 shadow-[0_14px_32px_rgba(8,6,20,0.2)] backdrop-blur">
             <div className="flex flex-wrap items-center justify-between gap-3">
               <div className="relative">
                 <Button
                   variant="secondary"
                   className="gap-2"
-                  onClick={() => setAddMenuOpen((prev) => !prev)}
+                  onClick={() => {
+                    if (questionsLocked) return;
+                    setAddMenuOpen((prev) => !prev);
+                  }}
+                  disabled={questionsLocked}
                 >
                   <Plus size={16} />
                   Add Question
@@ -589,6 +665,7 @@ export default function FormBuilderPage({ initialFormId }: Readonly<FormBuilderP
                         key={type.value}
                         type="button"
                         onClick={() => {
+                          if (questionsLocked) return;
                           addQuestion(createDefaultQuestion(type.value));
                           setAddMenuOpen(false);
                         }}

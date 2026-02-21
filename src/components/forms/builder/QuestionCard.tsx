@@ -28,6 +28,7 @@ type QuestionCardProps = {
   onUpdateOption: (id: string, index: number, label: string) => void;
   onRemoveOption: (id: string, index: number) => void;
   onMoveOption: (id: string, fromIndex: number, toIndex: number) => void;
+  readOnly?: boolean;
 };
 
 export default function QuestionCard({
@@ -42,10 +43,12 @@ export default function QuestionCard({
   onUpdateOption,
   onRemoveOption,
   onMoveOption,
+  readOnly = false,
 }: QuestionCardProps) {
   const optionsRequired = requiresOptions(question.type);
 
   const ensureType = (nextType: QuestionType) => {
+    if (readOnly) return;
     const shouldKeep = requiresOptions(nextType);
     onUpdate(question.id, {
       type: nextType,
@@ -62,9 +65,10 @@ export default function QuestionCard({
       <div className="flex items-start gap-3">
         <button
           type="button"
-          className="mt-1 rounded-lg p-1 text-ink-muted hover:bg-surface-2"
-          {...dragAttributes}
-          {...dragListeners}
+          className="mt-1 rounded-lg p-1 text-ink-muted hover:bg-surface-2 disabled:cursor-not-allowed disabled:opacity-40"
+          {...(readOnly ? {} : dragAttributes)}
+          {...(readOnly ? {} : dragListeners)}
+          disabled={readOnly}
           aria-label="Drag question"
         >
           <GripVertical size={18} />
@@ -80,11 +84,13 @@ export default function QuestionCard({
               }
               placeholder={`Question ${index + 1}`}
               className="md:flex-1"
+              disabled={readOnly}
             />
             <Select
               value={question.type}
               onChange={(event) => ensureType(event.target.value as QuestionType)}
               className="md:w-[220px]"
+              disabled={readOnly}
             >
               {QUESTION_TYPE_OPTIONS.map((type) => (
                 <option key={type.value} value={type.value}>
@@ -103,6 +109,7 @@ export default function QuestionCard({
             }
             placeholder="Question description (optional)"
             className="min-h-[78px]"
+            disabled={readOnly}
           />
 
           {optionsRequired ? (
@@ -115,12 +122,13 @@ export default function QuestionCard({
                       onUpdateOption(question.id, optionIndex, event.target.value)
                     }
                     placeholder={`Option ${optionIndex + 1}`}
+                    disabled={readOnly}
                   />
                   <Button
                     variant="ghost"
                     size="sm"
                     onClick={() => onMoveOption(question.id, optionIndex, optionIndex - 1)}
-                    disabled={optionIndex === 0}
+                    disabled={readOnly || optionIndex === 0}
                     aria-label="Move option up"
                   >
                     <ChevronUp size={15} />
@@ -129,7 +137,7 @@ export default function QuestionCard({
                     variant="ghost"
                     size="sm"
                     onClick={() => onMoveOption(question.id, optionIndex, optionIndex + 1)}
-                    disabled={optionIndex === question.options.length - 1}
+                    disabled={readOnly || optionIndex === question.options.length - 1}
                     aria-label="Move option down"
                   >
                     <ChevronDown size={15} />
@@ -138,7 +146,7 @@ export default function QuestionCard({
                     variant="ghost"
                     size="sm"
                     onClick={() => onRemoveOption(question.id, optionIndex)}
-                    disabled={question.options.length <= 1}
+                    disabled={readOnly || question.options.length <= 1}
                     aria-label="Delete option"
                   >
                     <Trash2 size={15} />
@@ -150,6 +158,7 @@ export default function QuestionCard({
                 size="sm"
                 className="gap-1.5"
                 onClick={() => onAddOption(question.id)}
+                disabled={readOnly}
               >
                 <Plus size={14} />
                 Add option
@@ -164,6 +173,7 @@ export default function QuestionCard({
                 checked={question.required}
                 onChange={(event) => onUpdate(question.id, { required: event.target.checked })}
                 className="h-4 w-4 rounded border-border"
+                disabled={readOnly}
               />
               Required
             </label>
@@ -173,6 +183,7 @@ export default function QuestionCard({
                 size="sm"
                 className="gap-1.5"
                 onClick={() => onDuplicate(question.id)}
+                disabled={readOnly}
               >
                 <Copy size={14} />
                 Duplicate
@@ -182,6 +193,7 @@ export default function QuestionCard({
                 size="sm"
                 className="gap-1.5"
                 onClick={() => onDelete(question.id)}
+                disabled={readOnly}
               >
                 <Trash2 size={14} />
                 Delete

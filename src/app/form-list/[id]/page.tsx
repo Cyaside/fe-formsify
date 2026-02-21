@@ -37,9 +37,12 @@ export default function PublicFormDetailPage() {
   const [questions, setQuestions] = useState<QuestionResponse[]>([]);
   const [loading, setLoading] = useState(Boolean(formId));
   const [error, setError] = useState<string | null>(null);
+  const [unpublished, setUnpublished] = useState(false);
 
   useEffect(() => {
     if (!formId) return;
+    setError(null);
+    setUnpublished(false);
     Promise.all([
       apiRequest<{ data: FormDetail }>(`/api/forms/${formId}`),
       apiRequest<{ data: QuestionResponse[] }>(`/api/forms/${formId}/questions`),
@@ -49,6 +52,12 @@ export default function PublicFormDetailPage() {
         setQuestions(questionResponse.data.toSorted((a, b) => a.order - b.order));
       })
       .catch((err) => {
+        if (err instanceof ApiError && err.status === 404) {
+          setUnpublished(true);
+          setForm(null);
+          setQuestions([]);
+          return;
+        }
         const message = err instanceof ApiError ? err.message : "Failed to load form";
         setError(message);
       })
@@ -64,6 +73,7 @@ export default function PublicFormDetailPage() {
       timeStyle: "short",
     }).format(new Date(form.updatedAt));
   }, [form]);
+  const canFill = Boolean(formId) && !unpublished;
 
   return (
     <div className="min-h-screen bg-page py-8 text-ink">
@@ -72,7 +82,7 @@ export default function PublicFormDetailPage() {
           <Link href="/form-list">
             <Button variant="secondary">Back to Form List</Button>
           </Link>
-          {formId ? (
+          {canFill ? (
             <Link href={`/form-list/${formId}/fill`}>
               <Button>Fill Form</Button>
             </Link>
@@ -83,9 +93,14 @@ export default function PublicFormDetailPage() {
           <Card className="border-rose/40 bg-rose/10 text-sm text-rose">Invalid form ID</Card>
         ) : null}
         {loading ? <Card className="text-sm text-ink-muted">Loading form preview...</Card> : null}
+        {unpublished ? (
+          <Card className="border-rose/40 bg-rose/10 text-sm text-rose">
+            Sorry the Forms you search isnt published yet
+          </Card>
+        ) : null}
         {error ? <Card className="border-rose/40 bg-rose/10 text-sm text-rose">{error}</Card> : null}
 
-        {form ? (
+        {form && !unpublished ? (
           <>
             <Card className="space-y-3 border-l-4 border-l-lavender p-6">
               <div className="flex items-center justify-between">
