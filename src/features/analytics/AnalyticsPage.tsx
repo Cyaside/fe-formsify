@@ -13,6 +13,7 @@ import RequireAuth from "@/features/auth/RequireAuth";
 import TrendChart from "./components/TrendChart";
 import { getRangeDates, rangeOptions } from "./lib/range";
 import { buildTrendSeries } from "./lib/trend";
+import DashboardMobileNav from "@/widgets/dashboard/DashboardMobileNav";
 
 export default function AnalyticsPage() {
   const [rangeIndex, setRangeIndex] = useState(1);
@@ -46,7 +47,7 @@ export default function AnalyticsPage() {
           <div className="flex flex-1 flex-col">
             <DashboardHeader />
 
-            <main className="flex-1 space-y-6 px-6 py-8">
+            <main className="flex-1 space-y-6 px-6 py-8 pb-24">
               <div className="flex flex-wrap items-center justify-between gap-3">
                 <div>
                   <p className="text-xs uppercase tracking-[0.24em] text-lavender">
@@ -61,7 +62,7 @@ export default function AnalyticsPage() {
                   <Select
                     value={String(rangeIndex)}
                     onChange={(event) => setRangeIndex(Number(event.target.value))}
-                    className="min-w-[140px]"
+                    className="min-w-35"
                   >
                     {rangeOptions.map((option, index) => (
                       <option key={option.label} value={index}>
@@ -127,6 +128,7 @@ export default function AnalyticsPage() {
             </main>
           </div>
         </div>
+        <DashboardMobileNav />
       </div>
     </RequireAuth>
   );

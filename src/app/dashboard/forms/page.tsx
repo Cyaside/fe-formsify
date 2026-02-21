@@ -12,6 +12,7 @@ import Input from "@/shared/ui/Input";
 import Modal from "@/shared/ui/Modal";
 import Select from "@/shared/ui/Select";
 import DashboardHeader from "@/widgets/dashboard/DashboardHeader";
+import DashboardMobileNav from "@/widgets/dashboard/DashboardMobileNav";
 import DashboardSidebar from "@/widgets/dashboard/DashboardSidebar";
 import { ApiError } from "@/shared/api/client";
 import { formsApi, type FormSummary } from "@/shared/api/forms";
@@ -112,7 +113,7 @@ export default function DashboardFormsPage() {
           <div className="flex flex-1 flex-col">
             <DashboardHeader />
 
-            <main className="flex-1 space-y-6 px-6 py-8">
+            <main className="flex-1 space-y-6 px-6 py-8 pb-24">
               <div className="flex flex-wrap items-center justify-between gap-3">
                 <div>
                   <p className="text-xs uppercase tracking-[0.24em] text-lavender">Forms</p>
@@ -233,6 +234,7 @@ export default function DashboardFormsPage() {
             </Button>
           </div>
         </Modal>
+        <DashboardMobileNav />
       </div>
     </RequireAuth>
   );

@@ -5,6 +5,7 @@ import { useQuery } from "@tanstack/react-query";
 import DashboardActivity from "@/widgets/dashboard/DashboardActivity";
 import DashboardForms from "@/widgets/dashboard/DashboardForms";
 import DashboardHeader from "@/widgets/dashboard/DashboardHeader";
+import DashboardMobileNav from "@/widgets/dashboard/DashboardMobileNav";
 import DashboardSidebar from "@/widgets/dashboard/DashboardSidebar";
 import DashboardStats from "@/widgets/dashboard/DashboardStats";
 import RequireAuth from "@/features/auth/RequireAuth";
@@ -35,7 +36,7 @@ export default function DashboardPage() {
           <DashboardSidebar />
           <div className="flex flex-1 flex-col">
             <DashboardHeader />
-            <main className="flex-1 space-y-8 px-6 py-8">
+            <main className="flex-1 space-y-8 px-6 py-8 pb-24">
               <DashboardStats />
               <div className="grid gap-6 xl:grid-cols-[1.2fr_0.8fr]">
                 <DashboardForms
@@ -48,6 +49,7 @@ export default function DashboardPage() {
             </main>
           </div>
         </div>
+        <DashboardMobileNav />
       </div>
     </RequireAuth>
   );
