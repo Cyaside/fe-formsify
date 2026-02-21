@@ -11,6 +11,7 @@ import Container from "@/components/ui/Container";
 import Input from "@/components/ui/Input";
 import Select from "@/components/ui/Select";
 import { apiRequest, ApiError } from "@/lib/api";
+import { useAuth } from "@/components/auth/AuthProvider";
 
 type PublicFormSummary = {
   id: string;
@@ -28,6 +29,7 @@ type PublicFormSummary = {
 type SortType = "newest" | "oldest";
 
 export default function PublicFormListPage() {
+  const { user, loading: authLoading } = useAuth();
   const [forms, setForms] = useState<PublicFormSummary[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -108,12 +110,24 @@ export default function PublicFormListPage() {
           </div>
 
           <div className="relative z-10 mt-8 flex flex-wrap items-center justify-center gap-2">
-            <Link href="/login">
-              <Button variant="secondary">Login</Button>
+            <Link href="/">
+              <Button variant="secondary">Back to Landing Page</Button>
             </Link>
-            <Link href="/register">
-              <Button>Register</Button>
-            </Link>
+            {!authLoading && user ? (
+              <Link href="/dashboard">
+                <Button>Go to Dashboard</Button>
+              </Link>
+            ) : null}
+            {!authLoading && !user ? (
+              <>
+                <Link href="/login">
+                  <Button variant="secondary">Login</Button>
+                </Link>
+                <Link href="/register">
+                  <Button>Register</Button>
+                </Link>
+              </>
+            ) : null}
             <ThemeToggle />
           </div>
         </Container>

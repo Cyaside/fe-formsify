@@ -33,11 +33,12 @@ type QuestionResponse = {
 
 type AnswerState = Record<string, unknown>;
 
+type SubmitAnswer = { questionId: string; optionId?: string; text?: string };
 const DEFAULT_THANK_YOU_TITLE = "Terima kasih!";
 const DEFAULT_THANK_YOU_MESSAGE = "Respons kamu sudah terekam.";
 
 const sortByOrder = <T extends { order: number }>(items: T[]) =>
-  items.toSorted((a, b) => a.order - b.order);
+  [...items].sort((a, b) => a.order - b.order);
 
 const isRequiredMissing = (question: QuestionResponse, value: unknown) => {
   if (!question.required) return false;
@@ -62,8 +63,8 @@ const getValidationErrors = (questions: QuestionResponse[], answers: AnswerState
 const submitMessageClassName = (submitMessage: string) =>
   `text-sm ${submitMessage.includes("success") ? "text-lavender" : "text-rose"}`;
 
-const buildSubmitAnswers = (questions: QuestionResponse[], answers: AnswerState) => {
-  return questions.flatMap((question) => {
+const buildSubmitAnswers = (questions: QuestionResponse[], answers: AnswerState): SubmitAnswer[] => {
+  return questions.flatMap<SubmitAnswer>((question) => {
     const value = answers[question.id];
 
     if (question.type === "SHORT_ANSWER") {

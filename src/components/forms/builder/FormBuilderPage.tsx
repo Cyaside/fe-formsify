@@ -703,11 +703,6 @@ export default function FormBuilderPage({ initialFormId }: Readonly<FormBuilderP
                   {publishing ? "Publishing..." : "Publish"}
                 </Button>
 
-                <Button variant="ghost" className="gap-2" onClick={handleCancelDraft}>
-                  <XCircle size={16} />
-                  Cancel Draft
-                </Button>
-
                 <Button
                   variant="secondary"
                   className="gap-2"
