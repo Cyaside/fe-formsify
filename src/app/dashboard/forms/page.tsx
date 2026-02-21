@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
-import { ArrowUpDown, Plus, Trash2 } from "lucide-react";
+import { ArrowUpDown, Copy, Plus, Trash2 } from "lucide-react";
 import RequireAuth from "@/components/auth/RequireAuth";
 import Badge from "@/components/ui/Badge";
 import Button from "@/components/ui/Button";
@@ -35,6 +35,7 @@ export default function DashboardFormsPage() {
   const [sort, setSort] = useState<SortType>("newest");
   const [deleteTarget, setDeleteTarget] = useState<FormSummary | null>(null);
   const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [copiedShareId, setCopiedShareId] = useState<string | null>(null);
 
   useEffect(() => {
     apiRequest<{ data: FormSummary[] }>("/api/forms")
@@ -94,6 +95,19 @@ export default function DashboardFormsPage() {
     }
   };
 
+  const handleCopyShareUrl = async (formId: string) => {
+    try {
+      const shareUrl = `${globalThis.location.origin}/share/${formId}`;
+      await globalThis.navigator.clipboard.writeText(shareUrl);
+      setCopiedShareId(formId);
+      globalThis.setTimeout(() => {
+        setCopiedShareId((current) => (current === formId ? null : current));
+      }, 1800);
+    } catch {
+      setError("Failed to copy share URL");
+    }
+  };
+
   return (
     <RequireAuth>
       <div className="min-h-screen bg-page text-ink">
@@ -145,9 +159,22 @@ export default function DashboardFormsPage() {
                     <div>
                       <div className="mb-2 flex items-center justify-between gap-2">
                         <h2 className="line-clamp-1 text-base font-semibold">{form.title}</h2>
-                        <Badge variant={form.status === "published" ? "published" : "draft"}>
-                          {form.status}
-                        </Badge>
+                        <div className="flex items-center gap-2">
+                          <Badge variant={form.status === "published" ? "published" : "draft"}>
+                            {form.status}
+                          </Badge>
+                          {form.status === "published" ? (
+                            <Button
+                              size="sm"
+                              variant="ghost"
+                              className="gap-1"
+                              onClick={() => handleCopyShareUrl(form.id)}
+                            >
+                              <Copy size={13} />
+                              {copiedShareId === form.id ? "Copied" : "Share URL"}
+                            </Button>
+                          ) : null}
+                        </div>
                       </div>
                       <p className="line-clamp-3 text-sm text-ink-muted">
                         {form.description || "No description"}

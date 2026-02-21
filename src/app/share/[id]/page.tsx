@@ -1,8 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import Link from "next/link";
-import { useParams, useRouter } from "next/navigation";
+import { useParams } from "next/navigation";
 import Button from "@/components/ui/Button";
 import Card from "@/components/ui/Card";
 import Container from "@/components/ui/Container";
@@ -227,9 +226,8 @@ function FillFormContent({
   );
 }
 
-export default function PublicFillFormPage() {
+export default function SharedPublicFormPage() {
   const params = useParams();
-  const router = useRouter();
   const formId = Array.isArray(params?.id) ? params.id[0] : params?.id;
   const invalidFormId = !formId;
 
@@ -315,7 +313,7 @@ export default function PublicFillFormPage() {
     try {
       await submitAnswers();
       setAnswers({});
-      router.replace("/form-list");
+      setSubmitMessage("Response submitted successfully.");
     } catch (err) {
       const message = err instanceof ApiError ? err.message : "Failed to submit response";
       setSubmitMessage(message);
@@ -327,12 +325,6 @@ export default function PublicFillFormPage() {
   return (
     <div className="min-h-screen bg-page py-8 text-ink">
       <Container className="max-w-3xl">
-        <div className="mb-4">
-          <Link href={formId ? `/form-list/${formId}` : "/form-list"}>
-            <Button variant="secondary">Back</Button>
-          </Link>
-        </div>
-
         {invalidFormId ? (
           <Card className="border-rose/40 bg-rose/10 text-sm text-rose">Invalid form ID</Card>
         ) : null}
