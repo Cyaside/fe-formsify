@@ -3,6 +3,7 @@ import ContactSection from "@/widgets/landing/ContactSection";
 import HeroSection from "@/widgets/landing/HeroSection";
 import StepsSection from "@/widgets/landing/StepsSection";
 import TestimonialsSection from "@/widgets/landing/TestimonialsSection";
+import Footer from "@/shared/ui/Footer";
 
 export default function Home() {
   return (
@@ -12,6 +13,7 @@ export default function Home() {
       <StepsSection />
       <TestimonialsSection />
       <ContactSection />
+      <Footer />
     </div>
   );
 }
