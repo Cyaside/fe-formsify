@@ -1,8 +1,10 @@
 "use client";
 
+import Link from "next/link";
 import ThemeToggle from "@/components/theme/ThemeToggle";
 import { useAuth } from "@/components/auth/AuthProvider";
 import { useRouter } from "next/navigation";
+import Button from "@/components/ui/Button";
 
 export default function DashboardHeader() {
   const { user, logout } = useAuth();
@@ -25,6 +27,9 @@ export default function DashboardHeader() {
           <span>Cari form, template, atau respon</span>
         </div>
         <div className="flex items-center gap-3">
+          <Link href="/">
+            <Button variant="secondary" size="sm">Back to Home</Button>
+          </Link>
           <ThemeToggle />
           <button
             type="button"

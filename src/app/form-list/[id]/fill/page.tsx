@@ -315,7 +315,7 @@ export default function PublicFillFormPage() {
     try {
       await submitAnswers();
       setAnswers({});
-      router.replace("/form-list");
+      router.replace(`/form-list/${formId}/submitted`);
     } catch (err) {
       const message = err instanceof ApiError ? err.message : "Failed to submit response";
       setSubmitMessage(message);

@@ -51,6 +51,8 @@ type FormDetail = {
   id: string;
   title: string;
   description?: string | null;
+  thankYouTitle: string;
+  thankYouMessage: string;
 };
 
 type QuestionResponse = {
@@ -66,6 +68,9 @@ type QuestionResponse = {
 type FormBuilderPageProps = {
   initialFormId?: string;
 };
+
+const DEFAULT_THANK_YOU_TITLE = "Terima kasih!";
+const DEFAULT_THANK_YOU_MESSAGE = "Respons kamu sudah terekam.";
 
 const mapOptionLabels = (options: QuestionResponse["options"]) => {
   return options.toSorted((a, b) => a.order - b.order).map((item) => item.label);
@@ -183,10 +188,14 @@ export default function FormBuilderPage({ initialFormId }: Readonly<FormBuilderP
   const [publishing, setPublishing] = useState(false);
   const [savingDraft, setSavingDraft] = useState(false);
   const [addMenuOpen, setAddMenuOpen] = useState(false);
+  const [thankYouTitle, setThankYouTitle] = useState(DEFAULT_THANK_YOU_TITLE);
+  const [thankYouMessage, setThankYouMessage] = useState(DEFAULT_THANK_YOU_MESSAGE);
 
   const queueRef = useRef<null | {
     title: string;
     description: string;
+    thankYouTitle: string;
+    thankYouMessage: string;
     questions: EditorQuestion[];
     removedQuestionIds: string[];
   }>(null);
@@ -203,12 +212,16 @@ export default function FormBuilderPage({ initialFormId }: Readonly<FormBuilderP
 
       const localDraft = loadDraft(draftKey);
       if (localDraft) {
+        setThankYouTitle(localDraft.thankYouTitle ?? DEFAULT_THANK_YOU_TITLE);
+        setThankYouMessage(localDraft.thankYouMessage ?? DEFAULT_THANK_YOU_MESSAGE);
         setSnapshot({ ...localDraft, hydrated: true });
         setLoading(false);
         return;
       }
 
       if (!initialFormId) {
+        setThankYouTitle(DEFAULT_THANK_YOU_TITLE);
+        setThankYouMessage(DEFAULT_THANK_YOU_MESSAGE);
         setSnapshot({
           formId: null,
           title: DEFAULT_FORM_TITLE,
@@ -235,6 +248,8 @@ export default function FormBuilderPage({ initialFormId }: Readonly<FormBuilderP
         const mappedQuestions: EditorQuestion[] = sortedQuestions.map(
           (question, index) => mapApiQuestionToEditor(question, index),
         );
+        setThankYouTitle(formResponse.data.thankYouTitle || DEFAULT_THANK_YOU_TITLE);
+        setThankYouMessage(formResponse.data.thankYouMessage || DEFAULT_THANK_YOU_MESSAGE);
 
         setSnapshot({
           formId: formResponse.data.id,
@@ -264,6 +279,8 @@ export default function FormBuilderPage({ initialFormId }: Readonly<FormBuilderP
     async (snapshot: {
       title: string;
       description: string;
+      thankYouTitle: string;
+      thankYouMessage: string;
       questions: EditorQuestion[];
       removedQuestionIds: string[];
     }) => {
@@ -280,6 +297,8 @@ export default function FormBuilderPage({ initialFormId }: Readonly<FormBuilderP
           body: {
             title: snapshot.title.trim(),
             description: snapshot.description.trim() || null,
+            thankYouTitle: snapshot.thankYouTitle.trim() || DEFAULT_THANK_YOU_TITLE,
+            thankYouMessage: snapshot.thankYouMessage.trim() || DEFAULT_THANK_YOU_MESSAGE,
             isPublished: false,
           },
         });
@@ -292,6 +311,8 @@ export default function FormBuilderPage({ initialFormId }: Readonly<FormBuilderP
         body: {
           title: snapshot.title.trim(),
           description: snapshot.description.trim() || null,
+          thankYouTitle: snapshot.thankYouTitle.trim() || DEFAULT_THANK_YOU_TITLE,
+          thankYouMessage: snapshot.thankYouMessage.trim() || DEFAULT_THANK_YOU_MESSAGE,
         },
       });
 
@@ -358,6 +379,8 @@ export default function FormBuilderPage({ initialFormId }: Readonly<FormBuilderP
     async (snapshot: {
       title: string;
       description: string;
+      thankYouTitle: string;
+      thankYouMessage: string;
       questions: EditorQuestion[];
       removedQuestionIds: string[];
     }) => {
@@ -365,6 +388,8 @@ export default function FormBuilderPage({ initialFormId }: Readonly<FormBuilderP
         formId,
         title: snapshot.title,
         description: snapshot.description,
+        thankYouTitle: snapshot.thankYouTitle,
+        thankYouMessage: snapshot.thankYouMessage,
         questions: snapshot.questions,
         removedQuestionIds: snapshot.removedQuestionIds,
       });
@@ -397,10 +422,12 @@ export default function FormBuilderPage({ initialFormId }: Readonly<FormBuilderP
     () => ({
       title,
       description,
+      thankYouTitle,
+      thankYouMessage,
       questions,
       removedQuestionIds,
     }),
-    [title, description, questions, removedQuestionIds],
+    [title, description, thankYouTitle, thankYouMessage, questions, removedQuestionIds],
   );
 
   useEffect(() => {
@@ -528,6 +555,19 @@ export default function FormBuilderPage({ initialFormId }: Readonly<FormBuilderP
                 className="min-h-20 resize-none border-none bg-transparent px-0 py-0 text-sm text-ink-muted shadow-none focus:border-none"
                 placeholder="Form description"
               />
+              <div className="grid gap-3 border-t border-border/60 pt-3 md:grid-cols-2">
+                <Input
+                  value={thankYouTitle}
+                  onChange={(event) => setThankYouTitle(event.target.value)}
+                  placeholder="Thank you title"
+                />
+                <Textarea
+                  value={thankYouMessage}
+                  onChange={(event) => setThankYouMessage(event.target.value)}
+                  className="min-h-11 resize-none"
+                  placeholder="Thank you message"
+                />
+              </div>
             </div>
           </Card>
 

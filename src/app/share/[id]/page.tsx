@@ -15,6 +15,8 @@ type FormDetail = {
   id: string;
   title: string;
   description?: string | null;
+  thankYouTitle?: string | null;
+  thankYouMessage?: string | null;
 };
 
 type QuestionOption = { id: string; label: string; order: number };
@@ -30,6 +32,9 @@ type QuestionResponse = {
 };
 
 type AnswerState = Record<string, unknown>;
+
+const DEFAULT_THANK_YOU_TITLE = "Terima kasih!";
+const DEFAULT_THANK_YOU_MESSAGE = "Respons kamu sudah terekam.";
 
 const sortByOrder = <T extends { order: number }>(items: T[]) =>
   items.toSorted((a, b) => a.order - b.order);
@@ -239,6 +244,7 @@ export default function SharedPublicFormPage() {
   const [error, setError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [submitMessage, setSubmitMessage] = useState<string | null>(null);
+  const [submitted, setSubmitted] = useState(false);
 
   useEffect(() => {
     if (!formId) return;
@@ -313,6 +319,7 @@ export default function SharedPublicFormPage() {
     try {
       await submitAnswers();
       setAnswers({});
+      setSubmitted(true);
       setSubmitMessage("Response submitted successfully.");
     } catch (err) {
       const message = err instanceof ApiError ? err.message : "Failed to submit response";
@@ -331,17 +338,24 @@ export default function SharedPublicFormPage() {
         {loading ? <Card className="text-sm text-ink-muted">Loading form...</Card> : null}
         {error ? <Card className="border-rose/40 bg-rose/10 text-sm text-rose">{error}</Card> : null}
 
-        <FillFormContent
-          form={form}
-          orderedQuestions={orderedQuestions}
-          answers={answers}
-          validationErrors={validationErrors}
-          submitting={submitting}
-          submitMessage={submitMessage}
-          onSubmit={handleSubmit}
-          onSetAnswer={setAnswer}
-          onToggleCheckbox={toggleCheckboxAnswer}
-        />
+        {submitted ? (
+          <Card className="space-y-3 border-l-4 border-l-lavender p-6 text-center">
+            <h1 className="text-2xl font-semibold">{form?.thankYouTitle || DEFAULT_THANK_YOU_TITLE}</h1>
+            <p className="text-sm text-ink-muted">{form?.thankYouMessage || DEFAULT_THANK_YOU_MESSAGE}</p>
+          </Card>
+        ) : (
+          <FillFormContent
+            form={form}
+            orderedQuestions={orderedQuestions}
+            answers={answers}
+            validationErrors={validationErrors}
+            submitting={submitting}
+            submitMessage={submitMessage}
+            onSubmit={handleSubmit}
+            onSetAnswer={setAnswer}
+            onToggleCheckbox={toggleCheckboxAnswer}
+          />
+        )}
       </Container>
     </div>
   );

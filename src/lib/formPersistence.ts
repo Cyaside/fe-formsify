@@ -6,6 +6,8 @@ type DraftSnapshot = {
   formId: string | null;
   title: string;
   description: string;
+  thankYouTitle: string;
+  thankYouMessage: string;
   questions: EditorQuestion[];
   removedQuestionIds: string[];
 };
