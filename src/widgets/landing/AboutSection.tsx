@@ -5,41 +5,55 @@ import Container from "@/shared/ui/Container";
 import SectionHeading from "@/shared/ui/SectionHeading";
 
 const highlights = [
-  { title: "Template Adaptif", desc: "Pilih layout siap pakai lalu sesuaikan dengan drag-and-drop." },
-  { title: "Validasi Pintar", desc: "Atur aturan validasi tanpa menulis satu baris kode." },
-  { title: "Analitik Realtime", desc: "Pantau performa form dan konversi setiap langkah." },
+  {
+    title: "Flexible question builder",
+    desc: "Add short answer, multiple choice, checkbox, and dropdown questions based on your form needs.",
+  },
+  {
+    title: "Multi-section form flow",
+    desc: "Split long forms into sections so respondents can fill them out more comfortably.",
+  },
+  {
+    title: "Publish and review responses",
+    desc: "Share a public form link, then monitor submissions and response summaries from the dashboard.",
+  },
 ];
 
 export default function AboutSection() {
   return (
     <section id="about" className="bg-page py-16 md:py-24">
-      <Container className="grid items-center gap-8 md:grid-cols-[1fr_1fr]">
+      <Container className="grid items-center gap-8 md:grid-cols-[1.05fr_0.95fr]">
         <div className="order-2 md:order-1">
           <SectionHeading
             eyebrow="About"
-            title="Buat form cepat dan terintegrasi"
-            description={
-              "Formsify membantu tim membuat form yang konsisten, cepat, dan siap dipakai — tanpa kompleksitas desain."
-            }
+            title="A form builder for creating, publishing, and reviewing results"
+            description="Formsify supports a clear workflow from draft form setup, question management, and public sharing to submission review and response summaries."
           />
 
           <div className="mt-6 space-y-4">
-            {highlights.map((item) => (
-              <div key={item.title}>
-                <h3 className="text-base font-semibold text-ink">{item.title}</h3>
-                <p className="mt-1 text-sm leading-6 text-ink-muted">{item.desc}</p>
+            {highlights.map((item, index) => (
+              <div key={item.title} className="rounded-2xl border border-border bg-surface px-4 py-4 shadow-soft">
+                <div className="flex items-start gap-3">
+                  <span className="mt-0.5 inline-flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-accent-100 text-xs font-bold text-accent">
+                    {index + 1}
+                  </span>
+                  <div>
+                    <h3 className="text-base font-semibold text-ink">{item.title}</h3>
+                    <p className="mt-1 text-sm leading-6 text-ink-muted">{item.desc}</p>
+                  </div>
+                </div>
               </div>
             ))}
           </div>
         </div>
 
-        <div className="order-1 md:order-2 flex items-center justify-center">
+        <div className="order-1 flex items-center justify-center md:order-2">
           <Image
             src="/logo.png"
-            alt="Forms preview"
+            alt="Formsify preview"
             width={540}
             height={360}
-            className="h-auto w-full max-w-[540px] rounded-2xl border border-border object-cover shadow-soft"
+            className="h-auto w-full max-w-[540px] rounded-2xl border border-border bg-surface object-cover p-6 shadow-soft"
             priority
           />
         </div>
@@ -47,4 +61,3 @@ export default function AboutSection() {
     </section>
   );
 }
-
