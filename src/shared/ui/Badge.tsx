@@ -10,6 +10,8 @@ const badgeStyles = cva(
         draft: "border border-sun/25 bg-sun/10 text-sun",
         published:
           "border border-accent/20 bg-accent-100 text-accent-900 dark:border-accent-700 dark:bg-accent-700 dark:text-white",
+        closed:
+          "border border-rose/25 bg-rose/10 text-rose dark:border-rose/40 dark:bg-rose/10 dark:text-rose",
         muted: "border border-border bg-surface-2 text-ink-muted",
       },
     },

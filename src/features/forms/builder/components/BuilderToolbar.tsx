@@ -16,6 +16,8 @@ type BuilderToolbarProps = Readonly<{
   savingDraft: boolean;
   questionsCount: number;
   publishNoQuestionMessage: string;
+  publishButtonLabel: string;
+  showSaveDraftButton: boolean;
   onAddSection: () => void;
   onAddQuestionType: (type: QuestionType) => void;
   onPublish: () => void;
@@ -30,6 +32,8 @@ export default function BuilderToolbar({
   savingDraft,
   questionsCount,
   publishNoQuestionMessage,
+  publishButtonLabel,
+  showSaveDraftButton,
   onAddSection,
   onAddQuestionType,
   onPublish,
@@ -116,18 +120,20 @@ export default function BuilderToolbar({
             title={questionsCount === 0 ? publishNoQuestionMessage : undefined}
           >
             <Send size={16} />
-            {publishing ? "Publishing..." : "Publish"}
+            {publishing ? `${publishButtonLabel}...` : publishButtonLabel}
           </Button>
 
-          <Button
-            variant="secondary"
-            className="gap-2"
-            onClick={onSaveDraft}
-            disabled={savingDraft}
-          >
-            {savingDraft ? <Loader2 size={16} className="animate-spin" /> : <Save size={16} />}
-            {savingDraft ? "Saving..." : "Save Draft"}
-          </Button>
+          {showSaveDraftButton ? (
+            <Button
+              variant="secondary"
+              className="gap-2"
+              onClick={onSaveDraft}
+              disabled={savingDraft}
+            >
+              {savingDraft ? <Loader2 size={16} className="animate-spin" /> : <Save size={16} />}
+              {savingDraft ? "Saving..." : "Save Draft"}
+            </Button>
+          ) : null}
 
           <ThemeToggle />
         </div>

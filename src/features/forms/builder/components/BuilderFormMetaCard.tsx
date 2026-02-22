@@ -10,6 +10,7 @@ type BuilderFormMetaCardProps = Readonly<{
   thankYouTitle: string;
   thankYouMessage: string;
   isResponseClosed: boolean;
+  isPublished: boolean;
   responseLimit: string;
   onChangeTitle: (value: string) => void;
   onChangeDescription: (value: string) => void;
@@ -25,6 +26,7 @@ export default function BuilderFormMetaCard({
   thankYouTitle,
   thankYouMessage,
   isResponseClosed,
+  isPublished,
   responseLimit,
   onChangeTitle,
   onChangeDescription,
@@ -67,9 +69,10 @@ export default function BuilderFormMetaCard({
               type="checkbox"
               checked={isResponseClosed}
               onChange={(event) => onChangeIsResponseClosed(event.target.checked)}
+              disabled={!isPublished}
               className="h-4 w-4 accent-accent"
             />
-            <span>Tutup respons (manual close)</span>
+            <span>{isPublished ? "Close responses (manual close)" : "Close (hanya untuk form published)"}</span>
           </label>
           <Input
             type="number"
