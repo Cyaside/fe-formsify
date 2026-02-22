@@ -1,3 +1,4 @@
+import { useState } from "react";
 import type { DraggableAttributes } from "@dnd-kit/core";
 import type { SyntheticListenerMap } from "@dnd-kit/core/dist/hooks/utilities";
 import {
@@ -13,7 +14,7 @@ import type {
   EditorSection,
   QuestionType,
 } from "@/features/forms/store/formEditor";
-import { QUESTION_TYPE_OPTIONS, requiresOptions } from "./constants";
+import { QUESTION_TYPE_OPTIONS, requiresOptions } from "../lib/constants";
 import Card from "@/shared/ui/Card";
 import Input from "@/shared/ui/Input";
 import Textarea from "@/shared/ui/Textarea";
@@ -52,6 +53,8 @@ export default function QuestionCard({
   readOnly = false,
 }: QuestionCardProps) {
   const optionsRequired = requiresOptions(question.type);
+  const [bulkPasteOpen, setBulkPasteOpen] = useState(false);
+  const [bulkPasteValue, setBulkPasteValue] = useState("");
 
   const ensureType = (nextType: QuestionType) => {
     if (readOnly) return;
@@ -64,6 +67,18 @@ export default function QuestionCard({
           : ["Option 1"]
         : [],
     });
+  };
+
+  const applyBulkPasteOptions = () => {
+    if (readOnly) return;
+    const parsed = bulkPasteValue
+      .split(/\r?\n/)
+      .map((line) => line.trim())
+      .filter((line) => line.length > 0);
+    if (parsed.length === 0) return;
+    onUpdate(question.id, { options: parsed });
+    setBulkPasteOpen(false);
+    setBulkPasteValue("");
   };
 
   return (
@@ -185,6 +200,55 @@ export default function QuestionCard({
                 <Plus size={14} />
                 Add option
               </Button>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => {
+                  if (readOnly) return;
+                  setBulkPasteOpen((prev) => !prev);
+                  if (!bulkPasteOpen) {
+                    setBulkPasteValue(question.options.join("\n"));
+                  }
+                }}
+                disabled={readOnly}
+              >
+                {bulkPasteOpen ? "Close bulk paste" : "Bulk paste"}
+              </Button>
+
+              {bulkPasteOpen ? (
+                <div className="space-y-2 rounded-xl border border-border bg-surface-2 p-3">
+                  <p className="text-xs text-ink-muted">
+                    One option per line. Empty lines will be ignored.
+                  </p>
+                  <Textarea
+                    value={bulkPasteValue}
+                    onChange={(event) => setBulkPasteValue(event.target.value)}
+                    className="min-h-[110px]"
+                    placeholder={"Option 1\nOption 2\nOption 3"}
+                    disabled={readOnly}
+                  />
+                  <div className="flex justify-end gap-2">
+                    <Button
+                      variant="secondary"
+                      size="sm"
+                      onClick={() => {
+                        setBulkPasteOpen(false);
+                        setBulkPasteValue("");
+                      }}
+                      disabled={readOnly}
+                    >
+                      Cancel
+                    </Button>
+                    <Button
+                      size="sm"
+                      onClick={applyBulkPasteOptions}
+                      disabled={readOnly}
+                    >
+                      Replace options
+                    </Button>
+                  </div>
+                </div>
+              ) : null}
             </div>
           ) : null}
 

@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import Link from "next/link";
 import { useParams } from "next/navigation";
 import { ChevronLeft, ChevronRight, Trash2 } from "lucide-react";
@@ -24,34 +25,56 @@ const formatDate = (value: string) =>
 export default function FormResponsesPage() {
   const params = useParams();
   const formId = Array.isArray(params?.id) ? params.id[0] : params?.id;
+  const queryClient = useQueryClient();
 
-  const [form, setForm] = useState<ResponsesPayload["form"] | null>(null);
-  const [responses, setResponses] = useState<ResponseRecord[]>([]);
   const [activeIndex, setActiveIndex] = useState(0);
-  const [loading, setLoading] = useState(Boolean(formId));
+  const [page, setPage] = useState(1);
+  const [pageSize] = useState(10);
   const [error, setError] = useState<string | null>(null);
   const [deleteOpen, setDeleteOpen] = useState(false);
   const [deleting, setDeleting] = useState(false);
 
-  useEffect(() => {
-    if (!formId) return;
+  const {
+    data,
+    isLoading,
+    isFetching,
+    error: queryError,
+    refetch,
+  } = useQuery({
+    queryKey: ["form-responses", formId, page, pageSize],
+    queryFn: () => formsApi.responses(formId!, { page, limit: pageSize }),
+    enabled: Boolean(formId),
+    placeholderData: (previous) => previous,
+  });
 
-    formsApi
-      .responses(formId)
-      .then((payload) => {
-        setForm(payload.form);
-        setResponses(payload.data);
-      })
-      .catch((err) => {
-        const message = err instanceof ApiError ? err.message : "Failed to load responses";
-        setError(message);
-      })
-      .finally(() => {
-        setLoading(false);
-      });
-  }, [formId]);
+  const form = data?.form ?? null;
+  const responses = data?.data ?? [];
+  const meta = data?.meta;
+  const totalResponses = meta?.total ?? responses.length;
+  const totalPages = meta?.totalPages ?? 1;
+  const loadError =
+    error ??
+    (queryError
+      ? queryError instanceof ApiError
+        ? queryError.message
+        : "Failed to load responses"
+      : null);
 
   const activeResponse = responses[activeIndex] ?? null;
+
+  useEffect(() => {
+    setActiveIndex(0);
+  }, [page]);
+
+  useEffect(() => {
+    if (responses.length === 0 && page > 1 && !isFetching) {
+      setPage((prev) => Math.max(1, prev - 1));
+    }
+  }, [isFetching, page, responses.length]);
+
+  useEffect(() => {
+    setActiveIndex((prev) => Math.min(prev, Math.max(0, responses.length - 1)));
+  }, [responses.length]);
 
   const groupedAnswers = useMemo(() => {
     if (!activeResponse) return [];
@@ -96,8 +119,9 @@ export default function FormResponsesPage() {
 
     try {
       await formsApi.deleteResponse(formId, activeResponse.id);
-      setResponses((prev) => prev.filter((item) => item.id !== activeResponse.id));
-      setActiveIndex((prev) => Math.max(0, prev - 1));
+      await queryClient.invalidateQueries({
+        queryKey: ["form-responses", formId],
+      });
       setDeleteOpen(false);
     } catch (err) {
       const message = err instanceof ApiError ? err.message : "Failed to delete response";
@@ -135,7 +159,16 @@ export default function FormResponsesPage() {
           ) : null}
         </div>
 
-        {error ? <Card className="border-rose/40 bg-rose/10 text-sm text-rose">{error}</Card> : null}
+        {loadError ? (
+          <Card className="border-rose/40 bg-rose/10 text-sm text-rose">
+            <div className="flex flex-wrap items-center justify-between gap-3">
+              <span>{loadError}</span>
+              <Button variant="secondary" size="sm" onClick={() => void refetch()}>
+                Retry
+              </Button>
+            </div>
+          </Card>
+        ) : null}
 
         {form ? (
           <Card className="space-y-2 border-l-4 border-l-accent p-6">
@@ -144,7 +177,12 @@ export default function FormResponsesPage() {
           </Card>
         ) : null}
 
-        {!loading && responses.length === 0 ? (
+        {isLoading ? <Card className="text-sm text-ink-muted">Loading responses...</Card> : null}
+        {!isLoading && isFetching ? (
+          <Card className="text-sm text-ink-muted">Refreshing responses...</Card>
+        ) : null}
+
+        {!isLoading && !loadError && responses.length === 0 ? (
           <Card className="text-sm text-ink-muted">No responses yet.</Card>
         ) : null}
 
@@ -177,9 +215,35 @@ export default function FormResponsesPage() {
               </div>
 
               <p className="text-sm font-medium">
-                {activeIndex + 1} of {responses.length}
+                {activeIndex + 1} of {responses.length} (page {page} of {totalPages})
               </p>
               <p className="text-xs text-ink-muted">Submitted: {formatDate(activeResponse.createdAt)}</p>
+            </Card>
+
+            <Card className="flex flex-wrap items-center justify-between gap-3 p-4">
+              <div className="flex items-center gap-2">
+                <Button
+                  variant="secondary"
+                  size="sm"
+                  onClick={() => setPage((prev) => Math.max(1, prev - 1))}
+                  disabled={page <= 1}
+                >
+                  <ChevronLeft size={14} />
+                  Prev Page
+                </Button>
+                <Button
+                  variant="secondary"
+                  size="sm"
+                  onClick={() => setPage((prev) => Math.min(totalPages, prev + 1))}
+                  disabled={page >= totalPages}
+                >
+                  Next Page
+                  <ChevronRight size={14} />
+                </Button>
+              </div>
+              <p className="text-sm text-ink-muted">
+                Total responses: {totalResponses}
+              </p>
             </Card>
 
             <div className="space-y-3">

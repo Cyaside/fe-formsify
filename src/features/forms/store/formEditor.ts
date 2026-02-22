@@ -41,6 +41,7 @@ type EditorState = {
   setFormMeta: (title: string, description: string) => void;
   setSections: (sections: EditorSection[]) => void;
   addSection: (section: EditorSection) => void;
+  duplicateSection: (id: string) => void;
   updateSection: (id: string, next: Partial<EditorSection>) => void;
   moveSection: (id: string, direction: -1 | 1) => void;
   removeSection: (id: string) => void;
@@ -152,6 +153,53 @@ export const useFormEditorStore = create<EditorState>((set) => ({
     set((state) => ({
       sections: normalizeSectionOrders([...state.sections, section]),
     })),
+  duplicateSection: (id) =>
+    set((state) => {
+      const sectionIndex = state.sections.findIndex((section) => section.id === id);
+      if (sectionIndex === -1) return state;
+
+      const sourceSection = state.sections[sectionIndex];
+      const nextSectionId = createTempId();
+      const duplicatedSection: EditorSection = {
+        ...sourceSection,
+        id: nextSectionId,
+        title: sourceSection.title.trim()
+          ? `${sourceSection.title} (Copy)`
+          : "Section Copy",
+      };
+
+      const nextSections = [...state.sections];
+      nextSections.splice(sectionIndex + 1, 0, duplicatedSection);
+
+      const sourceQuestions = state.questions.filter(
+        (question) => question.sectionId === sourceSection.id,
+      );
+      if (sourceQuestions.length === 0) {
+        return {
+          sections: normalizeSectionOrders(nextSections),
+        };
+      }
+
+      const duplicatedQuestions = sourceQuestions.map((question) => ({
+        ...question,
+        id: createTempId(),
+        sectionId: nextSectionId,
+      }));
+
+      const insertIndex =
+        state.questions.reduce((lastIndex, question, index) => {
+          if (question.sectionId === sourceSection.id) return index + 1;
+          return lastIndex;
+        }, -1) || state.questions.length;
+
+      const nextQuestions = [...state.questions];
+      nextQuestions.splice(insertIndex, 0, ...duplicatedQuestions);
+
+      return {
+        sections: normalizeSectionOrders(nextSections),
+        questions: normalizeQuestionOrders(nextQuestions),
+      };
+    }),
   updateSection: (id, next) =>
     set((state) => ({
       sections: state.sections.map((section) =>

@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useDeferredValue, useMemo, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import Link from "next/link";
 import { ArrowUpDown, Copy, Plus, Trash2 } from "lucide-react";
@@ -29,10 +29,13 @@ export default function DashboardFormsPage() {
   const [deleteTarget, setDeleteTarget] = useState<FormSummary | null>(null);
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [copiedShareId, setCopiedShareId] = useState<string | null>(null);
+  const deferredQuery = useDeferredValue(query);
+  const searchKeyword = deferredQuery.trim();
 
-  const { data, isLoading, error: queryError } = useQuery({
-    queryKey: ["forms", "mine"],
-    queryFn: () => formsApi.list(),
+  const { data, isLoading, isFetching, error: queryError } = useQuery({
+    queryKey: ["forms", "mine", { search: searchKeyword, filter, sort }],
+    queryFn: () => formsApi.list({ search: searchKeyword || undefined, status: filter, sort }),
+    placeholderData: (previous) => previous,
   });
 
   const forms = useMemo(() => data?.data ?? [], [data]);
@@ -51,27 +54,12 @@ export default function DashboardFormsPage() {
       timeStyle: "short",
     });
 
-    return forms
-      .map((form) => ({
-        ...form,
-        status: form.isPublished ? "published" : "draft",
-        updatedLabel: formatter.format(new Date(form.updatedAt)),
-      }))
-      .filter((form) => {
-        if (filter !== "all" && form.status !== filter) return false;
-        const keyword = query.trim().toLowerCase();
-        if (!keyword) return true;
-        return (
-          form.title.toLowerCase().includes(keyword) ||
-          (form.description ?? "").toLowerCase().includes(keyword)
-        );
-      })
-      .sort((a, b) => {
-        const left = new Date(a.updatedAt).getTime();
-        const right = new Date(b.updatedAt).getTime();
-        return sort === "newest" ? right - left : left - right;
-      });
-  }, [filter, forms, query, sort]);
+    return forms.map((form) => ({
+      ...form,
+      status: form.isPublished ? "published" : "draft",
+      updatedLabel: formatter.format(new Date(form.updatedAt)),
+    }));
+  }, [forms]);
 
   const handleDeleteForm = async () => {
     if (!deleteTarget) return;
@@ -79,10 +67,7 @@ export default function DashboardFormsPage() {
     setDeletingId(deleteTarget.id);
     try {
       await formsApi.remove(deleteTarget.id);
-      queryClient.setQueryData<{ data: FormSummary[] }>(["forms", "mine"], (prev) => {
-        if (!prev) return prev;
-        return { ...prev, data: prev.data.filter((form) => form.id !== deleteTarget.id) };
-      });
+      await queryClient.invalidateQueries({ queryKey: ["forms", "mine"] });
       setDeleteTarget(null);
     } catch (err) {
       const message = err instanceof ApiError ? err.message : "Failed to delete form";
@@ -145,6 +130,9 @@ export default function DashboardFormsPage() {
               </Card>
 
               {isLoading ? <Card className="text-sm text-ink-muted">Loading forms...</Card> : null}
+              {!isLoading && isFetching ? (
+                <Card className="text-sm text-ink-muted">Updating forms...</Card>
+              ) : null}
               {errorMessage ? (
                 <Card className="border-rose/40 bg-rose/10 text-sm text-rose">
                   {errorMessage}

@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Plus } from "lucide-react";
 import type { QuestionType } from "@/features/forms/store/formEditor";
-import { QUESTION_TYPE_OPTIONS } from "./constants";
+import { QUESTION_TYPE_OPTIONS } from "../lib/constants";
 import Button from "@/shared/ui/Button";
 
 type FloatingAddQuestionProps = {
