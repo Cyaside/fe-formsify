@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import Link from "next/link";
 import ThemeToggle from "@/shared/theme/ThemeToggle";
 import { useAuth } from "@/features/auth/AuthProvider";
@@ -16,10 +17,14 @@ export default function DashboardHeader() {
     <header className="mx-6 mt-6 flex flex-col gap-6 rounded-3xl border border-white/10 bg-surface/85 px-6 py-6 shadow-soft backdrop-blur">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
-          <div className="relative flex h-10 w-10 items-center justify-center rounded-2xl border border-lavender/40 bg-page/70">
-            <span className="absolute h-4 w-4 rounded-md border border-lavender/70 bg-violet" />
-            <span className="absolute -bottom-1 -right-1 h-3 w-3 rounded-full bg-sun" />
-          </div>
+          <Image
+            src="/logowithword.png"
+            alt="Formsify"
+            width={180}
+            height={48}
+            className="h-10 w-auto"
+            priority
+          />
           <div>
             <p className="text-xs font-semibold uppercase tracking-[0.35em] text-lavender">
               Dashboard

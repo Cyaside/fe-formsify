@@ -35,7 +35,7 @@ export default function AboutSection() {
 
         <div className="order-1 md:order-2 flex items-center justify-center">
           <Image
-            src="/formss.png"
+            src="/logo.png"
             alt="Forms preview"
             width={540}
             height={360}
