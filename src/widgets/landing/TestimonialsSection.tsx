@@ -1,5 +1,3 @@
-"use client";
-
 "use client"
 
 import Container from "@/shared/ui/Container";
@@ -34,8 +32,6 @@ const testimonials = [
   },
 ];
 
-import { DecoLeft, DecoRight } from "@/widgets/landing/components/Decorations";
-
 export default function TestimonialsSection() {
   const items = [...testimonials, ...testimonials];
 
@@ -44,22 +40,18 @@ export default function TestimonialsSection() {
       id="testimonials"
       className="relative overflow-hidden bg-page py-20 md:py-28"
     >
-      {/* Corner decorations */}
-      <DecoLeft />
-      <DecoRight />
-
       <Container>
         {/* ── Heading ── */}
         <div className="relative z-10 mb-14 text-center">
           {/* eyebrow */}
-          <p className="mb-3 text-sm font-semibold uppercase tracking-[0.2em] text-lavender/80">
+          <p className="mb-3 text-sm font-semibold uppercase tracking-[0.2em] text-accent/80">
             Reviews
           </p>
 
           {/* Main heading — matches "Alter your Ideas Into Reality" style */}
           <h2 className="font-extrabold leading-tight text-ink" style={{ fontSize: "clamp(2rem, 5vw, 3.25rem)" }}>
             Cerita dari tim yang{" "}
-            <span className="text-lavender">membangun</span>
+            <span className="text-accent">membangun</span>
             <br className="hidden sm:block" /> form lebih cepat.
           </h2>
 
@@ -73,10 +65,6 @@ export default function TestimonialsSection() {
         {/* ── Marquee carousel ── */}
         <div className="overflow-hidden">
           <div className="relative">
-            {/* fade edges */}
-            <div className="pointer-events-none absolute inset-y-0 left-0 z-10 w-20 bg-gradient-to-r from-page" />
-            <div className="pointer-events-none absolute inset-y-0 right-0 z-10 w-20 bg-gradient-to-l from-page" />
-
             <div className="group">
               <div
                 className="flex w-max gap-6 py-4"
@@ -96,8 +84,7 @@ export default function TestimonialsSection() {
                   <div
                     key={`${item.name}-${index}`}
                     aria-hidden={index >= testimonials.length}
-                    className="flex min-w-[260px] max-w-[280px] flex-col justify-between gap-4 rounded-2xl border border-white/10 bg-surface/70 p-5 shadow-md transition-transform duration-300 hover:-translate-y-1"
-                    style={{ boxShadow: "0 8px 28px rgba(91,63,217,0.08)" }}
+                    className="flex min-w-[260px] max-w-[280px] flex-col justify-between gap-4 rounded-2xl border border-border bg-surface p-5 shadow-soft transition-transform duration-300 hover:-translate-y-1"
                   >
                     {/* quote */}
                       <p className="text-sm leading-6 text-ink-muted">
@@ -109,7 +96,7 @@ export default function TestimonialsSection() {
                       {/* avatar placeholder with brand color */}
                       <div
                         className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-full text-xs font-bold text-white"
-                        style={{ background: "#5B3FD9" }}
+                        style={{ background: "var(--accent-700)" }}
                       >
                         {item.name.charAt(0)}
                       </div>

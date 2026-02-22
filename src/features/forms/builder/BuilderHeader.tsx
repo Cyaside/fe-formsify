@@ -39,7 +39,7 @@ export default function BuilderHeader({
   }
 
   return (
-    <header className="sticky top-0 z-20 border-b border-border bg-page/95 backdrop-blur">
+    <header className="sticky top-0 z-20 border-b border-border bg-page">
       <div className="mx-auto flex w-full max-w-4xl flex-col gap-4 px-4 py-4 md:px-6">
         <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
           <div className="w-full max-w-2xl space-y-3">

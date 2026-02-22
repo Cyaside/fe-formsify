@@ -26,7 +26,7 @@ export default function DashboardForms({ forms, loading, error }: DashboardForms
   const getContent = () => {
     if (loading) {
       return (
-        <div className="rounded-2xl border border-white/10 bg-page/70 p-4 text-sm text-ink-muted">
+        <div className="rounded-2xl border border-border bg-surface-2 p-4 text-sm text-ink-muted">
           Memuat form terbaru...
         </div>
       );
@@ -42,7 +42,7 @@ export default function DashboardForms({ forms, loading, error }: DashboardForms
 
     if (formattedForms.length === 0) {
       return (
-        <div className="rounded-2xl border border-white/10 bg-page/70 p-4 text-sm text-ink-muted">
+        <div className="rounded-2xl border border-border bg-surface-2 p-4 text-sm text-ink-muted">
           Belum ada form. Buat form baru untuk mulai.
         </div>
       );
@@ -51,7 +51,7 @@ export default function DashboardForms({ forms, loading, error }: DashboardForms
     return formattedForms.map((form) => (
       <div
         key={form.id}
-        className="flex flex-col gap-4 rounded-2xl border border-white/10 bg-page/70 p-4 md:flex-row md:items-center md:justify-between"
+        className="flex flex-col gap-4 rounded-2xl border border-border bg-surface-2 p-4 md:flex-row md:items-center md:justify-between"
       >
         <div>
           <p className="text-sm font-semibold text-ink">{form.title}</p>
@@ -63,7 +63,7 @@ export default function DashboardForms({ forms, loading, error }: DashboardForms
           <span className="text-xs">{form.description || "Tanpa deskripsi"}</span>
           <Link
             href="/dashboard/forms"
-            className="rounded-full bg-lavender px-4 py-2 text-xs font-semibold text-violet-deep transition hover:bg-sun"
+            className="rounded-full bg-accent px-4 py-2 text-xs font-semibold text-white transition-colors hover:bg-accent-900"
           >
             Buka
           </Link>
@@ -73,12 +73,12 @@ export default function DashboardForms({ forms, loading, error }: DashboardForms
   };
 
   return (
-    <div className="rounded-3xl border border-white/10 bg-surface/70 p-6">
+    <div className="rounded-3xl border border-border bg-surface p-6 shadow-soft">
       <div className="flex items-center justify-between">
         <h2 className="text-lg font-semibold text-ink font-display">Form Terbaru</h2>
         <Link
           href="/dashboard/forms"
-          className="rounded-full border border-lavender/40 px-4 py-2 text-xs font-semibold uppercase tracking-[0.25em] text-lavender transition hover:bg-lavender hover:text-violet-deep"
+          className="rounded-full border border-accent/30 px-4 py-2 text-xs font-semibold uppercase tracking-[0.25em] text-accent transition-colors hover:bg-accent hover:text-white"
         >
           Lihat Semua
         </Link>

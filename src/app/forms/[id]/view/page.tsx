@@ -91,7 +91,7 @@ export default function FormPreviewPage() {
 
         {form ? (
           <>
-            <Card className="border-l-4 border-l-lavender p-6">
+            <Card className="border-l-4 border-l-accent p-6">
               <h1 className="text-2xl font-semibold">{form.title}</h1>
               <p className="mt-2 text-sm text-ink-muted">{form.description || "No description"}</p>
             </Card>

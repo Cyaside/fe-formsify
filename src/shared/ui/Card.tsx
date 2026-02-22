@@ -6,7 +6,7 @@ const cardStyles = cva("rounded-2xl border border-border bg-surface p-5 shadow-s
   variants: {
     variant: {
       default: "",
-      subtle: "bg-surface-2",
+      subtle: "bg-surface-2 shadow-none",
       ghost: "border-transparent bg-transparent shadow-none",
     },
   },

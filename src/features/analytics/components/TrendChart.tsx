@@ -37,20 +37,20 @@ export default function TrendChart({ data, bucket }: TrendChartProps) {
     <div className="h-72 w-full">
       <ResponsiveContainer width="100%" height="100%">
         <LineChart data={data}>
-          <CartesianGrid stroke="rgba(255,255,255,0.08)" strokeDasharray="4 4" />
+          <CartesianGrid stroke="var(--border)" strokeDasharray="4 4" />
           <XAxis
             dataKey="date"
             tickFormatter={(value) => formatDateLabel(String(value), bucket)}
             tick={{ fill: "var(--ink-muted)", fontSize: 12 }}
-            axisLine={{ stroke: "rgba(255,255,255,0.12)" }}
+            axisLine={{ stroke: "var(--border)" }}
           />
           <YAxis
             allowDecimals={false}
             tick={{ fill: "var(--ink-muted)", fontSize: 12 }}
-            axisLine={{ stroke: "rgba(255,255,255,0.12)" }}
+            axisLine={{ stroke: "var(--border)" }}
           />
           <Tooltip
-            cursor={{ stroke: "rgba(202,166,255,0.5)", strokeWidth: 1 }}
+            cursor={{ stroke: "var(--accent-500)", strokeWidth: 1 }}
             formatter={(value) => [typeof value === "number" ? value : 0, "Responses"]}
             labelFormatter={(label) => formatDateLabel(String(label), bucket)}
             contentStyle={{
@@ -64,7 +64,7 @@ export default function TrendChart({ data, bucket }: TrendChartProps) {
           <Line
             type="monotone"
             dataKey="count"
-            stroke="var(--lavender)"
+            stroke="var(--accent-700)"
             strokeWidth={3}
             dot={false}
           />

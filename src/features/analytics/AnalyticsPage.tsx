@@ -14,8 +14,12 @@ import TrendChart from "./components/TrendChart";
 import { getRangeDates, rangeOptions } from "./lib/range";
 import { buildTrendSeries } from "./lib/trend";
 import DashboardMobileNav from "@/widgets/dashboard/DashboardMobileNav";
+import FormStatusPieChart from "./components/FormStatusPieChart";
+import { formsApi } from "@/shared/api/forms";
+import { useAuth } from "@/features/auth/AuthProvider";
 
 export default function AnalyticsPage() {
+  const { user } = useAuth();
   const [rangeIndex, setRangeIndex] = useState(1);
   const range = rangeOptions[rangeIndex] ?? rangeOptions[1];
 
@@ -26,10 +30,21 @@ export default function AnalyticsPage() {
     queryFn: () => analyticsApi.global({ from, to, bucket: range.bucket }),
   });
 
+  const { data: formsData, isLoading: formsLoading, error: formsError } = useQuery({
+    queryKey: ["forms", "mine", user?.id],
+    queryFn: () => formsApi.list(),
+    enabled: Boolean(user),
+  });
+
   const errorMessage = useMemo(() => {
     if (!error) return null;
     return error instanceof ApiError ? error.message : "Failed to load analytics.";
   }, [error]);
+
+  const formsErrorMessage = useMemo(() => {
+    if (!formsError) return null;
+    return formsError instanceof ApiError ? formsError.message : "Failed to load forms.";
+  }, [formsError]);
 
   const totals = data?.data.totals;
   const bucket = data?.data.range.bucket ?? range.bucket;
@@ -38,6 +53,15 @@ export default function AnalyticsPage() {
     () => buildTrendSeries(rawTrend, from, to, bucket),
     [bucket, from, rawTrend, to],
   );
+  const forms = formsData?.data ?? [];
+  const formStatusData = useMemo(() => {
+    const published = forms.filter((form) => form.isPublished).length;
+    const draft = forms.length - published;
+    return [
+      { label: "Dipublish", value: published, color: "var(--accent-700)" },
+      { label: "Draft", value: draft, color: "var(--accent-300)" },
+    ];
+  }, [forms]);
 
   return (
     <RequireAuth>
@@ -50,7 +74,7 @@ export default function AnalyticsPage() {
             <main className="flex-1 space-y-6 px-6 py-8 pb-24">
               <div className="flex flex-wrap items-center justify-between gap-3">
                 <div>
-                  <p className="text-xs uppercase tracking-[0.24em] text-lavender">
+                  <p className="text-xs uppercase tracking-[0.24em] text-accent">
                     Analytics
                   </p>
                   <h2 className="mt-2 text-2xl font-semibold">Global Analytics</h2>
@@ -117,11 +141,35 @@ export default function AnalyticsPage() {
                         Responses over time
                       </h3>
                       <p className="text-xs text-ink-muted">
-                        {from} to {to} · Bucket: {bucket}
+                        {from} to {to} - Bucket: {bucket}
                       </p>
                     </div>
 
                     <TrendChart data={trend} bucket={bucket} />
+                  </Card>
+
+                  <Card className="space-y-4">
+                    <div>
+                      <p className="text-xs uppercase tracking-[0.24em] text-ink-muted">
+                        Status Form
+                      </p>
+                      <h3 className="mt-2 text-lg font-semibold">Distribusi Form</h3>
+                      <p className="text-xs text-ink-muted">
+                        Perbandingan form dipublish vs draft
+                      </p>
+                    </div>
+
+                    {formsLoading ? (
+                      <div className="text-sm text-ink-muted">
+                        Loading form breakdown...
+                      </div>
+                    ) : null}
+                    {formsErrorMessage ? (
+                      <div className="text-sm text-rose">{formsErrorMessage}</div>
+                    ) : null}
+                    {!formsLoading && !formsErrorMessage ? (
+                      <FormStatusPieChart data={formStatusData} />
+                    ) : null}
                   </Card>
                 </>
               ) : null}

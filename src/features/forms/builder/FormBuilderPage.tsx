@@ -882,7 +882,7 @@ export default function FormBuilderPage({ initialFormId }: Readonly<FormBuilderP
 
             return (
               <div key={section.id} className="space-y-3">
-                <Card className="border-t-4 border-t-lavender/70 p-4 md:p-5">
+                <Card className="border-t-4 border-t-accent/70 p-4 md:p-5">
                   <div className="flex flex-wrap items-start justify-between gap-3">
                     <div className="min-w-0 flex-1 space-y-2">
                       <Input
@@ -982,7 +982,7 @@ export default function FormBuilderPage({ initialFormId }: Readonly<FormBuilderP
     <RequireAuth>
       <div className="min-h-screen bg-page text-ink">
         <Container className="max-w-4xl py-6 md:py-8">
-          <Card className="mb-4 border-t-4 border-t-lavender p-6">
+          <Card className="mb-4 border-t-4 border-t-accent p-6">
             <div className="space-y-3">
               <Input
                 value={title}
@@ -1018,7 +1018,7 @@ export default function FormBuilderPage({ initialFormId }: Readonly<FormBuilderP
             </Card>
           ) : null}
 
-          <nav className="sticky top-3 z-20 mb-4 rounded-2xl border border-border bg-surface/90 p-3 shadow-[0_14px_32px_rgba(8,6,20,0.2)] backdrop-blur">
+          <nav className="sticky top-3 z-20 mb-4 rounded-2xl border border-border bg-surface p-3 shadow-soft">
             <div className="flex flex-wrap items-center justify-between gap-3">
               <div className="relative">
                 <div className="flex items-center gap-2">

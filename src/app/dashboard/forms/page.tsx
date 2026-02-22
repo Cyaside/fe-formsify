@@ -116,7 +116,7 @@ export default function DashboardFormsPage() {
             <main className="flex-1 space-y-6 px-6 py-8 pb-24">
               <div className="flex flex-wrap items-center justify-between gap-3">
                 <div>
-                  <p className="text-xs uppercase tracking-[0.24em] text-lavender">Forms</p>
+                  <p className="text-xs uppercase tracking-[0.24em] text-accent">Forms</p>
                   <h2 className="mt-2 text-2xl font-semibold">Your Forms</h2>
                 </div>
                 <Link href="/forms/new">

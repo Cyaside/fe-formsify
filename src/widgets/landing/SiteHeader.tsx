@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import ThemeToggle from "@/shared/theme/ThemeToggle";
 import Container from "@/shared/ui/Container";
 
@@ -16,11 +17,15 @@ export default function SiteHeader() {
     <header className="absolute left-0 right-0 top-0 z-20">
       <Container className="flex items-center justify-between py-6">
         <div className="flex items-center gap-3">
-          <div className="relative flex h-10 w-10 items-center justify-center rounded-2xl border border-lavender/40 bg-surface/80">
-            <span className="absolute h-4 w-4 rounded-md border border-lavender/70 bg-violet" />
-            <span className="absolute -bottom-1 -right-1 h-3 w-3 rounded-full bg-sun" />
-          </div>
-          <span className="text-sm font-semibold uppercase tracking-[0.3em] text-lavender">
+          <Image
+            src="/logo.png"
+            alt="Formsify logo"
+            width={48}
+            height={48}
+            className="h-10 w-auto"
+            priority
+          />
+          <span className="text-sm font-semibold uppercase tracking-[0.3em] text-accent">
             Formsify
           </span>
         </div>
@@ -29,7 +34,7 @@ export default function SiteHeader() {
             <a
               key={item.href}
               href={item.href}
-              className="transition hover:text-lavender"
+              className="transition-colors hover:text-accent"
             >
               {item.label}
             </a>

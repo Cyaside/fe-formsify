@@ -168,7 +168,7 @@ export default function FormSummaryPage() {
         {error ? <Card className="border-rose/40 bg-rose/10 text-sm text-rose">{error}</Card> : null}
 
         {form ? (
-          <Card className="space-y-2 border-l-4 border-l-lavender p-6">
+          <Card className="space-y-2 border-l-4 border-l-accent p-6">
             <h1 className="text-2xl font-semibold">{form.title}</h1>
             <p className="text-sm text-ink-muted">{form.description || "No description"}</p>
             <p className="text-xs text-ink-muted">{responses.length} responses</p>

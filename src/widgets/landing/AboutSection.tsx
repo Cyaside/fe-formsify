@@ -35,11 +35,11 @@ export default function AboutSection() {
 
         <div className="order-1 md:order-2 flex items-center justify-center">
           <Image
-            src="/formss.png"
+            src="/logo.png"
             alt="Forms preview"
             width={540}
             height={360}
-            className="h-auto w-full max-w-[540px] rounded-2xl object-cover shadow-lg"
+            className="h-auto w-full max-w-[540px] rounded-2xl border border-border object-cover shadow-soft"
             priority
           />
         </div>

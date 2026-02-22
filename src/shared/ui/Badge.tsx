@@ -7,8 +7,9 @@ const badgeStyles = cva(
   {
     variants: {
       variant: {
-        draft: "border border-sun/40 bg-sun/10 text-sun",
-        published: "border border-lavender/40 bg-lavender/10 text-lavender",
+        draft: "border border-sun/25 bg-sun/10 text-sun",
+        published:
+          "border border-accent/20 bg-accent-100 text-accent-900 dark:border-accent-700 dark:bg-accent-700 dark:text-white",
         muted: "border border-border bg-surface-2 text-ink-muted",
       },
     },

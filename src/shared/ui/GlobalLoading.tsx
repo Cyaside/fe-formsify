@@ -25,13 +25,13 @@ export default function GlobalLoading() {
   if (!visible) return null;
 
   return (
-    <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-page/80 backdrop-blur-sm">
+    <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/40 p-4">
       <div
         role="status"
         aria-live="polite"
         className="flex flex-col items-center gap-2 rounded-2xl border border-border bg-surface px-6 py-5 text-center shadow-pop"
       >
-        <Loader2 className="h-7 w-7 animate-spin text-lavender" />
+        <Loader2 className="h-7 w-7 animate-spin text-accent" />
         <p className="text-sm text-ink-muted">Loading...</p>
       </div>
     </div>

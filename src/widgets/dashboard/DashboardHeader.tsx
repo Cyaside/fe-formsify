@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import Link from "next/link";
 import ThemeToggle from "@/shared/theme/ThemeToggle";
 import { useAuth } from "@/features/auth/AuthProvider";
@@ -13,15 +14,19 @@ export default function DashboardHeader() {
   const displayName = user?.name || user?.email || "Pengguna";
 
   return (
-    <header className="mx-6 mt-6 flex flex-col gap-6 rounded-3xl border border-white/10 bg-surface/85 px-6 py-6 shadow-soft backdrop-blur">
+    <header className="mx-6 mt-6 flex flex-col gap-6 rounded-3xl border border-border bg-surface px-6 py-6 shadow-soft">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
-          <div className="relative flex h-10 w-10 items-center justify-center rounded-2xl border border-lavender/40 bg-page/70">
-            <span className="absolute h-4 w-4 rounded-md border border-lavender/70 bg-violet" />
-            <span className="absolute -bottom-1 -right-1 h-3 w-3 rounded-full bg-sun" />
-          </div>
+          <Image
+            src="/logowithword.png"
+            alt="Formsify"
+            width={180}
+            height={48}
+            className="h-10 w-auto"
+            priority
+          />
           <div>
-            <p className="text-xs font-semibold uppercase tracking-[0.35em] text-lavender">
+            <p className="text-xs font-semibold uppercase tracking-[0.35em] text-accent">
               Dashboard
             </p>
             <p className="mt-1 text-sm text-ink-muted">
@@ -43,8 +48,8 @@ export default function DashboardHeader() {
           </h1>
         </div>
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
-          <div className="flex items-center gap-2 rounded-full border border-white/10 bg-page/60 px-4 py-2 text-sm text-ink-muted">
-            <span className="h-2 w-2 rounded-full bg-lavender" />
+          <div className="flex items-center gap-2 rounded-full border border-border bg-surface-2 px-4 py-2 text-sm text-ink-muted">
+            <span className="h-2 w-2 rounded-full bg-accent" />
             <span>Cari form, template, atau respon</span>
           </div>
           <div className="flex items-center gap-3">
@@ -57,7 +62,7 @@ export default function DashboardHeader() {
                 logout();
                 router.replace("/");
               }}
-              className="rounded-full border border-lavender/40 px-4 py-2 text-xs font-semibold uppercase tracking-[0.25em] text-lavender transition hover:bg-lavender hover:text-violet-deep"
+              className="rounded-full border border-accent/30 px-4 py-2 text-xs font-semibold uppercase tracking-[0.25em] text-accent transition-colors hover:bg-accent hover:text-white"
             >
               Logout
             </button>

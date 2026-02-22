@@ -48,7 +48,7 @@ const getValidationErrors = (questions: Question[], answers: AnswerState) => {
 };
 
 const submitMessageClassName = (submitMessage: string) =>
-  `text-sm ${submitMessage.includes("success") ? "text-lavender" : "text-rose"}`;
+  `text-sm ${submitMessage.includes("success") ? "text-accent" : "text-rose"}`;
 
 const buildSubmitAnswers = (questions: Question[], answers: AnswerState): SubmitAnswer[] => {
   return questions.flatMap<SubmitAnswer>((question) => {
@@ -114,7 +114,7 @@ function QuestionInputField({
                 name={question.id}
                 checked={answer === option.id}
                 onChange={() => onSetAnswer(question.id, option.id)}
-                className="h-4 w-4"
+                className="h-4 w-4 accent-accent"
               />
               {option.label}
             </label>
@@ -133,7 +133,7 @@ function QuestionInputField({
                 type="checkbox"
                 checked={selected.includes(option.id)}
                 onChange={() => onToggleCheckbox(question.id, option.id)}
-                className="h-4 w-4"
+                className="h-4 w-4 accent-accent"
               />
               {option.label}
             </label>
@@ -184,7 +184,7 @@ function FillFormContent({
 
   return (
     <form onSubmit={onSubmit} className="space-y-4">
-      <Card className="border-l-4 border-l-violet p-6">
+      <Card className="border-l-4 border-l-accent p-6">
         <h1 className="text-2xl font-semibold">{form.title}</h1>
         <p className="mt-2 text-sm text-ink-muted">{form.description || "No description"}</p>
         <p className="mt-4 text-xs text-ink-muted">* Required</p>
@@ -246,7 +246,7 @@ function FillFormContent({
           </div>
           <div className="h-2 rounded-full bg-surface-2">
             <div
-              className="h-full rounded-full bg-lavender"
+              className="h-full rounded-full bg-accent"
               style={{ width: `${((pageIndex + 1) / totalPages) * 100}%` }}
             />
           </div>
