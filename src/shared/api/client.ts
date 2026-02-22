@@ -41,7 +41,11 @@ export async function apiRequest<T>(
     startGlobalLoading();
   }
 
-  const url = path.startsWith("http") ? path : `${API_BASE_URL}${path}`;
+  const url = path.startsWith("http")
+    ? path
+    : path.startsWith("/api/")
+      ? path
+      : `${API_BASE_URL}${path}`;
   const headers = new Headers(fetchOptions.headers);
 
   if (!headers.has("Content-Type") && body !== undefined) {
