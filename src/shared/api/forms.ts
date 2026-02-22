@@ -82,6 +82,12 @@ export type ResponsesPayload = {
     title: string;
     description?: string | null;
   };
+  meta?: {
+    page: number;
+    limit: number;
+    total: number;
+    totalPages: number;
+  };
 };
 
 export type ResponseDetailPayload = {
@@ -151,6 +157,17 @@ export type SubmitPayload = {
   answers: SubmitAnswer[];
 };
 
+export type FormsListParams = {
+  search?: string;
+  status?: "all" | "draft" | "published";
+  sort?: "newest" | "oldest";
+};
+
+export type ResponsesListParams = {
+  page?: number;
+  limit?: number;
+};
+
 type RequestOptions = {
   showGlobalLoading?: boolean;
 };
@@ -167,7 +184,8 @@ const buildQuery = (params?: Record<string, string | number | undefined>) => {
 };
 
 export const formsApi = {
-  list: () => apiRequest<{ data: FormSummary[] }>("/api/forms"),
+  list: (params?: FormsListParams) =>
+    apiRequest<{ data: FormSummary[] }>(`/api/forms${buildQuery(params)}`),
   listPublic: (params?: { page?: number; limit?: number }) =>
     apiRequest<{ data: FormSummary[] }>(`/api/forms/public${buildQuery(params)}`),
   detail: (formId: string) =>
@@ -253,8 +271,8 @@ export const formsApi = {
       body: payload,
       showGlobalLoading: options?.showGlobalLoading,
     }),
-  responses: (formId: string) =>
-    apiRequest<ResponsesPayload>(`/api/forms/${formId}/responses`),
+  responses: (formId: string, params?: ResponsesListParams) =>
+    apiRequest<ResponsesPayload>(`/api/forms/${formId}/responses${buildQuery(params)}`),
   responseDetail: (formId: string, responseId: string) =>
     apiRequest<ResponseDetailPayload>(`/api/forms/${formId}/responses/${responseId}`),
   deleteResponse: (formId: string, responseId: string) =>
