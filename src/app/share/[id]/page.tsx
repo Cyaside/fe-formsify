@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useParams } from "next/navigation";
 import Button from "@/shared/ui/Button";
 import Card from "@/shared/ui/Card";
@@ -278,6 +278,7 @@ function FillFormContent({
 }
 
 export default function SharedPublicFormPage() {
+  const actionCooldownMs = 350;
   const params = useParams();
   const formId = Array.isArray(params?.id) ? params.id[0] : params?.id;
   const invalidFormId = !formId;
@@ -294,6 +295,7 @@ export default function SharedPublicFormPage() {
   const [submitMessage, setSubmitMessage] = useState<string | null>(null);
   const [submitted, setSubmitted] = useState(false);
   const [pageIndex, setPageIndex] = useState(0);
+  const lastActionAtRef = useRef(0);
 
   useEffect(() => {
     if (!formId) return;
@@ -393,9 +395,19 @@ export default function SharedPublicFormPage() {
     );
   };
 
+  const claimAction = () => {
+    const now = Date.now();
+    if (now - lastActionAtRef.current < actionCooldownMs) {
+      return false;
+    }
+    lastActionAtRef.current = now;
+    return true;
+  };
+
   const handleSubmit = async (event: React.SyntheticEvent<HTMLFormElement>) => {
     event.preventDefault();
-    if (!formId || !validateAnswers()) return;
+    if (!formId || submitting || !validateAnswers()) return;
+    if (!claimAction()) return;
 
     setSubmitting(true);
     setSubmitMessage(null);
@@ -441,9 +453,13 @@ export default function SharedPublicFormPage() {
             totalPages={totalPages}
             onNextPage={() => {
               if (!validateCurrentPage()) return;
+              if (!claimAction()) return;
               setPageIndex((prev) => Math.min(prev + 1, totalPages - 1));
             }}
-            onPrevPage={() => setPageIndex((prev) => Math.max(prev - 1, 0))}
+            onPrevPage={() => {
+              if (!claimAction()) return;
+              setPageIndex((prev) => Math.max(prev - 1, 0));
+            }}
             answers={answers}
             validationErrors={validationErrors}
             submitting={submitting}

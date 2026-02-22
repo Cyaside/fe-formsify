@@ -1,5 +1,18 @@
+const unwrapEnvString = (value: string | undefined) => {
+  if (!value) return value;
+  const trimmed = value.trim();
+  if (
+    trimmed.length >= 2 &&
+    ((trimmed.startsWith('"') && trimmed.endsWith('"')) ||
+      (trimmed.startsWith("'") && trimmed.endsWith("'")))
+  ) {
+    return trimmed.slice(1, -1).trim();
+  }
+  return trimmed;
+};
+
 export const API_BASE_URL =
-  process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://localhost:4000";
+  unwrapEnvString(process.env.NEXT_PUBLIC_API_BASE_URL) ?? "http://localhost:4000";
 
 export class ApiError extends Error {
   status: number;
