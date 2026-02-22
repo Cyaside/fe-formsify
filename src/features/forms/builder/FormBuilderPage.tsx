@@ -61,6 +61,8 @@ const DEFAULT_THANK_YOU_TITLE = "Terima kasih!";
 const DEFAULT_THANK_YOU_MESSAGE = "Respons kamu sudah terekam.";
 const QUESTION_LOCK_MESSAGE =
   "Sorry the forms already has submission you cant edit, create and delete the questions it anymore";
+const PUBLISH_NO_QUESTION_MESSAGE =
+  "Tambahkan minimal satu pertanyaan sebelum publish.";
 
 const mapOptionLabels = (options: QuestionResponse["options"]) => {
   return options.toSorted((a, b) => a.order - b.order).map((item) => item.label);
@@ -92,6 +94,50 @@ const mapApiQuestionToEditor = (
     order: index,
     options: mapOptionLabels(question.options),
   };
+};
+
+const getPublishValidationMessage = (payload: {
+  title: string;
+  sections: EditorSection[];
+  questions: EditorQuestion[];
+}) => {
+  if (!payload.title.trim()) {
+    return "Judul form wajib diisi sebelum publish.";
+  }
+
+  if (payload.sections.length === 0) {
+    return "Form harus memiliki minimal satu section sebelum publish.";
+  }
+
+  if (payload.questions.length === 0) {
+    return PUBLISH_NO_QUESTION_MESSAGE;
+  }
+
+  const sectionIds = new Set(payload.sections.map((section) => section.id));
+  for (const question of payload.questions) {
+    if (!sectionIds.has(question.sectionId)) {
+      return "Ada pertanyaan yang belum terhubung ke section yang valid.";
+    }
+    if (!question.title.trim()) {
+      return "Semua pertanyaan harus memiliki judul sebelum publish.";
+    }
+    if (requiresOptions(question.type)) {
+      const validOptions = question.options.filter((option) => option.trim().length > 0);
+      if (validOptions.length === 0) {
+        return "Pertanyaan pilihan wajib memiliki minimal satu opsi.";
+      }
+    }
+  }
+
+  return null;
+};
+
+const resolveBuilderActionErrorMessage = (err: unknown, fallback: string) => {
+  if (!(err instanceof ApiError)) return fallback;
+  if (err.status === 409) {
+    return "Form sudah memiliki respons. Struktur pertanyaan tidak bisa diubah lagi.";
+  }
+  return err.message || fallback;
 };
 
 function createDefaultSection(index: number): EditorSection {
@@ -804,6 +850,16 @@ export default function FormBuilderPage({ initialFormId }: Readonly<FormBuilderP
   };
 
   const handlePublish = async () => {
+    const publishValidationError = getPublishValidationMessage({
+      title,
+      sections,
+      questions,
+    });
+    if (publishValidationError) {
+      setSaveMessage(publishValidationError);
+      return;
+    }
+
     try {
       setPublishing(true);
       await enqueueSave(savePayload, { showGlobalLoading: true });
@@ -817,8 +873,8 @@ export default function FormBuilderPage({ initialFormId }: Readonly<FormBuilderP
       }
       setSaveMessage("Published");
       router.push("/dashboard/forms");
-    } catch {
-      setSaveMessage("Failed to publish");
+    } catch (err) {
+      setSaveMessage(resolveBuilderActionErrorMessage(err, "Failed to publish"));
     } finally {
       setPublishing(false);
     }
@@ -838,8 +894,8 @@ export default function FormBuilderPage({ initialFormId }: Readonly<FormBuilderP
       }
       setSaveMessage("Draft saved");
       router.push("/dashboard/forms");
-    } catch {
-      setSaveMessage("Failed to save draft");
+    } catch (err) {
+      setSaveMessage(resolveBuilderActionErrorMessage(err, "Failed to save draft"));
     } finally {
       setSavingDraft(false);
     }
@@ -1085,7 +1141,12 @@ export default function FormBuilderPage({ initialFormId }: Readonly<FormBuilderP
                   <p className="text-xs text-ink-muted">{saveMessage}</p>
                 </div>
 
-                <Button className="gap-2" onClick={handlePublish} disabled={publishing}>
+                <Button
+                  className="gap-2"
+                  onClick={handlePublish}
+                  disabled={publishing || questions.length === 0}
+                  title={questions.length === 0 ? PUBLISH_NO_QUESTION_MESSAGE : undefined}
+                >
                   <Send size={16} />
                   {publishing ? "Publishing..." : "Publish"}
                 </Button>

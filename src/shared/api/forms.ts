@@ -84,6 +84,15 @@ export type ResponsesPayload = {
   };
 };
 
+export type ResponseDetailPayload = {
+  data: ResponseRecord;
+  form: {
+    id: string;
+    title: string;
+    description?: string | null;
+  };
+};
+
 export type CreateFormPayload = {
   title: string;
   description?: string | null;
@@ -246,6 +255,8 @@ export const formsApi = {
     }),
   responses: (formId: string) =>
     apiRequest<ResponsesPayload>(`/api/forms/${formId}/responses`),
+  responseDetail: (formId: string, responseId: string) =>
+    apiRequest<ResponseDetailPayload>(`/api/forms/${formId}/responses/${responseId}`),
   deleteResponse: (formId: string, responseId: string) =>
     apiRequest(`/api/forms/${formId}/responses/${responseId}`, {
       method: "DELETE",
