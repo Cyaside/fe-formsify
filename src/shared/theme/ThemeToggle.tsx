@@ -14,23 +14,40 @@ function applyTheme(mode: ThemeMode) {
 }
 
 export default function ThemeToggle() {
-  const [mode, setMode] = useState<ThemeMode>(() => {
-    if (globalThis.window === undefined) return "dark";
+  const [mode, setMode] = useState<ThemeMode | null>(null);
+  const [mounted, setMounted] = useState(false);
+
+  // Determine initial mode on mount to avoid SSR/CSR mismatch
+  useEffect(() => {
     const stored = globalThis.localStorage.getItem(STORAGE_KEY);
-    return stored === "light" ? "light" : "dark";
-  });
+    if (stored === "light" || stored === "dark") {
+      setMode(stored as ThemeMode);
+    } else if (globalThis.matchMedia?.("(prefers-color-scheme: light)").matches) {
+      setMode("light");
+    } else {
+      setMode("dark");
+    }
+    setMounted(true);
+  }, []);
 
   useEffect(() => {
-    applyTheme(mode);
+    if (mode) applyTheme(mode);
   }, [mode]);
 
   const handleToggle = () => {
-    const next = mode === "dark" ? "light" : "dark";
+    const current = mode ?? "dark";
+    const next = current === "dark" ? "light" : "dark";
     setMode(next);
-    globalThis.localStorage.setItem(STORAGE_KEY, next);
+    try {
+      globalThis.localStorage.setItem(STORAGE_KEY, next);
+    } catch (_) {
+      // ignore storage errors
+    }
     applyTheme(next);
   };
 
+  // While we haven't mounted and determined the mode, render a neutral button
+  // to avoid a server/client markup mismatch. After mount, render the real icon.
   return (
     <button
       type="button"
@@ -40,7 +57,7 @@ export default function ThemeToggle() {
       aria-pressed={mode === "dark"}
       title={mode === "dark" ? "Switch to light mode" : "Switch to dark mode"}
     >
-      {mode === "dark" ? <Sun size={18} /> : <Moon size={18} />}
+      {mounted && mode ? (mode === "dark" ? <Sun size={18} /> : <Moon size={18} />) : null}
     </button>
   );
 }
