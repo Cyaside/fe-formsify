@@ -9,8 +9,16 @@ export type QuestionType =
   | "CHECKBOX"
   | "DROPDOWN";
 
+export type EditorSection = {
+  id: string;
+  title: string;
+  description: string;
+  order: number;
+};
+
 export type EditorQuestion = {
   id: string;
+  sectionId: string;
   title: string;
   description: string;
   type: QuestionType;
@@ -23,19 +31,29 @@ type EditorState = {
   formId: string | null;
   title: string;
   description: string;
+  sections: EditorSection[];
   questions: EditorQuestion[];
+  removedSectionIds: string[];
   removedQuestionIds: string[];
   hydrated: boolean;
   setFormId: (id: string | null) => void;
   setHydrated: (value: boolean) => void;
   setFormMeta: (title: string, description: string) => void;
+  setSections: (sections: EditorSection[]) => void;
+  addSection: (section: EditorSection) => void;
+  updateSection: (id: string, next: Partial<EditorSection>) => void;
+  moveSection: (id: string, direction: -1 | 1) => void;
+  removeSection: (id: string) => void;
+  replaceSectionId: (tempId: string, nextId: string) => void;
   setQuestions: (questions: EditorQuestion[]) => void;
   reorderQuestions: (fromIndex: number, toIndex: number) => void;
   setSnapshot: (snapshot: {
     formId: string | null;
     title: string;
     description: string;
+    sections: EditorSection[];
     questions: EditorQuestion[];
+    removedSectionIds: string[];
     removedQuestionIds: string[];
     hydrated?: boolean;
   }) => void;
@@ -44,6 +62,7 @@ type EditorState = {
   duplicateQuestion: (id: string) => void;
   updateQuestion: (id: string, next: Partial<EditorQuestion>) => void;
   removeQuestion: (id: string) => void;
+  clearRemovedSectionIds: () => void;
   clearRemovedQuestionIds: () => void;
   addOption: (id: string, label?: string) => void;
   updateOption: (id: string, index: number, label: string) => void;
@@ -71,7 +90,7 @@ const reorderQuestions = (
   const next = [...questions];
   const [moved] = next.splice(fromIndex, 1);
   next.splice(toIndex, 0, moved);
-  return next.map((question, index) => ({ ...question, order: index }));
+  return normalizeQuestionOrders(next);
 };
 
 const createTempId = () => `temp_${Date.now()}_${Math.random().toString(16).slice(2)}`;
@@ -96,16 +115,76 @@ const removeOptionAt = (options: string[], index: number) => {
   return options.filter((_option, optionIndex) => optionIndex !== index);
 };
 
+const normalizeSectionOrders = (sections: EditorSection[]) => {
+  return sections.map((section, index) => ({
+    ...section,
+    order: index,
+  }));
+};
+
+const normalizeQuestionOrders = (questions: EditorQuestion[]) => {
+  const counters = new Map<string, number>();
+  return questions.map((question) => {
+    const nextOrder = counters.get(question.sectionId) ?? 0;
+    counters.set(question.sectionId, nextOrder + 1);
+    if (question.order === nextOrder) return question;
+    return { ...question, order: nextOrder };
+  });
+};
+
+const countQuestionsInSection = (questions: EditorQuestion[], sectionId: string) =>
+  questions.filter((question) => question.sectionId === sectionId).length;
+
 export const useFormEditorStore = create<EditorState>((set) => ({
   formId: null,
   title: "",
   description: "",
+  sections: [],
   questions: [],
+  removedSectionIds: [],
   removedQuestionIds: [],
   hydrated: false,
   setFormId: (id) => set({ formId: id }),
   setHydrated: (value) => set({ hydrated: value }),
   setFormMeta: (title, description) => set({ title, description }),
+  setSections: (sections) => set({ sections: normalizeSectionOrders(sections) }),
+  addSection: (section) =>
+    set((state) => ({
+      sections: normalizeSectionOrders([...state.sections, section]),
+    })),
+  updateSection: (id, next) =>
+    set((state) => ({
+      sections: state.sections.map((section) =>
+        section.id === id ? { ...section, ...next } : section,
+      ),
+    })),
+  moveSection: (id, direction) =>
+    set((state) => {
+      const index = state.sections.findIndex((section) => section.id === id);
+      if (index === -1) return state;
+      const targetIndex = index + direction;
+      if (targetIndex < 0 || targetIndex >= state.sections.length) return state;
+      const next = [...state.sections];
+      const [moved] = next.splice(index, 1);
+      next.splice(targetIndex, 0, moved);
+      return { sections: normalizeSectionOrders(next) };
+    }),
+  removeSection: (id) =>
+    set((state) => ({
+      sections: normalizeSectionOrders(state.sections.filter((section) => section.id !== id)),
+      removedSectionIds: id.startsWith("temp_")
+        ? state.removedSectionIds
+        : [...state.removedSectionIds, id],
+    })),
+  replaceSectionId: (tempId, nextId) =>
+    set((state) => ({
+      sections: state.sections.map((section) =>
+        section.id === tempId ? { ...section, id: nextId } : section,
+      ),
+      questions: state.questions.map((question) =>
+        question.sectionId === tempId ? { ...question, sectionId: nextId } : question,
+      ),
+    })),
   setQuestions: (questions) => set({ questions }),
   reorderQuestions: (fromIndex, toIndex) =>
     set((state) => ({
@@ -116,7 +195,9 @@ export const useFormEditorStore = create<EditorState>((set) => ({
       formId: snapshot.formId,
       title: snapshot.title,
       description: snapshot.description,
+      sections: normalizeSectionOrders(snapshot.sections),
       questions: snapshot.questions,
+      removedSectionIds: snapshot.removedSectionIds,
       removedQuestionIds: snapshot.removedQuestionIds,
       hydrated: snapshot.hydrated ?? true,
     }),
@@ -128,7 +209,13 @@ export const useFormEditorStore = create<EditorState>((set) => ({
     })),
   addQuestion: (question) =>
     set((state) => ({
-      questions: [...state.questions, { ...question, order: state.questions.length }],
+      questions: normalizeQuestionOrders([
+        ...state.questions,
+        {
+          ...question,
+          order: countQuestionsInSection(state.questions, question.sectionId),
+        },
+      ]),
     })),
   duplicateQuestion: (id) =>
     set((state) => {
@@ -145,25 +232,27 @@ export const useFormEditorStore = create<EditorState>((set) => ({
       next.splice(index + 1, 0, duplicate);
 
       return {
-        questions: next.map((question, itemIndex) => ({
-          ...question,
-          order: itemIndex,
-        })),
+        questions: normalizeQuestionOrders(next),
       };
     }),
   updateQuestion: (id, next) =>
     set((state) => ({
-      questions: state.questions.map((question) =>
-        question.id === id ? { ...question, ...next } : question,
+      questions: normalizeQuestionOrders(
+        state.questions.map((question) =>
+          question.id === id ? { ...question, ...next } : question,
+        ),
       ),
     })),
   removeQuestion: (id) =>
     set((state) => ({
-      questions: state.questions.filter((question) => question.id !== id),
+      questions: normalizeQuestionOrders(
+        state.questions.filter((question) => question.id !== id),
+      ),
       removedQuestionIds: id.startsWith("temp_")
         ? state.removedQuestionIds
         : [...state.removedQuestionIds, id],
     })),
+  clearRemovedSectionIds: () => set({ removedSectionIds: [] }),
   clearRemovedQuestionIds: () => set({ removedQuestionIds: [] }),
   addOption: (id, label = "") =>
     set((state) => ({
@@ -198,7 +287,9 @@ export const useFormEditorStore = create<EditorState>((set) => ({
       formId: null,
       title: "",
       description: "",
+      sections: [],
       questions: [],
+      removedSectionIds: [],
       removedQuestionIds: [],
       hydrated: false,
     }),

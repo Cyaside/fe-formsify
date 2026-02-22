@@ -8,7 +8,7 @@ import Button from "@/shared/ui/Button";
 import Card from "@/shared/ui/Card";
 import Container from "@/shared/ui/Container";
 import { ApiError } from "@/shared/api/client";
-import { formsApi, type FormDetail, type Question } from "@/shared/api/forms";
+import { formsApi, type FormDetail, type Question, type Section } from "@/shared/api/forms";
 
 export default function FormPreviewPage() {
   const params = useParams();
@@ -20,6 +20,7 @@ export default function FormPreviewPage() {
 
   const [form, setForm] = useState<FormDetail | null>(null);
   const [questions, setQuestions] = useState<Question[]>([]);
+  const [sections, setSections] = useState<Section[]>([]);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
@@ -28,10 +29,12 @@ export default function FormPreviewPage() {
     Promise.all([
       formsApi.detail(formId),
       formsApi.questions(formId),
+      formsApi.sections(formId),
     ])
-      .then(([formResponse, questionResponse]) => {
+      .then(([formResponse, questionResponse, sectionsResponse]) => {
         setForm(formResponse.data);
         setQuestions(questionResponse.data.toSorted((a, b) => a.order - b.order));
+        setSections(sectionsResponse.data.toSorted((a, b) => a.order - b.order));
       })
       .catch((err) => {
         const message = err instanceof ApiError ? err.message : "Failed to load preview";
@@ -45,6 +48,21 @@ export default function FormPreviewPage() {
       options: question.options.toSorted((a, b) => a.order - b.order),
     }));
   }, [questions]);
+
+  const orderedSections = useMemo(
+    () => sections.toSorted((a, b) => a.order - b.order),
+    [sections],
+  );
+
+  const sectionPages = useMemo(() => {
+    if (orderedSections.length === 0) {
+      return [{ section: null, questions: formattedQuestions }];
+    }
+    return orderedSections.map((section) => ({
+      section,
+      questions: formattedQuestions.filter((question) => question.sectionId === section.id),
+    }));
+  }, [formattedQuestions, orderedSections]);
 
   return (
     <div className="min-h-screen bg-page py-8 text-ink">
@@ -81,31 +99,57 @@ export default function FormPreviewPage() {
             {formattedQuestions.length === 0 ? (
               <Card className="text-sm text-ink-muted">No questions yet.</Card>
             ) : (
-              <div className="space-y-3">
-                {formattedQuestions.map((question, index) => (
-                  <Card key={question.id} className="space-y-3 p-5">
-                    <div className="flex items-start justify-between gap-3">
-                      <div>
-                        <h2 className="text-base font-medium">
-                          {index + 1}. {question.title}
-                        </h2>
-                        {question.description ? (
-                          <p className="mt-1 text-sm text-ink-muted">{question.description}</p>
-                        ) : null}
-                      </div>
-                      {question.required ? <Badge variant="draft">Required</Badge> : null}
-                    </div>
+              <div className="space-y-6">
+                {sectionPages.map((page, sectionIndex) => (
+                  <div key={page.section?.id ?? `section-${sectionIndex}`} className="space-y-3">
+                    {page.section ? (
+                      <Card className="border-dashed border-border/70 p-4">
+                        <p className="text-xs text-ink-muted">
+                          Section {sectionIndex + 1} of {sectionPages.length}
+                        </p>
+                        <h2 className="text-lg font-semibold">{page.section.title}</h2>
+                        <p className="text-sm text-ink-muted">
+                          {page.section.description || "No section description"}
+                        </p>
+                      </Card>
+                    ) : null}
 
-                    {question.options.length > 0 ? (
-                      <ul className="list-disc space-y-1 pl-4 text-sm text-ink-muted">
-                        {question.options.map((option) => (
-                          <li key={option.id}>{option.label}</li>
-                        ))}
-                      </ul>
+                    {page.questions.length === 0 ? (
+                      <Card className="text-sm text-ink-muted">
+                        No questions in this section yet.
+                      </Card>
                     ) : (
-                      <p className="text-sm text-ink-muted">{question.type === "SHORT_ANSWER" ? "Short answer" : "Text response"}</p>
+                      page.questions.map((question, index) => (
+                        <Card key={question.id} className="space-y-3 p-5">
+                          <div className="flex items-start justify-between gap-3">
+                            <div>
+                              <h2 className="text-base font-medium">
+                                {index + 1}. {question.title}
+                              </h2>
+                              {question.description ? (
+                                <p className="mt-1 text-sm text-ink-muted">{question.description}</p>
+                              ) : null}
+                            </div>
+                            {question.required ? <Badge variant="draft">Required</Badge> : null}
+                          </div>
+
+                          {question.options.length > 0 ? (
+                            <ul className="list-disc space-y-1 pl-4 text-sm text-ink-muted">
+                              {question.options.map((option) => (
+                                <li key={option.id}>{option.label}</li>
+                              ))}
+                            </ul>
+                          ) : (
+                            <p className="text-sm text-ink-muted">
+                              {question.type === "SHORT_ANSWER"
+                                ? "Short answer"
+                                : "Text response"}
+                            </p>
+                          )}
+                        </Card>
+                      ))
                     )}
-                  </Card>
+                  </div>
                 ))}
               </div>
             )}

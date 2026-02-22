@@ -1,13 +1,13 @@
 "use client";
 
-import { useEffect, useState, type FormEvent } from "react";
+import { Suspense, useEffect, useState, type FormEvent } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import Container from "@/shared/ui/Container";
 import { ApiError } from "@/shared/api/client";
 import { useAuth } from "@/features/auth/AuthProvider";
 
-export default function RegisterPage() {
+function RegisterPageContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const next = searchParams.get("next") ?? "/dashboard";
@@ -125,5 +125,23 @@ export default function RegisterPage() {
         </div>
       </Container>
     </div>
+  );
+}
+
+export default function RegisterPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="min-h-screen bg-page text-ink">
+          <Container className="flex min-h-screen items-center justify-center py-16">
+            <div className="w-full max-w-md rounded-[32px] border border-white/10 bg-surface/70 p-8 text-center text-sm text-ink-muted">
+              Loading...
+            </div>
+          </Container>
+        </div>
+      }
+    >
+      <RegisterPageContent />
+    </Suspense>
   );
 }

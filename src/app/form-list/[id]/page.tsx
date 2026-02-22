@@ -39,13 +39,24 @@ export default function PublicFormDetailPage() {
     enabled: Boolean(formId) && !unpublished,
     retry: false,
   });
+  const sectionsQuery = useQuery({
+    queryKey: ["forms", "public", formId, "sections"],
+    queryFn: () => formsApi.sections(formId!),
+    enabled: Boolean(formId) && !unpublished,
+    retry: false,
+  });
 
   const form = formQuery.data?.data ?? null;
   const questions = useMemo(
     () => questionsQuery.data?.data ?? [],
     [questionsQuery.data],
   );
-  const loading = formQuery.isLoading || questionsQuery.isLoading;
+  const sections = useMemo(
+    () => sectionsQuery.data?.data ?? [],
+    [sectionsQuery.data],
+  );
+  const loading =
+    formQuery.isLoading || questionsQuery.isLoading || sectionsQuery.isLoading;
 
   const updatedLabel = useMemo(() => {
     if (!form?.updatedAt) return "-";
@@ -59,6 +70,19 @@ export default function PublicFormDetailPage() {
     () => questions.toSorted((a, b) => a.order - b.order),
     [questions],
   );
+  const orderedSections = useMemo(
+    () => sections.toSorted((a, b) => a.order - b.order),
+    [sections],
+  );
+  const sectionPages = useMemo(() => {
+    if (orderedSections.length === 0) {
+      return [{ section: null, questions: orderedQuestions }];
+    }
+    return orderedSections.map((section) => ({
+      section,
+      questions: orderedQuestions.filter((question) => question.sectionId === section.id),
+    }));
+  }, [orderedQuestions, orderedSections]);
 
   return (
     <div className="min-h-screen bg-page py-8 text-ink">
@@ -101,31 +125,53 @@ export default function PublicFormDetailPage() {
               <p className="text-sm text-ink-muted">Summary stats will appear here in the next iteration.</p>
             </Card>
 
-            <div className="space-y-3">
-              {orderedQuestions.map((question, index) => (
-                <Card key={question.id} className="space-y-3 p-5">
-                  <div className="flex items-start justify-between gap-3">
-                    <div>
-                      <h3 className="text-base font-medium">
-                        {index + 1}. {question.title}
-                      </h3>
-                      {question.description ? (
-                        <p className="mt-1 text-sm text-ink-muted">{question.description}</p>
-                      ) : null}
-                    </div>
-                    {question.required ? <Badge variant="draft">Required</Badge> : null}
-                  </div>
-
-                  {question.options.length > 0 ? (
-                    <ul className="list-disc space-y-1 pl-4 text-sm text-ink-muted">
-                      {question.options
-                        .toSorted((a, b) => a.order - b.order)
-                        .map((option) => (
-                          <li key={option.id}>{option.label}</li>
-                        ))}
-                    </ul>
+            <div className="space-y-6">
+              {sectionPages.map((page, sectionIndex) => (
+                <div key={page.section?.id ?? `section-${sectionIndex}`} className="space-y-3">
+                  {page.section ? (
+                    <Card className="border-dashed border-border/70 p-4">
+                      <p className="text-xs text-ink-muted">
+                        Section {sectionIndex + 1} of {sectionPages.length}
+                      </p>
+                      <h2 className="text-lg font-semibold">{page.section.title}</h2>
+                      <p className="text-sm text-ink-muted">
+                        {page.section.description || "No section description"}
+                      </p>
+                    </Card>
                   ) : null}
-                </Card>
+
+                  {page.questions.length === 0 ? (
+                    <Card className="text-sm text-ink-muted">
+                      No questions in this section yet.
+                    </Card>
+                  ) : (
+                    page.questions.map((question, index) => (
+                      <Card key={question.id} className="space-y-3 p-5">
+                        <div className="flex items-start justify-between gap-3">
+                          <div>
+                            <h3 className="text-base font-medium">
+                              {index + 1}. {question.title}
+                            </h3>
+                            {question.description ? (
+                              <p className="mt-1 text-sm text-ink-muted">{question.description}</p>
+                            ) : null}
+                          </div>
+                          {question.required ? <Badge variant="draft">Required</Badge> : null}
+                        </div>
+
+                        {question.options.length > 0 ? (
+                          <ul className="list-disc space-y-1 pl-4 text-sm text-ink-muted">
+                            {question.options
+                              .toSorted((a, b) => a.order - b.order)
+                              .map((option) => (
+                                <li key={option.id}>{option.label}</li>
+                              ))}
+                          </ul>
+                        ) : null}
+                      </Card>
+                    ))
+                  )}
+                </div>
               ))}
             </div>
           </>

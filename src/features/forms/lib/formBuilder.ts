@@ -47,6 +47,7 @@ export const createEmptyQuestion = (
   const type = overrides.type ?? "SHORT_ANSWER";
   return {
     id: overrides.id ?? `temp_${Date.now()}_${Math.random().toString(16).slice(2)}`,
+    sectionId: overrides.sectionId ?? "",
     title: overrides.title ?? "",
     description: overrides.description ?? "",
     type,

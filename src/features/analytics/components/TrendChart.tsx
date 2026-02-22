@@ -51,7 +51,7 @@ export default function TrendChart({ data, bucket }: TrendChartProps) {
           />
           <Tooltip
             cursor={{ stroke: "rgba(202,166,255,0.5)", strokeWidth: 1 }}
-            formatter={(value: number) => [value, "Responses"]}
+            formatter={(value) => [typeof value === "number" ? value : 0, "Responses"]}
             labelFormatter={(label) => formatDateLabel(String(label), bucket)}
             contentStyle={{
               background: "var(--surface)",

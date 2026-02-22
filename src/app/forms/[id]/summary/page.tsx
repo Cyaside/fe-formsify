@@ -3,6 +3,15 @@
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useParams } from "next/navigation";
+import {
+  Bar,
+  BarChart,
+  CartesianGrid,
+  ResponsiveContainer,
+  Tooltip,
+  XAxis,
+  YAxis,
+} from "recharts";
 import Button from "@/shared/ui/Button";
 import Card from "@/shared/ui/Card";
 import Container from "@/shared/ui/Container";
@@ -45,11 +54,26 @@ export default function FormSummaryPage() {
   useEffect(() => {
     if (!formId) return;
 
-    Promise.all([formsApi.responses(formId), formsApi.questions(formId)])
-      .then(([responsesPayload, questionsPayload]) => {
+    Promise.all([
+      formsApi.responses(formId),
+      formsApi.questions(formId),
+      formsApi.sections(formId),
+    ])
+      .then(([responsesPayload, questionsPayload, sectionsPayload]) => {
         setForm(responsesPayload.form);
         setResponses(responsesPayload.data);
-        setQuestions(questionsPayload.data.toSorted((a, b) => a.order - b.order));
+        const sortedSections = sectionsPayload.data.toSorted((a, b) => a.order - b.order);
+        const sectionOrderMap = new Map(
+          sortedSections.map((section) => [section.id, section.order]),
+        );
+        setQuestions(
+          questionsPayload.data.toSorted((a, b) => {
+            const sectionOrderA = sectionOrderMap.get(a.sectionId) ?? 0;
+            const sectionOrderB = sectionOrderMap.get(b.sectionId) ?? 0;
+            if (sectionOrderA !== sectionOrderB) return sectionOrderA - sectionOrderB;
+            return a.order - b.order;
+          }),
+        );
       })
       .catch((err) => {
         const message = err instanceof ApiError ? err.message : "Failed to load summary";
@@ -156,7 +180,11 @@ export default function FormSummaryPage() {
         ) : null}
 
         {questionSummaries.map((summary) => {
-          const maxCount = summary.options.reduce((max, option) => Math.max(max, option.count), 0);
+          const chartData = summary.options.map((option) => ({
+            label: option.label,
+            count: option.count,
+            percent: formatPercent(option.percent),
+          }));
 
           return (
             <Card key={summary.questionId} className="space-y-4 p-5">
@@ -165,27 +193,54 @@ export default function FormSummaryPage() {
                 <p className="text-sm text-ink-muted">{summary.responseCount} selections</p>
               </div>
 
-              <div className="space-y-3">
-                {summary.options.map((option) => {
-                  const width = maxCount > 0 ? (option.count / maxCount) * 100 : 0;
+              <div className="h-64 w-full">
+                <ResponsiveContainer width="100%" height="100%">
+                  <BarChart data={chartData} layout="vertical" margin={{ left: 12 }}>
+                    <CartesianGrid stroke="rgba(255,255,255,0.08)" strokeDasharray="4 4" />
+                    <XAxis
+                      type="number"
+                      allowDecimals={false}
+                      tick={{ fill: "var(--ink-muted)", fontSize: 12 }}
+                      axisLine={{ stroke: "rgba(255,255,255,0.12)" }}
+                    />
+                    <YAxis
+                      type="category"
+                      dataKey="label"
+                      tick={{ fill: "var(--ink-muted)", fontSize: 12 }}
+                      axisLine={{ stroke: "rgba(255,255,255,0.12)" }}
+                      width={120}
+                    />
+                    <Tooltip
+                      formatter={(value, _label, payload) => {
+                        const safeValue = typeof value === "number" ? value : 0;
+                        const percent = payload?.payload?.percent as string | undefined;
+                        return [
+                          safeValue,
+                          percent ? `Responses (${percent})` : "Responses",
+                        ];
+                      }}
+                      contentStyle={{
+                        background: "var(--surface)",
+                        border: "1px solid var(--border)",
+                        borderRadius: 12,
+                        color: "var(--ink)",
+                        fontSize: 12,
+                      }}
+                    />
+                    <Bar dataKey="count" fill="var(--lavender)" radius={[8, 8, 8, 8]} />
+                  </BarChart>
+                </ResponsiveContainer>
+              </div>
 
-                  return (
-                    <div key={option.optionId} className="space-y-1">
-                      <div className="flex items-center justify-between text-sm text-ink-muted">
-                        <span>{option.label}</span>
-                        <span>
-                          {option.count} ({formatPercent(option.percent)})
-                        </span>
-                      </div>
-                      <div className="h-9 rounded-lg bg-surface-2 p-1">
-                        <div
-                          className="h-full rounded-md bg-violet"
-                          style={{ width: `${width}%` }}
-                        />
-                      </div>
-                    </div>
-                  );
-                })}
+              <div className="space-y-2 text-sm text-ink-muted">
+                {summary.options.map((option) => (
+                  <div key={option.optionId} className="flex items-center justify-between">
+                    <span>{option.label}</span>
+                    <span>
+                      {option.count} ({formatPercent(option.percent)})
+                    </span>
+                  </div>
+                ))}
               </div>
             </Card>
           );

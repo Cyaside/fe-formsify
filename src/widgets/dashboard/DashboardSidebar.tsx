@@ -56,9 +56,6 @@ export default function DashboardSidebar() {
             );
           })}
         </div>
-        <div className="rounded-3xl border border-lavender/20 bg-page/60 p-4 text-xs text-ink-muted">
-          Upgrade ke Pro untuk akses logic lanjutan dan kolaborasi tim.
-        </div>
       </div>
     </aside>
   );

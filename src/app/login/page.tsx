@@ -1,13 +1,13 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { Suspense, useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import Container from "@/shared/ui/Container";
 import { ApiError } from "@/shared/api/client";
 import { useAuth } from "@/features/auth/AuthProvider";
 
-export default function LoginPage() {
+function LoginPageContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const next = searchParams.get("next") ?? "/";
@@ -112,5 +112,23 @@ export default function LoginPage() {
         </div>
       </Container>
     </div>
+  );
+}
+
+export default function LoginPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="min-h-screen bg-page text-ink">
+          <Container className="flex min-h-screen items-center justify-center py-16">
+            <div className="w-full max-w-md rounded-4xl border border-white/10 bg-surface/70 p-8 text-center text-sm text-ink-muted">
+              Loading...
+            </div>
+          </Container>
+        </div>
+      }
+    >
+      <LoginPageContent />
+    </Suspense>
   );
 }

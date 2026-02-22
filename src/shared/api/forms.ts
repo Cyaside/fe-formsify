@@ -8,8 +8,17 @@ export type QuestionOption = {
   order: number;
 };
 
+export type Section = {
+  id: string;
+  formId: string;
+  title: string;
+  description?: string | null;
+  order: number;
+};
+
 export type Question = {
   id: string;
+  sectionId: string;
   title: string;
   description?: string | null;
   type: QuestionType;
@@ -98,6 +107,7 @@ export type CreateQuestionPayload = {
   required?: boolean;
   order?: number;
   options?: string[];
+  sectionId?: string;
 };
 
 export type UpdateQuestionPayload = {
@@ -107,6 +117,19 @@ export type UpdateQuestionPayload = {
   required?: boolean;
   order?: number;
   options?: string[];
+  sectionId?: string;
+};
+
+export type CreateSectionPayload = {
+  title: string;
+  description?: string | null;
+  order?: number;
+};
+
+export type UpdateSectionPayload = {
+  title?: string;
+  description?: string | null;
+  order?: number;
 };
 
 export type SubmitAnswer = {
@@ -142,10 +165,37 @@ export const formsApi = {
     apiRequest<{ data: FormDetail }>(`/api/forms/${formId}`),
   questions: (formId: string) =>
     apiRequest<{ data: Question[] }>(`/api/forms/${formId}/questions`),
+  sections: (formId: string) =>
+    apiRequest<{ data: Section[] }>(`/api/forms/${formId}/sections`),
   create: (payload: CreateFormPayload, options?: RequestOptions) =>
     apiRequest<{ data: { id: string } }>("/api/forms", {
       method: "POST",
       body: payload,
+      showGlobalLoading: options?.showGlobalLoading,
+    }),
+  createSection: (
+    formId: string,
+    payload: CreateSectionPayload,
+    options?: RequestOptions,
+  ) =>
+    apiRequest<{ data: Section }>(`/api/forms/${formId}/sections`, {
+      method: "POST",
+      body: payload,
+      showGlobalLoading: options?.showGlobalLoading,
+    }),
+  updateSection: (
+    sectionId: string,
+    payload: UpdateSectionPayload,
+    options?: RequestOptions,
+  ) =>
+    apiRequest<{ data: Section }>(`/api/sections/${sectionId}`, {
+      method: "PUT",
+      body: payload,
+      showGlobalLoading: options?.showGlobalLoading,
+    }),
+  removeSection: (sectionId: string, options?: RequestOptions) =>
+    apiRequest(`/api/sections/${sectionId}`, {
+      method: "DELETE",
       showGlobalLoading: options?.showGlobalLoading,
     }),
   update: (formId: string, payload: UpdateFormPayload, options?: RequestOptions) =>

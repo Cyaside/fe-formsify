@@ -8,7 +8,11 @@ import {
   ChevronUp,
   ChevronDown,
 } from "lucide-react";
-import type { EditorQuestion, QuestionType } from "@/features/forms/store/formEditor";
+import type {
+  EditorQuestion,
+  EditorSection,
+  QuestionType,
+} from "@/features/forms/store/formEditor";
 import { QUESTION_TYPE_OPTIONS, requiresOptions } from "./constants";
 import Card from "@/shared/ui/Card";
 import Input from "@/shared/ui/Input";
@@ -19,6 +23,7 @@ import Button from "@/shared/ui/Button";
 type QuestionCardProps = {
   index: number;
   question: EditorQuestion;
+  sections: EditorSection[];
   dragAttributes?: DraggableAttributes;
   dragListeners?: SyntheticListenerMap;
   onUpdate: (id: string, value: Partial<EditorQuestion>) => void;
@@ -34,6 +39,7 @@ type QuestionCardProps = {
 export default function QuestionCard({
   index,
   question,
+  sections,
   dragAttributes,
   dragListeners,
   onUpdate,
@@ -99,6 +105,22 @@ export default function QuestionCard({
               ))}
             </Select>
           </div>
+          <Select
+            value={question.sectionId}
+            onChange={(event) =>
+              onUpdate(question.id, {
+                sectionId: event.target.value,
+              })
+            }
+            className="md:w-[260px]"
+            disabled={readOnly || sections.length === 0}
+          >
+            {sections.map((section) => (
+              <option key={section.id} value={section.id}>
+                {section.title || "Untitled section"}
+              </option>
+            ))}
+          </Select>
 
           <Textarea
             value={question.description}

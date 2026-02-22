@@ -27,7 +27,7 @@ import Input from "@/shared/ui/Input";
 import Textarea from "@/shared/ui/Textarea";
 import ThemeToggle from "@/shared/theme/ThemeToggle";
 import { ApiError } from "@/shared/api/client";
-import { formsApi, type Question } from "@/shared/api/forms";
+import { formsApi, type Question, type Section } from "@/shared/api/forms";
 import {
   clearDraft,
   loadDraft,
@@ -35,6 +35,7 @@ import {
 } from "@/features/forms/lib/formPersistence";
 import {
   useFormEditorStore,
+  type EditorSection,
   type EditorQuestion,
   type QuestionType,
 } from "@/features/forms/store/formEditor";
@@ -43,12 +44,14 @@ import {
   createTempId,
   DEFAULT_FORM_TITLE,
   DEFAULT_QUESTION_TITLE,
+  DEFAULT_SECTION_TITLE,
   QUESTION_TYPE_OPTIONS,
   mapUiTypeToApiType,
   requiresOptions,
 } from "./constants";
 
 type QuestionResponse = Question;
+type SectionResponse = Section;
 
 type FormBuilderPageProps = {
   initialFormId?: string;
@@ -63,12 +66,25 @@ const mapOptionLabels = (options: QuestionResponse["options"]) => {
   return options.toSorted((a, b) => a.order - b.order).map((item) => item.label);
 };
 
+const mapApiSectionToEditor = (
+  section: SectionResponse,
+  index: number,
+): EditorSection => {
+  return {
+    id: section.id,
+    title: section.title,
+    description: section.description ?? "",
+    order: index,
+  };
+};
+
 const mapApiQuestionToEditor = (
   question: QuestionResponse,
   index: number,
 ): EditorQuestion => {
   return {
     id: question.id,
+    sectionId: question.sectionId,
     title: question.title,
     description: question.description ?? "",
     type: question.type,
@@ -78,9 +94,22 @@ const mapApiQuestionToEditor = (
   };
 };
 
-function createDefaultQuestion(type: QuestionType = "SHORT_ANSWER"): EditorQuestion {
+function createDefaultSection(index: number): EditorSection {
   return {
     id: createTempId(),
+    title: index === 0 ? DEFAULT_SECTION_TITLE : `Section ${index + 1}`,
+    description: "",
+    order: index,
+  };
+}
+
+function createDefaultQuestion(
+  sectionId: string,
+  type: QuestionType = "SHORT_ANSWER",
+): EditorQuestion {
+  return {
+    id: createTempId(),
+    sectionId,
     title: DEFAULT_QUESTION_TITLE,
     description: "",
     type,
@@ -93,6 +122,7 @@ function createDefaultQuestion(type: QuestionType = "SHORT_ANSWER"): EditorQuest
 type SortableQuestionItemProps = Readonly<{
   index: number;
   question: EditorQuestion;
+  sections: EditorSection[];
   onUpdate: (id: string, value: Partial<EditorQuestion>) => void;
   onDuplicate: (id: string) => void;
   onDelete: (id: string) => void;
@@ -106,6 +136,7 @@ type SortableQuestionItemProps = Readonly<{
 function SortableQuestionItem({
   index,
   question,
+  sections,
   onUpdate,
   onDuplicate,
   onDelete,
@@ -131,6 +162,7 @@ function SortableQuestionItem({
       <QuestionCard
         index={index}
         question={question}
+        sections={sections}
         dragAttributes={attributes}
         dragListeners={listeners}
         onUpdate={onUpdate}
@@ -151,12 +183,19 @@ export default function FormBuilderPage({ initialFormId }: Readonly<FormBuilderP
     formId,
     title,
     description,
+    sections,
     questions,
+    removedSectionIds,
     removedQuestionIds,
     hydrated,
     setFormId,
     setSnapshot,
     setFormMeta,
+    addSection,
+    updateSection,
+    moveSection,
+    removeSection,
+    replaceSectionId,
     addQuestion,
     updateQuestion,
     duplicateQuestion,
@@ -166,6 +205,7 @@ export default function FormBuilderPage({ initialFormId }: Readonly<FormBuilderP
     removeOption,
     moveOption,
     setQuestions,
+    clearRemovedSectionIds,
     clearRemovedQuestionIds,
     replaceQuestionId,
     reset,
@@ -190,7 +230,9 @@ export default function FormBuilderPage({ initialFormId }: Readonly<FormBuilderP
       description: string;
       thankYouTitle: string;
       thankYouMessage: string;
+      sections: EditorSection[];
       questions: EditorQuestion[];
+      removedSectionIds: string[];
       removedQuestionIds: string[];
     };
     showGlobalLoading?: boolean;
@@ -210,21 +252,45 @@ export default function FormBuilderPage({ initialFormId }: Readonly<FormBuilderP
 
       const localDraft = loadDraft(draftKey);
       if (localDraft) {
+        const draftSections =
+          localDraft.sections && localDraft.sections.length > 0
+            ? localDraft.sections
+            : [createDefaultSection(0)];
+        const fallbackSectionId = draftSections[0].id;
+        const draftQuestions = localDraft.questions.length > 0
+          ? localDraft.questions.map((question) => ({
+              ...question,
+              sectionId: question.sectionId || fallbackSectionId,
+            }))
+          : [createDefaultQuestion(fallbackSectionId)];
         setThankYouTitle(localDraft.thankYouTitle ?? DEFAULT_THANK_YOU_TITLE);
         setThankYouMessage(localDraft.thankYouMessage ?? DEFAULT_THANK_YOU_MESSAGE);
-        setSnapshot({ ...localDraft, hydrated: true });
+        setSnapshot({
+          formId: localDraft.formId,
+          title: localDraft.title,
+          description: localDraft.description,
+          sections: draftSections,
+          questions: draftQuestions,
+          removedSectionIds: localDraft.removedSectionIds ?? [],
+          removedQuestionIds: localDraft.removedQuestionIds ?? [],
+          hydrated: true,
+        });
         setLoading(false);
         return;
       }
 
       if (!initialFormId) {
+        const initialSections = [createDefaultSection(0)];
+        const initialQuestions = [createDefaultQuestion(initialSections[0].id)];
         setThankYouTitle(DEFAULT_THANK_YOU_TITLE);
         setThankYouMessage(DEFAULT_THANK_YOU_MESSAGE);
         setSnapshot({
           formId: null,
           title: DEFAULT_FORM_TITLE,
           description: "",
-          questions: [createDefaultQuestion()],
+          sections: initialSections,
+          questions: initialQuestions,
+          removedSectionIds: [],
           removedQuestionIds: [],
           hydrated: true,
         });
@@ -233,18 +299,38 @@ export default function FormBuilderPage({ initialFormId }: Readonly<FormBuilderP
       }
 
       try {
-        const [formResponse, questionsResponse] = await Promise.all([
+        const [formResponse, questionsResponse, sectionsResponse] = await Promise.all([
           formsApi.detail(initialFormId),
           formsApi.questions(initialFormId),
+          formsApi.sections(initialFormId),
         ]);
         if (!active) return;
 
-        const sortedQuestions = questionsResponse.data.toSorted(
+        const sortedSections = sectionsResponse.data.toSorted(
           (a, b) => a.order - b.order,
         );
+        const mappedSections: EditorSection[] = sortedSections.map(
+          (section, index) => mapApiSectionToEditor(section, index),
+        );
+        const fallbackSection =
+          mappedSections[0] ?? createDefaultSection(0);
+        const fallbackSectionId = fallbackSection.id;
+
+        const sectionOrderMap = new Map(
+          mappedSections.map((section) => [section.id, section.order]),
+        );
+        const sortedQuestions = questionsResponse.data.toSorted((a, b) => {
+          const sectionOrderA = sectionOrderMap.get(a.sectionId) ?? 0;
+          const sectionOrderB = sectionOrderMap.get(b.sectionId) ?? 0;
+          if (sectionOrderA !== sectionOrderB) return sectionOrderA - sectionOrderB;
+          return a.order - b.order;
+        });
 
         const mappedQuestions: EditorQuestion[] = sortedQuestions.map(
-          (question, index) => mapApiQuestionToEditor(question, index),
+          (question, index) => ({
+            ...mapApiQuestionToEditor(question, index),
+            sectionId: question.sectionId || fallbackSectionId,
+          }),
         );
         setThankYouTitle(formResponse.data.thankYouTitle || DEFAULT_THANK_YOU_TITLE);
         setThankYouMessage(formResponse.data.thankYouMessage || DEFAULT_THANK_YOU_MESSAGE);
@@ -253,7 +339,13 @@ export default function FormBuilderPage({ initialFormId }: Readonly<FormBuilderP
           formId: formResponse.data.id,
           title: formResponse.data.title,
           description: formResponse.data.description ?? "",
-          questions: mappedQuestions.length > 0 ? mappedQuestions : [createDefaultQuestion()],
+          sections:
+            mappedSections.length > 0 ? mappedSections : [fallbackSection],
+          questions:
+            mappedQuestions.length > 0
+              ? mappedQuestions
+              : [createDefaultQuestion(fallbackSectionId)],
+          removedSectionIds: [],
           removedQuestionIds: [],
           hydrated: true,
         });
@@ -285,7 +377,9 @@ export default function FormBuilderPage({ initialFormId }: Readonly<FormBuilderP
       description: string;
       thankYouTitle: string;
       thankYouMessage: string;
+      sections: EditorSection[];
       questions: EditorQuestion[];
+      removedSectionIds: string[];
       removedQuestionIds: string[];
     }, options?: { showGlobalLoading?: boolean }) => {
       if (!hydrated) return;
@@ -294,6 +388,7 @@ export default function FormBuilderPage({ initialFormId }: Readonly<FormBuilderP
       const requestOptions = { showGlobalLoading: options?.showGlobalLoading };
 
       let activeFormId = formId;
+      const isNewForm = !activeFormId;
 
       setSaveMessage("Saving changes...");
 
@@ -324,6 +419,7 @@ export default function FormBuilderPage({ initialFormId }: Readonly<FormBuilderP
       );
 
       if (questionsLocked) {
+        clearRemovedSectionIds();
         clearRemovedQuestionIds();
         clearDraft(draftKey);
         setSaveMessage(questionsLockNote ?? QUESTION_LOCK_MESSAGE);
@@ -344,10 +440,149 @@ export default function FormBuilderPage({ initialFormId }: Readonly<FormBuilderP
         }
       }
 
-      const normalizedQuestions = snapshot.questions.map((question, index) => ({
-        ...question,
+      const sectionIdMap = new Map<string, string>();
+      const normalizedSections = snapshot.sections.map((section, index) => ({
+        ...section,
+        title: section.title.trim() || `Section ${index + 1}`,
+        description: section.description.trim() || null,
         order: index,
       }));
+
+      try {
+        if (isNewForm) {
+          const existingSections = await formsApi.sections(activeFormId);
+          const defaultSection = existingSections.data.toSorted(
+            (a, b) => a.order - b.order,
+          )[0];
+          if (defaultSection && normalizedSections[0]) {
+            const firstSection = normalizedSections[0];
+            sectionIdMap.set(firstSection.id, defaultSection.id);
+            replaceSectionId(firstSection.id, defaultSection.id);
+            await formsApi.updateSection(
+              defaultSection.id,
+              {
+                title: firstSection.title,
+                description: firstSection.description,
+                order: 0,
+              },
+              requestOptions,
+            );
+
+            for (const section of normalizedSections.slice(1)) {
+              if (section.id.startsWith("temp_")) {
+                const createdSection = await formsApi.createSection(
+                  activeFormId,
+                  {
+                    title: section.title,
+                    description: section.description,
+                    order: section.order,
+                  },
+                  requestOptions,
+                );
+                sectionIdMap.set(section.id, createdSection.data.id);
+                replaceSectionId(section.id, createdSection.data.id);
+              } else {
+                await formsApi.updateSection(
+                  section.id,
+                  {
+                    title: section.title,
+                    description: section.description,
+                    order: section.order,
+                  },
+                  requestOptions,
+                );
+              }
+            }
+          } else {
+            for (const section of normalizedSections) {
+              if (section.id.startsWith("temp_")) {
+                const createdSection = await formsApi.createSection(
+                  activeFormId,
+                  {
+                    title: section.title,
+                    description: section.description,
+                    order: section.order,
+                  },
+                  requestOptions,
+                );
+                sectionIdMap.set(section.id, createdSection.data.id);
+                replaceSectionId(section.id, createdSection.data.id);
+              } else {
+                await formsApi.updateSection(
+                  section.id,
+                  {
+                    title: section.title,
+                    description: section.description,
+                    order: section.order,
+                  },
+                  requestOptions,
+                );
+              }
+            }
+          }
+        } else {
+          for (const sectionId of snapshot.removedSectionIds) {
+            try {
+              await formsApi.removeSection(sectionId, requestOptions);
+            } catch (err) {
+              if (err instanceof ApiError && err.status === 409) {
+                setQuestionsLocked(true);
+                setQuestionsLockNote(QUESTION_LOCK_MESSAGE);
+                setSaveMessage(QUESTION_LOCK_MESSAGE);
+                return;
+              }
+              throw err;
+            }
+          }
+
+          for (const section of normalizedSections) {
+            if (section.id.startsWith("temp_")) {
+              const createdSection = await formsApi.createSection(
+                activeFormId,
+                {
+                  title: section.title,
+                  description: section.description,
+                  order: section.order,
+                },
+                requestOptions,
+              );
+              sectionIdMap.set(section.id, createdSection.data.id);
+              replaceSectionId(section.id, createdSection.data.id);
+            } else {
+              await formsApi.updateSection(
+                section.id,
+                {
+                  title: section.title,
+                  description: section.description,
+                  order: section.order,
+                },
+                requestOptions,
+              );
+            }
+          }
+        }
+      } catch (err) {
+        if (err instanceof ApiError && err.status === 409) {
+          setQuestionsLocked(true);
+          setQuestionsLockNote(QUESTION_LOCK_MESSAGE);
+          setSaveMessage(QUESTION_LOCK_MESSAGE);
+          return;
+        }
+        throw err;
+      }
+
+      const orderCounter = new Map<string, number>();
+      const normalizedQuestions = snapshot.questions.map((question) => {
+        const resolvedSectionId =
+          sectionIdMap.get(question.sectionId) ?? question.sectionId;
+        const nextOrder = orderCounter.get(resolvedSectionId) ?? 0;
+        orderCounter.set(resolvedSectionId, nextOrder + 1);
+        return {
+          ...question,
+          sectionId: resolvedSectionId,
+          order: nextOrder,
+        };
+      });
 
       try {
         for (const question of normalizedQuestions) {
@@ -357,6 +592,7 @@ export default function FormBuilderPage({ initialFormId }: Readonly<FormBuilderP
             type: mapUiTypeToApiType(question.type),
             required: question.required,
             order: question.order,
+            sectionId: question.sectionId,
             options: requiresOptions(question.type)
               ? question.options
                   .map((item) => item.trim())
@@ -389,6 +625,7 @@ export default function FormBuilderPage({ initialFormId }: Readonly<FormBuilderP
         throw err;
       }
 
+      clearRemovedSectionIds();
       clearRemovedQuestionIds();
       clearDraft(draftKey);
 
@@ -396,12 +633,14 @@ export default function FormBuilderPage({ initialFormId }: Readonly<FormBuilderP
     },
     [
       clearRemovedQuestionIds,
+      clearRemovedSectionIds,
       draftKey,
       formId,
       hydrated,
       questionsLockNote,
       questionsLocked,
       replaceQuestionId,
+      replaceSectionId,
       setFormId,
     ],
   );
@@ -412,7 +651,9 @@ export default function FormBuilderPage({ initialFormId }: Readonly<FormBuilderP
       description: string;
       thankYouTitle: string;
       thankYouMessage: string;
+      sections: EditorSection[];
       questions: EditorQuestion[];
+      removedSectionIds: string[];
       removedQuestionIds: string[];
     }, options?: { showGlobalLoading?: boolean }) => {
       saveDraft(draftKey, {
@@ -421,7 +662,9 @@ export default function FormBuilderPage({ initialFormId }: Readonly<FormBuilderP
         description: snapshot.description,
         thankYouTitle: snapshot.thankYouTitle,
         thankYouMessage: snapshot.thankYouMessage,
+        sections: snapshot.sections,
         questions: snapshot.questions,
+        removedSectionIds: snapshot.removedSectionIds,
         removedQuestionIds: snapshot.removedQuestionIds,
       });
 
@@ -460,10 +703,26 @@ export default function FormBuilderPage({ initialFormId }: Readonly<FormBuilderP
       description,
       thankYouTitle,
       thankYouMessage,
+      sections,
       questions,
+      removedSectionIds,
       removedQuestionIds,
     }),
-    [title, description, thankYouTitle, thankYouMessage, questions, removedQuestionIds],
+    [
+      title,
+      description,
+      thankYouTitle,
+      thankYouMessage,
+      sections,
+      questions,
+      removedSectionIds,
+      removedQuestionIds,
+    ],
+  );
+
+  const orderedSections = useMemo(
+    () => sections.toSorted((a, b) => a.order - b.order),
+    [sections],
   );
 
   useEffect(() => {
@@ -474,19 +733,73 @@ export default function FormBuilderPage({ initialFormId }: Readonly<FormBuilderP
     return () => globalThis.clearTimeout(timeout);
   }, [enqueueSave, error, hydrated, loading, savePayload]);
 
+  const handleAddSection = () => {
+    if (questionsLocked) return;
+    addSection(createDefaultSection(orderedSections.length));
+  };
+
+  const ensureSectionIdForQuestion = () => {
+    if (orderedSections.length > 0) return orderedSections[0].id;
+    const nextSection = createDefaultSection(0);
+    addSection(nextSection);
+    return nextSection.id;
+  };
+
+  const handleAddQuestionToSection = (
+    sectionId: string,
+    type: QuestionType = "SHORT_ANSWER",
+  ) => {
+    if (questionsLocked) return;
+    addQuestion(createDefaultQuestion(sectionId, type));
+  };
+
+  const handleQuestionUpdate = useCallback(
+    (id: string, value: Partial<EditorQuestion>) => {
+      if (value.sectionId) {
+        const current = questions.find((question) => question.id === id);
+        if (!current) return;
+        if (value.sectionId !== current.sectionId) {
+          const updated = { ...current, ...value };
+          const remaining = questions.filter((question) => question.id !== id);
+          setQuestions([...remaining, updated]);
+          return;
+        }
+      }
+      updateQuestion(id, value);
+    },
+    [questions, setQuestions, updateQuestion],
+  );
+
   const handleDragEnd = (event: DragEndEvent) => {
     if (questionsLocked) return;
     const { active, over } = event;
     if (!over || active.id === over.id) return;
+    const activeQuestion = questions.find((item) => item.id === active.id);
+    const overQuestion = questions.find((item) => item.id === over.id);
+    if (!activeQuestion || !overQuestion) return;
+    if (activeQuestion.sectionId !== overQuestion.sectionId) return;
 
-    const oldIndex = questions.findIndex((item) => item.id === active.id);
-    const newIndex = questions.findIndex((item) => item.id === over.id);
+    const sectionId = activeQuestion.sectionId;
+    const sectionIndices = questions.reduce<number[]>((acc, question, index) => {
+      if (question.sectionId === sectionId) acc.push(index);
+      return acc;
+    }, []);
+
+    const sectionQuestions = sectionIndices.map((index) => questions[index]);
+    const oldIndex = sectionQuestions.findIndex((item) => item.id === active.id);
+    const newIndex = sectionQuestions.findIndex((item) => item.id === over.id);
     if (oldIndex < 0 || newIndex < 0) return;
 
-    const next = arrayMove(questions, oldIndex, newIndex).map((question, index) => ({
-      ...question,
-      order: index,
-    }));
+    const reordered = arrayMove(sectionQuestions, oldIndex, newIndex).map(
+      (question, index) => ({
+        ...question,
+        order: index,
+      }),
+    );
+    const next = [...questions];
+    sectionIndices.forEach((index, i) => {
+      next[index] = reordered[i];
+    });
     setQuestions(next);
   };
 
@@ -540,33 +853,126 @@ export default function FormBuilderPage({ initialFormId }: Readonly<FormBuilderP
       return <Card className="border-rose/40 bg-rose/10 text-sm text-rose">{error}</Card>;
     }
 
+    if (orderedSections.length === 0) {
+      return (
+        <Card className="space-y-3 text-sm text-ink-muted">
+          <p>No sections yet.</p>
+          <Button variant="secondary" onClick={handleAddSection} disabled={questionsLocked}>
+            Add Section
+          </Button>
+        </Card>
+      );
+    }
+
     return (
-      <div className="space-y-4 pb-14">
+      <div className="space-y-6 pb-14">
         <DndContext
           sensors={sensors}
           collisionDetection={closestCenter}
           onDragEnd={handleDragEnd}
         >
-          <SortableContext
-            items={questions.map((question) => question.id)}
-            strategy={verticalListSortingStrategy}
-          >
-            {questions.map((question, index) => (
-              <SortableQuestionItem
-                key={question.id}
-                index={index}
-                question={question}
-                onUpdate={updateQuestion}
-                onDuplicate={duplicateQuestion}
-                onDelete={removeQuestion}
-                onAddOption={(id) => addOption(id)}
-                onUpdateOption={updateOption}
-                onRemoveOption={removeOption}
-                onMoveOption={moveOption}
-                readOnly={questionsLocked}
-              />
-            ))}
-          </SortableContext>
+          {orderedSections.map((section, sectionIndex) => {
+            const sectionQuestions = questions.filter(
+              (question) => question.sectionId === section.id,
+            );
+            const canDeleteSection =
+              !questionsLocked &&
+              orderedSections.length > 1 &&
+              sectionQuestions.length === 0;
+
+            return (
+              <div key={section.id} className="space-y-3">
+                <Card className="border-t-4 border-t-lavender/70 p-4 md:p-5">
+                  <div className="flex flex-wrap items-start justify-between gap-3">
+                    <div className="min-w-0 flex-1 space-y-2">
+                      <Input
+                        value={section.title}
+                        onChange={(event) =>
+                          updateSection(section.id, { title: event.target.value })
+                        }
+                        placeholder={`Section ${sectionIndex + 1}`}
+                        disabled={questionsLocked}
+                      />
+                      <Textarea
+                        value={section.description}
+                        onChange={(event) =>
+                          updateSection(section.id, { description: event.target.value })
+                        }
+                        placeholder="Section description (optional)"
+                        className="min-h-[68px]"
+                        disabled={questionsLocked}
+                      />
+                    </div>
+                    <div className="flex flex-wrap items-center gap-2">
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => moveSection(section.id, -1)}
+                        disabled={questionsLocked || sectionIndex === 0}
+                      >
+                        Move up
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => moveSection(section.id, 1)}
+                        disabled={questionsLocked || sectionIndex === orderedSections.length - 1}
+                      >
+                        Move down
+                      </Button>
+                      <Button
+                        variant="secondary"
+                        size="sm"
+                        onClick={() => handleAddQuestionToSection(section.id)}
+                        disabled={questionsLocked}
+                      >
+                        Add question
+                      </Button>
+                      <Button
+                        variant="danger"
+                        size="sm"
+                        onClick={() => removeSection(section.id)}
+                        disabled={!canDeleteSection}
+                      >
+                        Delete section
+                      </Button>
+                    </div>
+                  </div>
+                  <p className="mt-2 text-xs text-ink-muted">
+                    Section {sectionIndex + 1} of {orderedSections.length}
+                  </p>
+                </Card>
+
+                {sectionQuestions.length === 0 ? (
+                  <Card className="text-sm text-ink-muted">
+                    No questions in this section yet.
+                  </Card>
+                ) : (
+                  <SortableContext
+                    items={sectionQuestions.map((question) => question.id)}
+                    strategy={verticalListSortingStrategy}
+                  >
+                    {sectionQuestions.map((question, index) => (
+                      <SortableQuestionItem
+                        key={question.id}
+                        index={index}
+                        question={question}
+                        sections={orderedSections}
+                        onUpdate={handleQuestionUpdate}
+                        onDuplicate={duplicateQuestion}
+                        onDelete={removeQuestion}
+                        onAddOption={(id) => addOption(id)}
+                        onUpdateOption={updateOption}
+                        onRemoveOption={removeOption}
+                        onMoveOption={moveOption}
+                        readOnly={questionsLocked}
+                      />
+                    ))}
+                  </SortableContext>
+                )}
+              </div>
+            );
+          })}
         </DndContext>
       </div>
     );
@@ -615,18 +1021,29 @@ export default function FormBuilderPage({ initialFormId }: Readonly<FormBuilderP
           <nav className="sticky top-3 z-20 mb-4 rounded-2xl border border-border bg-surface/90 p-3 shadow-[0_14px_32px_rgba(8,6,20,0.2)] backdrop-blur">
             <div className="flex flex-wrap items-center justify-between gap-3">
               <div className="relative">
-                <Button
-                  variant="secondary"
-                  className="gap-2"
-                  onClick={() => {
-                    if (questionsLocked) return;
-                    setAddMenuOpen((prev) => !prev);
-                  }}
-                  disabled={questionsLocked}
-                >
-                  <Plus size={16} />
-                  Add Question
-                </Button>
+                <div className="flex items-center gap-2">
+                  <Button
+                    variant="secondary"
+                    className="gap-2"
+                    onClick={handleAddSection}
+                    disabled={questionsLocked}
+                  >
+                    <Plus size={16} />
+                    Add Section
+                  </Button>
+                  <Button
+                    variant="secondary"
+                    className="gap-2"
+                    onClick={() => {
+                      if (questionsLocked) return;
+                      setAddMenuOpen((prev) => !prev);
+                    }}
+                    disabled={questionsLocked}
+                  >
+                    <Plus size={16} />
+                    Add Question
+                  </Button>
+                </div>
                 {addMenuOpen ? (
                   <div className="absolute left-0 top-12 z-30 w-52 rounded-xl border border-border bg-surface p-2">
                     {QUESTION_TYPE_OPTIONS.map((type) => (
@@ -635,7 +1052,8 @@ export default function FormBuilderPage({ initialFormId }: Readonly<FormBuilderP
                         type="button"
                         onClick={() => {
                           if (questionsLocked) return;
-                          addQuestion(createDefaultQuestion(type.value));
+                          const targetSectionId = ensureSectionIdForQuestion();
+                          handleAddQuestionToSection(targetSectionId, type.value);
                           setAddMenuOpen(false);
                         }}
                         className="flex w-full rounded-lg px-3 py-2 text-left text-sm text-ink-muted transition hover:bg-surface-2 hover:text-ink"

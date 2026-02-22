@@ -10,6 +10,7 @@ export const QUESTION_TYPE_OPTIONS: Array<{ value: QuestionType; label: string }
 
 export const DEFAULT_FORM_TITLE = "Untitled Form";
 export const DEFAULT_QUESTION_TITLE = "Untitled Question";
+export const DEFAULT_SECTION_TITLE = "Section 1";
 
 export const createTempId = () => `temp_${Date.now()}_${Math.random().toString(16).slice(2)}`;
 

@@ -12,10 +12,16 @@ import {
   formsApi,
   type FormDetail,
   type Question,
+  type Section,
   type SubmitAnswer,
 } from "@/shared/api/forms";
 
 type AnswerState = Record<string, unknown>;
+
+type SectionPage = {
+  section: Section | null;
+  questions: Question[];
+};
 
 const DEFAULT_THANK_YOU_TITLE = "Terima kasih!";
 const DEFAULT_THANK_YOU_MESSAGE = "Respons kamu sudah terekam.";
@@ -146,6 +152,12 @@ function QuestionInputField({
 function FillFormContent({
   form,
   orderedQuestions,
+  currentSection,
+  currentPageQuestions,
+  pageIndex,
+  totalPages,
+  onNextPage,
+  onPrevPage,
   answers,
   validationErrors,
   submitting,
@@ -156,6 +168,12 @@ function FillFormContent({
 }: Readonly<{
   form: FormDetail | null;
   orderedQuestions: Question[];
+  currentSection: Section | null;
+  currentPageQuestions: Question[];
+  pageIndex: number;
+  totalPages: number;
+  onNextPage: () => void;
+  onPrevPage: () => void;
   answers: AnswerState;
   validationErrors: Record<string, string>;
   submitting: boolean;
@@ -174,10 +192,27 @@ function FillFormContent({
         <p className="mt-4 text-xs text-ink-muted">* Required</p>
       </Card>
 
+      {currentSection ? (
+        <Card className="space-y-2 border-dashed border-border/70 p-5">
+          <div className="flex items-center justify-between text-xs text-ink-muted">
+            <span>
+              Section {pageIndex + 1} of {totalPages}
+            </span>
+            <span>{currentPageQuestions.length} questions</span>
+          </div>
+          <div>
+            <h2 className="text-lg font-semibold">{currentSection.title}</h2>
+            <p className="text-sm text-ink-muted">
+              {currentSection.description || "No section description"}
+            </p>
+          </div>
+        </Card>
+      ) : null}
+
       {orderedQuestions.length === 0 ? (
         <Card className="text-sm text-ink-muted">This form has no questions yet.</Card>
       ) : (
-        orderedQuestions.map((question, index) => (
+        currentPageQuestions.map((question, index) => (
           <Card key={question.id} className="space-y-3 p-5">
             <div>
               <h2 className="text-base font-medium">
@@ -204,11 +239,38 @@ function FillFormContent({
       )}
 
       {orderedQuestions.length > 0 ? (
-        <div className="flex items-center justify-between">
-          <Button type="submit" disabled={submitting}>
-            {submitting ? "Submitting..." : "Submit"}
-          </Button>
-          {submitMessage ? <p className={submitMessageClassName(submitMessage)}>{submitMessage}</p> : null}
+        <div className="space-y-3">
+          <div className="flex items-center justify-between text-xs text-ink-muted">
+            <span>
+              Section {pageIndex + 1} of {totalPages}
+            </span>
+            <span>{orderedQuestions.length} questions</span>
+          </div>
+          <div className="h-2 rounded-full bg-surface-2">
+            <div
+              className="h-full rounded-full bg-lavender"
+              style={{ width: `${((pageIndex + 1) / totalPages) * 100}%` }}
+            />
+          </div>
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <div className="flex items-center gap-2">
+              <Button variant="secondary" onClick={onPrevPage} disabled={pageIndex === 0}>
+                Previous
+              </Button>
+              {pageIndex < totalPages - 1 ? (
+                <Button type="button" onClick={onNextPage}>
+                  Next
+                </Button>
+              ) : (
+                <Button type="submit" disabled={submitting}>
+                  {submitting ? "Submitting..." : "Submit"}
+                </Button>
+              )}
+            </div>
+            {submitMessage ? (
+              <p className={submitMessageClassName(submitMessage)}>{submitMessage}</p>
+            ) : null}
+          </div>
         </div>
       ) : null}
     </form>
@@ -222,6 +284,7 @@ export default function SharedPublicFormPage() {
 
   const [form, setForm] = useState<FormDetail | null>(null);
   const [questions, setQuestions] = useState<Question[]>([]);
+  const [sections, setSections] = useState<Section[]>([]);
   const [answers, setAnswers] = useState<AnswerState>({});
   const [validationErrors, setValidationErrors] = useState<Record<string, string>>({});
   const [loading, setLoading] = useState(Boolean(formId));
@@ -230,22 +293,29 @@ export default function SharedPublicFormPage() {
   const [submitting, setSubmitting] = useState(false);
   const [submitMessage, setSubmitMessage] = useState<string | null>(null);
   const [submitted, setSubmitted] = useState(false);
+  const [pageIndex, setPageIndex] = useState(0);
 
   useEffect(() => {
     if (!formId) return;
     setError(null);
     setUnpublished(false);
 
-    Promise.all([formsApi.detail(formId), formsApi.questions(formId)])
-      .then(([formResponse, questionResponse]) => {
+    Promise.all([
+      formsApi.detail(formId),
+      formsApi.questions(formId),
+      formsApi.sections(formId),
+    ])
+      .then(([formResponse, questionResponse, sectionsResponse]) => {
         setForm(formResponse.data);
         setQuestions(sortByOrder(questionResponse.data));
+        setSections(sortByOrder(sectionsResponse.data));
       })
       .catch((err) => {
         if (err instanceof ApiError && err.status === 404) {
           setUnpublished(true);
           setForm(null);
           setQuestions([]);
+          setSections([]);
           return;
         }
         const message = err instanceof ApiError ? err.message : "Failed to load form";
@@ -260,6 +330,23 @@ export default function SharedPublicFormPage() {
     () => questions.map((question) => ({ ...question, options: sortByOrder(question.options) })),
     [questions],
   );
+
+  const orderedSections = useMemo(() => sortByOrder(sections), [sections]);
+
+  const pages = useMemo<SectionPage[]>(() => {
+    if (orderedSections.length === 0) {
+      return [{ section: null, questions: orderedQuestions }];
+    }
+    return orderedSections.map((section) => ({
+      section,
+      questions: orderedQuestions.filter((question) => question.sectionId === section.id),
+    }));
+  }, [orderedQuestions, orderedSections]);
+  const totalPages = Math.max(1, pages.length);
+  const currentPageIndex = Math.min(pageIndex, totalPages - 1);
+  const currentPage = pages[currentPageIndex] ?? pages[0];
+  const currentSection = currentPage?.section ?? null;
+  const currentPageQuestions = currentPage?.questions ?? [];
 
   const clearQuestionError = (questionId: string) => {
     setValidationErrors((prev) => {
@@ -289,6 +376,13 @@ export default function SharedPublicFormPage() {
     const nextErrors = getValidationErrors(orderedQuestions, answers);
     setValidationErrors(nextErrors);
     return Object.keys(nextErrors).length === 0;
+  };
+
+  const validateCurrentPage = () => {
+    const nextErrors = getValidationErrors(currentPageQuestions, answers);
+    if (Object.keys(nextErrors).length === 0) return true;
+    setValidationErrors((prev) => ({ ...prev, ...nextErrors }));
+    return false;
   };
 
   const submitAnswers = async () => {
@@ -341,6 +435,15 @@ export default function SharedPublicFormPage() {
           <FillFormContent
             form={form}
             orderedQuestions={orderedQuestions}
+            currentSection={currentSection}
+            currentPageQuestions={currentPageQuestions}
+            pageIndex={currentPageIndex}
+            totalPages={totalPages}
+            onNextPage={() => {
+              if (!validateCurrentPage()) return;
+              setPageIndex((prev) => Math.min(prev + 1, totalPages - 1));
+            }}
+            onPrevPage={() => setPageIndex((prev) => Math.max(prev - 1, 0))}
             answers={answers}
             validationErrors={validationErrors}
             submitting={submitting}

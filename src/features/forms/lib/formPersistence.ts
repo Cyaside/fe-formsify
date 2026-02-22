@@ -1,4 +1,4 @@
-import type { EditorQuestion } from "@/features/forms/store/formEditor";
+import type { EditorQuestion, EditorSection } from "@/features/forms/store/formEditor";
 
 const DRAFT_PREFIX = "formsify:draft:";
 
@@ -8,7 +8,9 @@ type DraftSnapshot = {
   description: string;
   thankYouTitle: string;
   thankYouMessage: string;
+  sections: EditorSection[];
   questions: EditorQuestion[];
+  removedSectionIds: string[];
   removedQuestionIds: string[];
 };
 
