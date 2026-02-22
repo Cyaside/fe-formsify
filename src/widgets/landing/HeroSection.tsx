@@ -36,10 +36,7 @@ export default function HeroSection() {
   }, []);
 
   return (
-    <section
-      className="relative overflow-hidden bg-linear-to-b from-violet-deep via-violet/70 to-violet-deep"
-      id="top"
-    >
+    <section className="relative overflow-hidden border-b border-border bg-page" id="top">
       <Navbar />
       <Container className="relative pb-28 pt-32 md:pt-36">
         <div
@@ -49,11 +46,7 @@ export default function HeroSection() {
             opacity: 1 - progress * 0.6,
           }}
         >
-          <div className="absolute -left-12 top-12 h-64 w-64 rounded-full bg-violet/25 blur-2xl" />
-          <div className="absolute -right-10 bottom-8 h-72 w-72 rounded-full bg-rose/20 blur-2xl" />
-          <div className="absolute left-1/2 top-8 h-52 w-52 -translate-x-1/2 rounded-full bg-lavender/20 blur-3xl" />
-
-          <div className="relative z-10 w-full text-center px-4">
+          <div className="relative z-10 w-full rounded-3xl border border-border bg-surface px-4 py-10 text-center shadow-soft md:px-8 md:py-14">
             <h1 className="mx-auto max-w-300 text-[56px] leading-[0.95] font-extrabold tracking-tight text-ink md:text-[96px]">
               The simplest way to create forms
             </h1>
@@ -66,7 +59,7 @@ export default function HeroSection() {
               {user ? (
                 <Link
                   href="/dashboard"
-                  className="inline-flex items-center rounded-full bg-blue-600 px-6 py-3 text-sm font-semibold text-white shadow hover:bg-blue-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
+                  className="inline-flex items-center rounded-full bg-accent px-6 py-3 text-sm font-semibold text-white transition-colors hover:bg-accent-900 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-500"
                 >
                   Dashboard
                 </Link>
@@ -74,14 +67,14 @@ export default function HeroSection() {
                 <>
                   <Link
                     href="/login"
-                    className="inline-flex items-center rounded-full bg-blue-600 px-6 py-3 text-sm font-semibold text-white shadow hover:bg-blue-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
+                    className="inline-flex items-center rounded-full bg-accent px-6 py-3 text-sm font-semibold text-white transition-colors hover:bg-accent-900 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-500"
                   >
                     Login
                   </Link>
 
                   <Link
                     href="/register"
-                    className="inline-flex items-center rounded-full border border-white/20 bg-transparent px-5 py-2 text-sm font-semibold text-white hover:bg-white/10 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
+                    className="inline-flex items-center rounded-full border border-border bg-page px-5 py-2 text-sm font-semibold text-ink transition-colors hover:bg-surface-2 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-500"
                   >
                     Register
                   </Link>
@@ -90,7 +83,7 @@ export default function HeroSection() {
 
               <Link
                 href="/form-list"
-                className="inline-flex items-center rounded-full px-4 py-2 text-sm font-medium text-white/80 hover:text-white focus:outline-none"
+                className="inline-flex items-center rounded-full px-4 py-2 text-sm font-medium text-ink-muted transition-colors hover:text-accent focus:outline-none"
               >
                 Form list
               </Link>

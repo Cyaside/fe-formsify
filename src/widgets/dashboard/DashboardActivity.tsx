@@ -18,7 +18,7 @@ export default function DashboardActivity({
   const renderContent = () => {
     if (loading && items.length === 0) {
       return (
-        <div className="rounded-2xl border border-white/10 bg-page/60 p-4 text-sm text-ink-muted">
+        <div className="rounded-2xl border border-border bg-surface-2 p-4 text-sm text-ink-muted">
           Memuat aktivitas terbaru...
         </div>
       );
@@ -34,7 +34,7 @@ export default function DashboardActivity({
 
     if (items.length === 0) {
       return (
-        <div className="rounded-2xl border border-white/10 bg-page/60 p-4 text-sm text-ink-muted">
+        <div className="rounded-2xl border border-border bg-surface-2 p-4 text-sm text-ink-muted">
           Belum ada aktivitas yang bisa ditampilkan.
         </div>
       );
@@ -43,11 +43,11 @@ export default function DashboardActivity({
     return items.map((item) => (
       <div
         key={`${item.title}-${item.time}`}
-        className="rounded-2xl border border-white/10 bg-page/60 p-4"
+        className="rounded-2xl border border-border bg-surface-2 p-4"
       >
         <p className="text-sm font-semibold text-ink">{item.title}</p>
         <p className="mt-2 text-sm text-ink-muted">{item.detail}</p>
-        <p className="mt-3 text-xs uppercase tracking-[0.3em] text-lavender">
+        <p className="mt-3 text-xs uppercase tracking-[0.3em] text-accent">
           {item.time}
         </p>
       </div>
@@ -55,7 +55,7 @@ export default function DashboardActivity({
   };
 
   return (
-    <div className="rounded-3xl border border-white/10 bg-surface/70 p-6">
+    <div className="rounded-3xl border border-border bg-surface p-6 shadow-soft">
       <h2 className="text-lg font-semibold text-ink font-display">Aktivitas Terbaru</h2>
       <div className="mt-6 grid gap-4">
         {renderContent()}

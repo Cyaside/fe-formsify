@@ -194,7 +194,7 @@ export default function QuestionCard({
                 type="checkbox"
                 checked={question.required}
                 onChange={(event) => onUpdate(question.id, { required: event.target.checked })}
-                className="h-4 w-4 rounded border-border"
+                className="h-4 w-4 rounded border-border accent-accent"
                 disabled={readOnly}
               />
               Required

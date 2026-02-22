@@ -10,7 +10,7 @@ export default function DashboardSidebar() {
 
   return (
     <aside className="hidden w-72 shrink-0 p-6 lg:flex lg:flex-col">
-      <div className="sticky top-6 flex h-[calc(100vh-3rem)] flex-col gap-8 rounded-3xl border border-white/10 bg-surface/85 p-6 shadow-soft backdrop-blur">
+      <div className="sticky top-6 flex h-[calc(100vh-3rem)] flex-col gap-8 rounded-3xl border border-border bg-surface p-6 shadow-soft">
         <div className="flex items-center gap-3">
           <Image
             src="/logowithword.png"
@@ -31,29 +31,29 @@ export default function DashboardSidebar() {
               <button
                 key={item.label}
                 type="button"
-                className={`flex items-center justify-between rounded-2xl px-4 py-3 text-left transition hover:bg-page/40 hover:text-ink ${
-                  isActive ? "bg-page/50 text-ink" : ""
+                className={`flex items-center justify-between rounded-2xl px-4 py-3 text-left transition-colors hover:bg-surface-2 hover:text-ink ${
+                  isActive ? "bg-surface-2 text-ink" : ""
                 }`}
               >
                 <span className="flex items-center gap-2">
                   {Icon ? <Icon size={16} /> : null}
                   {item.label}
                 </span>
-                <span className="h-2 w-2 rounded-full bg-lavender/60" />
+                <span className="h-2 w-2 rounded-full bg-accent/70" />
               </button>
             ) : (
               <Link
                 key={item.label}
                 href={item.href}
-                className={`flex items-center justify-between rounded-2xl px-4 py-3 text-left transition hover:bg-page/40 hover:text-ink ${
-                  isActive ? "bg-page/50 text-ink" : ""
+                className={`flex items-center justify-between rounded-2xl px-4 py-3 text-left transition-colors hover:bg-surface-2 hover:text-ink ${
+                  isActive ? "bg-surface-2 text-ink" : ""
                 }`}
               >
                 <span className="flex items-center gap-2">
                   {Icon ? <Icon size={16} /> : null}
                   {item.label}
                 </span>
-                <span className="h-2 w-2 rounded-full bg-lavender/60" />
+                <span className="h-2 w-2 rounded-full bg-accent/70" />
               </Link>
             );
           })}

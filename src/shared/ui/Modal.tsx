@@ -22,7 +22,7 @@ export default function Modal({
   if (!open) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4">
       <div
         role="dialog"
         aria-modal="true"
@@ -44,7 +44,7 @@ export default function Modal({
           <button
             type="button"
             onClick={onClose}
-            className="rounded-lg p-1 text-ink-muted transition hover:bg-surface-2 hover:text-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-lavender/40 focus-visible:ring-offset-2 focus-visible:ring-offset-surface"
+            className="rounded-lg p-1 text-ink-muted transition-colors hover:bg-surface-2 hover:text-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-500/40 focus-visible:ring-offset-2 focus-visible:ring-offset-surface"
             aria-label="Close modal"
           >
             x

@@ -24,7 +24,7 @@ export default function Navbar({
       className={`flex flex-col gap-3 ${alignment} ${className}`.trim()}
     >
       {eyebrow ? (
-        <span className="text-xs font-semibold uppercase tracking-[0.32em] text-lavender/80">{eyebrow}</span>
+        <span className="text-xs font-semibold uppercase tracking-[0.32em] text-accent/80">{eyebrow}</span>
       ) : null}
 
       <h1 className="text-balance text-3xl font-semibold text-ink md:text-4xl font-display">{title}</h1>

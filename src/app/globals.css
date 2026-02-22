@@ -4,27 +4,41 @@
 
 :root {
   color-scheme: dark;
-  --page-bg: #0a0614;
-  --surface: #130b21;
-  --surface-2: #1b1030;
-  --ink: #f6f2ff;
-  --ink-muted: #b9a7d8;
-  --border: rgba(246, 242, 255, 0.12);
-  --violet-deep: #2d155a;
-  --violet: #6f3cff;
-  --lavender: #caa6ff;
-  --sun: #ffd166;
-  --rose: #ff6fb1;
-  --berry: #ff4d6d;
+  --accent-900: #4c1d95;
+  --accent-700: #6d28d9;
+  --accent-500: #8b5cf6;
+  --accent-300: #c4b5fd;
+  --accent-100: #ede9fe;
+  --bg: #0f0f0f;
+  --bg-2: #18181b;
+  --border: #27272a;
+  --text: #fafafa;
+  --text-2: #a1a1aa;
+  --danger: #f87171;
   --success: #4ade80;
-  --warning: #ffd166;
+  --warning: #fbbf24;
   --info: #7dd3fc;
-  --danger: #ff6fb1;
+  --page-bg: var(--bg);
+  --surface: var(--bg-2);
+  --surface-2: #202025;
+  --ink: var(--text);
+  --ink-muted: var(--text-2);
+  --background: var(--bg);
+  --foreground: var(--text);
+  --primary: var(--accent-700);
+  --primary-foreground: #ffffff;
+  --ring: var(--accent-500);
+  --violet-deep: var(--accent-900);
+  --violet: var(--accent-700);
+  --lavender: var(--accent-700);
+  --sun: var(--warning);
+  --rose: var(--danger);
+  --berry: var(--danger);
   --radius-sm: 10px;
   --radius-md: 16px;
   --radius-lg: 24px;
-  --shadow-soft: 0 8px 24px rgba(0, 0, 0, 0.12);
-  --shadow-pop: 0 20px 60px rgba(8, 6, 20, 0.45);
+  --shadow-soft: 0 1px 2px rgba(0, 0, 0, 0.22), 0 8px 24px rgba(0, 0, 0, 0.14);
+  --shadow-pop: 0 8px 24px rgba(0, 0, 0, 0.22), 0 18px 44px rgba(0, 0, 0, 0.18);
   --space-1: 4px;
   --space-2: 8px;
   --space-3: 12px;
@@ -38,27 +52,41 @@
 
 .light {
   color-scheme: light;
-  --page-bg: #f7f4ff;
-  --surface: #ffffff;
-  --surface-2: #efe9ff;
-  --ink: #1b112c;
-  --ink-muted: #5d4b7b;
-  --border: rgba(38, 22, 70, 0.12);
-  --violet-deep: #2b155b;
-  --violet: #6f3cff;
-  --lavender: #9d7bff;
-  --sun: #ffc857;
-  --rose: #ff6fb1;
-  --berry: #ff4d6d;
-  --success: #2cb67d;
-  --warning: #ffc857;
+  --accent-900: #4c1d95;
+  --accent-700: #6d28d9;
+  --accent-500: #8b5cf6;
+  --accent-300: #c4b5fd;
+  --accent-100: #ede9fe;
+  --bg: #ffffff;
+  --bg-2: #f9fafb;
+  --border: #e5e7eb;
+  --text: #111827;
+  --text-2: #6b7280;
+  --danger: #dc2626;
+  --success: #16a34a;
+  --warning: #d97706;
   --info: #38bdf8;
-  --danger: #ff5a8a;
+  --page-bg: var(--bg);
+  --surface: var(--bg-2);
+  --surface-2: #f3f4f6;
+  --ink: var(--text);
+  --ink-muted: var(--text-2);
+  --background: var(--bg);
+  --foreground: var(--text);
+  --primary: var(--accent-700);
+  --primary-foreground: #ffffff;
+  --ring: var(--accent-500);
+  --violet-deep: var(--accent-900);
+  --violet: var(--accent-700);
+  --lavender: var(--accent-700);
+  --sun: var(--warning);
+  --rose: var(--danger);
+  --berry: var(--danger);
   --radius-sm: 10px;
   --radius-md: 16px;
   --radius-lg: 24px;
-  --shadow-soft: 0 8px 24px rgba(27, 17, 44, 0.12);
-  --shadow-pop: 0 20px 60px rgba(27, 17, 44, 0.28);
+  --shadow-soft: 0 1px 2px rgba(17, 24, 39, 0.05), 0 8px 24px rgba(17, 24, 39, 0.06);
+  --shadow-pop: 0 8px 24px rgba(17, 24, 39, 0.08), 0 18px 44px rgba(17, 24, 39, 0.1);
   --space-1: 4px;
   --space-2: 8px;
   --space-3: 12px;
@@ -71,6 +99,16 @@
 }
 
 @theme inline {
+  --color-bg: var(--bg);
+  --color-bg-2: var(--bg-2);
+  --color-text: var(--text);
+  --color-text-2: var(--text-2);
+  --color-accent-900: var(--accent-900);
+  --color-accent-700: var(--accent-700);
+  --color-accent-500: var(--accent-500);
+  --color-accent-300: var(--accent-300);
+  --color-accent-100: var(--accent-100);
+  --color-accent: var(--accent-700);
   --color-page: var(--page-bg);
   --color-surface: var(--surface);
   --color-surface-2: var(--surface-2);
@@ -87,6 +125,7 @@
   --color-warning: var(--warning);
   --color-info: var(--info);
   --color-danger: var(--danger);
+  --color-muted: var(--surface-2);
   --shadow-soft: var(--shadow-soft);
   --shadow-pop: var(--shadow-pop);
   --radius-sm: var(--radius-sm);
@@ -110,7 +149,7 @@ body {
   background: var(--page-bg);
   color: var(--ink);
   font-family: var(--font-body), system-ui, sans-serif;
-  transition: background 0.3s ease, color 0.3s ease;
+  transition: background 0.2s ease, color 0.2s ease;
 }
 
 .marquee-mask {

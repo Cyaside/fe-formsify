@@ -60,7 +60,7 @@ export default function Navbar() {
         <motion.div
           initial={{ opacity: 0, y: -20 }}
           animate={{ opacity: 1, y: 0 }}
-          className="rounded-full border border-white/10 bg-surface/80 px-6 py-3 shadow-[0_18px_40px_rgba(8,6,20,0.4)] backdrop-blur"
+          className="rounded-full border border-border bg-surface px-6 py-3 shadow-soft"
         >
           <div className="flex items-center gap-6">
             <ul className="flex items-center gap-4">
@@ -72,14 +72,14 @@ export default function Navbar() {
                       onClick={() => handleScrollToSection(item.id)}
                       className={`relative rounded-full px-4 py-2 text-xs font-semibold uppercase tracking-[0.28em] transition ${
                         isActive
-                          ? "text-lavender"
+                          ? "text-accent"
                           : "text-ink-muted hover:text-ink"
                       }`}
                     >
                       {isActive ? (
                         <motion.span
                           layoutId="activeSection"
-                          className="absolute inset-0 rounded-full bg-lavender/10"
+                          className="absolute inset-0 rounded-full bg-accent-100 dark:bg-accent/10"
                           transition={{ type: "spring", bounce: 0.2, duration: 0.6 }}
                         />
                       ) : null}
@@ -92,7 +92,7 @@ export default function Navbar() {
             {user ? (
               <Link
                 href="/dashboard"
-                className="rounded-full border border-lavender/40 px-4 py-2 text-xs font-semibold uppercase tracking-[0.25em] text-lavender transition hover:bg-lavender hover:text-violet-deep"
+                className="rounded-full border border-accent/30 px-4 py-2 text-xs font-semibold uppercase tracking-[0.25em] text-accent transition-colors hover:bg-accent hover:text-white"
               >
                 Dashboard
               </Link>
@@ -100,13 +100,13 @@ export default function Navbar() {
               <div className="flex items-center gap-2">
                 <Link
                   href="/login"
-                  className="rounded-full border border-white/10 px-4 py-2 text-xs font-semibold uppercase tracking-[0.25em] text-ink-muted transition hover:text-ink"
+                  className="rounded-full border border-border px-4 py-2 text-xs font-semibold uppercase tracking-[0.25em] text-ink-muted transition-colors hover:bg-surface-2 hover:text-ink"
                 >
                   Login
                 </Link>
                 <Link
                   href="/register"
-                  className="rounded-full border border-lavender/40 px-4 py-2 text-xs font-semibold uppercase tracking-[0.25em] text-lavender transition hover:bg-lavender hover:text-violet-deep"
+                  className="rounded-full border border-accent/30 px-4 py-2 text-xs font-semibold uppercase tracking-[0.25em] text-accent transition-colors hover:bg-accent hover:text-white"
                 >
                   Register
                 </Link>
@@ -123,7 +123,7 @@ export default function Navbar() {
           initial={{ opacity: 0, scale: 0.8 }}
           animate={{ opacity: 1, scale: 1 }}
           onClick={() => setIsOpen((prev) => !prev)}
-          className="rounded-full border border-white/10 bg-surface/80 p-3 shadow-[0_16px_32px_rgba(8,6,20,0.35)] backdrop-blur"
+          className="rounded-full border border-border bg-surface p-3 shadow-soft"
           aria-label="Toggle navigation"
         >
           <div className="relative h-6 w-6">
@@ -149,7 +149,7 @@ export default function Navbar() {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 z-40 bg-page/95 backdrop-blur"
+            className="fixed inset-0 z-40 bg-page/95"
             onClick={() => setIsOpen(false)}
           >
             <Container className="flex h-full flex-col items-center justify-center gap-8">
@@ -163,7 +163,7 @@ export default function Navbar() {
                   onClick={() => handleScrollToSection(item.id)}
                   className={`text-2xl font-semibold transition ${
                     activeSection === item.id
-                      ? "text-lavender"
+                      ? "text-accent"
                       : "text-ink-muted hover:text-ink"
                   }`}
                 >
@@ -179,7 +179,7 @@ export default function Navbar() {
                 >
                   <Link
                     href="/dashboard"
-                    className="rounded-full border border-lavender/40 px-6 py-3 text-sm font-semibold uppercase tracking-[0.25em] text-lavender"
+                    className="rounded-full border border-accent/30 px-6 py-3 text-sm font-semibold uppercase tracking-[0.25em] text-accent"
                   >
                     Dashboard
                   </Link>
@@ -194,13 +194,13 @@ export default function Navbar() {
                 >
                   <Link
                     href="/login"
-                    className="rounded-full border border-white/10 px-6 py-3 text-sm font-semibold uppercase tracking-[0.25em] text-ink-muted"
+                    className="rounded-full border border-border px-6 py-3 text-sm font-semibold uppercase tracking-[0.25em] text-ink-muted"
                   >
                     Login
                   </Link>
                   <Link
                     href="/register"
-                    className="rounded-full border border-lavender/40 px-6 py-3 text-sm font-semibold uppercase tracking-[0.25em] text-lavender"
+                    className="rounded-full border border-accent/30 px-6 py-3 text-sm font-semibold uppercase tracking-[0.25em] text-accent"
                   >
                     Register
                   </Link>

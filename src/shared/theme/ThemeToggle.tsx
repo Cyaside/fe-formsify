@@ -52,7 +52,7 @@ export default function ThemeToggle() {
     <button
       type="button"
       onClick={handleToggle}
-      className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-border/70 bg-surface/80 text-ink transition hover:border-lavender hover:text-lavender focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-lavender/40 focus-visible:ring-offset-2 focus-visible:ring-offset-page"
+      className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-border bg-surface text-ink transition-colors hover:border-accent-500 hover:text-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-500/40 focus-visible:ring-offset-2 focus-visible:ring-offset-page"
       aria-label="Toggle light or dark mode"
       aria-pressed={mode === "dark"}
       title={mode === "dark" ? "Switch to light mode" : "Switch to dark mode"}

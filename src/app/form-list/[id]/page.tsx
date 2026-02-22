@@ -111,7 +111,7 @@ export default function PublicFormDetailPage() {
 
         {form && !unpublished ? (
           <>
-            <Card className="space-y-3 border-l-4 border-l-lavender p-6">
+            <Card className="space-y-3 border-l-4 border-l-accent p-6">
               <div className="flex items-center justify-between">
                 <h1 className="text-2xl font-semibold">{form.title}</h1>
                 <Badge variant="muted">Read only</Badge>

@@ -42,9 +42,9 @@ function LoginPageContent() {
   return (
     <div className="min-h-screen bg-page text-ink">
       <Container className="flex min-h-screen items-center justify-center py-16">
-        <div className="w-full max-w-md rounded-4xl border border-white/10 bg-surface/70 p-8 shadow-[0_24px_60px_rgba(8,6,20,0.4)]">
+        <div className="w-full max-w-md rounded-4xl border border-border bg-surface p-8 shadow-pop">
           <div className="mb-8 text-center">
-            <p className="text-xs font-semibold uppercase tracking-[0.32em] text-lavender">
+            <p className="text-xs font-semibold uppercase tracking-[0.32em] text-accent">
               Login
             </p>
             <h1 className="mt-3 text-3xl font-semibold text-ink font-display">
@@ -56,7 +56,7 @@ function LoginPageContent() {
           </div>
 
           <form onSubmit={handleSubmit} className="flex flex-col gap-4">
-            <label className="text-xs font-semibold uppercase tracking-[0.28em] text-lavender">
+            <label className="text-xs font-semibold uppercase tracking-[0.28em] text-accent">
               <span>Email</span>
               <input
                 type="email"
@@ -65,11 +65,11 @@ function LoginPageContent() {
                 value={email}
                 onChange={(event) => setEmail(event.target.value)}
                 placeholder="email@company.com"
-                className="mt-3 w-full rounded-2xl border border-white/10 bg-page/80 px-4 py-3 text-sm text-ink placeholder:text-ink-muted focus:border-lavender focus:outline-none"
+                className="mt-3 w-full rounded-2xl border border-border bg-surface-2 px-4 py-3 text-sm text-ink placeholder:text-ink-muted focus:border-accent-500 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-500/25"
                 required
               />
             </label>
-            <label className="text-xs font-semibold uppercase tracking-[0.28em] text-lavender">
+            <label className="text-xs font-semibold uppercase tracking-[0.28em] text-accent">
               <span>Password</span>
               <input
                 type="password"
@@ -78,7 +78,7 @@ function LoginPageContent() {
                 value={password}
                 onChange={(event) => setPassword(event.target.value)}
                 placeholder="Minimal 6 karakter"
-                className="mt-3 w-full rounded-2xl border border-white/10 bg-page/80 px-4 py-3 text-sm text-ink placeholder:text-ink-muted focus:border-lavender focus:outline-none"
+                className="mt-3 w-full rounded-2xl border border-border bg-surface-2 px-4 py-3 text-sm text-ink placeholder:text-ink-muted focus:border-accent-500 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-500/25"
                 required
               />
             </label>
@@ -92,7 +92,7 @@ function LoginPageContent() {
             <button
               type="submit"
               disabled={loading}
-              className="mt-2 inline-flex items-center justify-center rounded-full bg-lavender px-6 py-3 text-sm font-semibold text-violet-deep transition hover:-translate-y-0.5 hover:bg-sun disabled:cursor-not-allowed disabled:opacity-70"
+              className="mt-2 inline-flex items-center justify-center rounded-full bg-accent px-6 py-3 text-sm font-semibold text-white transition-colors hover:bg-accent-900 disabled:cursor-not-allowed disabled:opacity-70"
             >
               {loading ? "Memproses..." : "Masuk"}
             </button>
@@ -100,7 +100,7 @@ function LoginPageContent() {
 
           <p className="mt-6 text-center text-sm text-ink-muted">
             Belum punya akun?{" "}
-            <Link href="/register" className="font-semibold text-lavender hover:text-sun">
+            <Link href="/register" className="font-semibold text-accent hover:text-accent-900">
               Register
             </Link>
           </p>
@@ -121,7 +121,7 @@ export default function LoginPage() {
       fallback={
         <div className="min-h-screen bg-page text-ink">
           <Container className="flex min-h-screen items-center justify-center py-16">
-            <div className="w-full max-w-md rounded-4xl border border-white/10 bg-surface/70 p-8 text-center text-sm text-ink-muted">
+            <div className="w-full max-w-md rounded-4xl border border-border bg-surface p-8 text-center text-sm text-ink-muted">
               Loading...
             </div>
           </Container>

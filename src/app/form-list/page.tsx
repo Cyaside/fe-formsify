@@ -76,13 +76,10 @@ export default function PublicFormListPage() {
 
   return (
     <div className="min-h-screen bg-page text-ink">
-      <section className="relative overflow-hidden bg-linear-to-b from-violet-deep via-violet/70 to-violet-deep">
+      <section className="relative overflow-hidden border-b border-border bg-page">
         <Container className="relative py-16 md:py-20">
-          <div className="absolute -left-12 top-8 h-44 w-44 rounded-full bg-lavender/20 blur-2xl" />
-          <div className="absolute -right-10 bottom-4 h-52 w-52 rounded-full bg-rose/20 blur-2xl" />
-
-          <div className="relative z-10 mx-auto max-w-4xl text-center">
-            <p className="text-xs font-semibold uppercase tracking-[0.3em] text-lavender">
+          <div className="relative z-10 mx-auto max-w-4xl rounded-3xl border border-border bg-surface px-6 py-8 text-center shadow-soft md:px-10 md:py-10">
+            <p className="text-xs font-semibold uppercase tracking-[0.3em] text-accent">
               Public Directory
             </p>
             <h1 className="mt-3 text-4xl font-bold tracking-tight md:text-5xl">
@@ -116,19 +113,6 @@ export default function PublicFormListPage() {
           </div>
         </Container>
 
-        <div className="pointer-events-none absolute inset-x-0 bottom-0">
-          <svg
-            viewBox="0 0 1440 220"
-            preserveAspectRatio="none"
-            className="h-16 w-full md:h-24"
-            aria-hidden="true"
-          >
-            <path
-              d="M0 140L120 120C240 100 480 60 720 80C960 100 1200 180 1320 190L1440 200V220H0Z"
-              fill="var(--page-bg)"
-            />
-          </svg>
-        </div>
       </section>
 
       <Container className="py-6">

@@ -19,7 +19,7 @@ export default function RequireAuth({ children }: { children: ReactNode }) {
   if (loading || !user) {
     return (
       <div className="min-h-screen bg-page text-ink flex items-center justify-center">
-        <div className="rounded-3xl border border-white/10 bg-surface/70 px-8 py-6 text-sm text-ink-muted">
+        <div className="rounded-3xl border border-border bg-surface px-8 py-6 text-sm text-ink-muted shadow-soft">
           Menyiapkan sesi...
         </div>
       </div>

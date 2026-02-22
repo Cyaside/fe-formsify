@@ -14,7 +14,7 @@ export default function FloatingAddQuestion({ onAdd }: FloatingAddQuestionProps)
   return (
     <div className="fixed bottom-6 right-6 z-30">
       {open ? (
-        <div className="mb-2 w-52 rounded-xl border border-border bg-surface p-2 shadow-[0_10px_24px_rgba(0,0,0,0.2)]">
+        <div className="mb-2 w-52 rounded-xl border border-border bg-surface p-2 shadow-soft">
           {QUESTION_TYPE_OPTIONS.map((type) => (
             <button
               key={type.value}

@@ -9,7 +9,7 @@ export default function DashboardMobileNav() {
   const items = dashboardNavItems.filter((item) => !item.disabled && item.href !== "#");
 
   return (
-    <nav className="fixed bottom-0 left-0 right-0 z-40 border-t border-white/10 bg-surface/90 shadow-soft backdrop-blur lg:hidden">
+    <nav className="fixed bottom-0 left-0 right-0 z-40 border-t border-border bg-surface shadow-soft lg:hidden">
       <div className="mx-auto flex max-w-6xl items-center justify-around px-4 py-2 pb-[env(safe-area-inset-bottom)]">
         {items.map((item) => {
           const isActive =
@@ -22,7 +22,7 @@ export default function DashboardMobileNav() {
               key={item.label}
               href={item.href}
               className={`flex flex-col items-center gap-1 rounded-xl px-3 py-2 text-[10px] font-semibold uppercase tracking-[0.18em] ${
-                isActive ? "text-lavender" : "text-ink-muted"
+                isActive ? "text-accent" : "text-ink-muted"
               }`}
               aria-current={isActive ? "page" : undefined}
             >

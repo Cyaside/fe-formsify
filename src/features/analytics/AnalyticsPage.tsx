@@ -58,8 +58,8 @@ export default function AnalyticsPage() {
     const published = forms.filter((form) => form.isPublished).length;
     const draft = forms.length - published;
     return [
-      { label: "Dipublish", value: published, color: "var(--lavender)" },
-      { label: "Draft", value: draft, color: "var(--sun)" },
+      { label: "Dipublish", value: published, color: "var(--accent-700)" },
+      { label: "Draft", value: draft, color: "var(--accent-300)" },
     ];
   }, [forms]);
 
@@ -74,7 +74,7 @@ export default function AnalyticsPage() {
             <main className="flex-1 space-y-6 px-6 py-8 pb-24">
               <div className="flex flex-wrap items-center justify-between gap-3">
                 <div>
-                  <p className="text-xs uppercase tracking-[0.24em] text-lavender">
+                  <p className="text-xs uppercase tracking-[0.24em] text-accent">
                     Analytics
                   </p>
                   <h2 className="mt-2 text-2xl font-semibold">Global Analytics</h2>

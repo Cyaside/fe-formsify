@@ -23,7 +23,7 @@ export default function FormStatusPieChart({ data }: FormStatusPieChartProps) {
 
   if (total === 0) {
     return (
-      <div className="rounded-2xl border border-white/10 bg-page/60 p-4 text-sm text-ink-muted">
+      <div className="rounded-2xl border border-border bg-surface-2 p-4 text-sm text-ink-muted">
         Belum ada data form untuk ditampilkan.
       </div>
     );
@@ -43,7 +43,12 @@ export default function FormStatusPieChart({ data }: FormStatusPieChartProps) {
               paddingAngle={3}
             >
               {summary.map((entry) => (
-                <Cell key={entry.label} fill={entry.color} stroke="var(--surface)" />
+                <Cell
+                  key={entry.label}
+                  fill={entry.color}
+                  stroke="var(--background)"
+                  strokeWidth={2}
+                />
               ))}
             </Pie>
             <Tooltip
@@ -60,6 +65,9 @@ export default function FormStatusPieChart({ data }: FormStatusPieChartProps) {
                 color: "var(--ink)",
                 fontSize: 12,
               }}
+              wrapperStyle={{ zIndex: 1000 }}
+              labelStyle={{ color: "var(--ink)", fontSize: 12, fontWeight: 600 }}
+              itemStyle={{ color: "var(--ink)", fontSize: 12 }}
             />
           </PieChart>
         </ResponsiveContainer>

@@ -25,7 +25,7 @@ export default function SiteHeader() {
             className="h-10 w-auto"
             priority
           />
-          <span className="text-sm font-semibold uppercase tracking-[0.3em] text-lavender">
+          <span className="text-sm font-semibold uppercase tracking-[0.3em] text-accent">
             Formsify
           </span>
         </div>
@@ -34,7 +34,7 @@ export default function SiteHeader() {
             <a
               key={item.href}
               href={item.href}
-              className="transition hover:text-lavender"
+              className="transition-colors hover:text-accent"
             >
               {item.label}
             </a>

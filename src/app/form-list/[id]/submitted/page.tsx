@@ -48,7 +48,7 @@ export default function SubmissionThankYouPage() {
         {error ? <Card className="border-rose/40 bg-rose/10 text-sm text-rose">{error}</Card> : null}
 
         {!loading && !error ? (
-          <Card className="space-y-3 border-l-4 border-l-lavender p-6 text-center">
+          <Card className="space-y-3 border-l-4 border-l-accent p-6 text-center">
             <h1 className="text-2xl font-semibold">{form?.thankYouTitle || DEFAULT_THANK_YOU_TITLE}</h1>
             <p className="text-sm text-ink-muted">{form?.thankYouMessage || DEFAULT_THANK_YOU_MESSAGE}</p>
             <div className="pt-2">

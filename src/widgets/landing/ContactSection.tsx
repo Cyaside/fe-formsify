@@ -14,11 +14,11 @@ export default function ContactSection() {
             description="Tinggalkan pesan, kami bantu merancang flow form yang efisien dan cantik."
           />
           <div className="grid gap-4">
-            <div className="rounded-3xl border border-white/10 bg-surface/70 p-6">
+            <div className="rounded-3xl border border-border bg-surface p-6 shadow-soft">
               <p className="text-sm text-ink-muted">Email</p>
               <p className="mt-2 text-base font-semibold text-ink">hello@formsify.id</p>
             </div>
-            <div className="rounded-3xl border border-white/10 bg-surface/70 p-6">
+            <div className="rounded-3xl border border-border bg-surface p-6 shadow-soft">
               <p className="text-sm text-ink-muted">Office</p>
               <p className="mt-2 text-base font-semibold text-ink">
                 Formsify Creative Lab, Jakarta
@@ -26,34 +26,34 @@ export default function ContactSection() {
             </div>
           </div>
         </div>
-        <form className="flex flex-col gap-4 rounded-[32px] border border-white/10 bg-surface/70 p-8">
-          <label className="text-xs font-semibold uppercase tracking-[0.28em] text-lavender">
+        <form className="flex flex-col gap-4 rounded-[32px] border border-border bg-surface p-8 shadow-soft">
+          <label className="text-xs font-semibold uppercase tracking-[0.28em] text-accent">
             Nama
             <input
               type="text"
               placeholder="Nama lengkap"
-              className="mt-3 w-full rounded-2xl border border-white/10 bg-page/80 px-4 py-3 text-sm text-ink placeholder:text-ink-muted focus:border-lavender focus:outline-none"
+              className="mt-3 w-full rounded-2xl border border-border bg-surface-2 px-4 py-3 text-sm text-ink placeholder:text-ink-muted focus:border-accent-500 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-500/25"
             />
           </label>
-          <label className="text-xs font-semibold uppercase tracking-[0.28em] text-lavender">
+          <label className="text-xs font-semibold uppercase tracking-[0.28em] text-accent">
             Email
             <input
               type="email"
               placeholder="email@company.com"
-              className="mt-3 w-full rounded-2xl border border-white/10 bg-page/80 px-4 py-3 text-sm text-ink placeholder:text-ink-muted focus:border-lavender focus:outline-none"
+              className="mt-3 w-full rounded-2xl border border-border bg-surface-2 px-4 py-3 text-sm text-ink placeholder:text-ink-muted focus:border-accent-500 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-500/25"
             />
           </label>
-          <label className="text-xs font-semibold uppercase tracking-[0.28em] text-lavender">
+          <label className="text-xs font-semibold uppercase tracking-[0.28em] text-accent">
             Pesan
             <textarea
               rows={4}
               placeholder="Ceritakan kebutuhan form kamu"
-              className="mt-3 w-full rounded-2xl border border-white/10 bg-page/80 px-4 py-3 text-sm text-ink placeholder:text-ink-muted focus:border-lavender focus:outline-none"
+              className="mt-3 w-full rounded-2xl border border-border bg-surface-2 px-4 py-3 text-sm text-ink placeholder:text-ink-muted focus:border-accent-500 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-500/25"
             />
           </label>
           <button
             type="button"
-            className="mt-2 inline-flex items-center justify-center rounded-full bg-lavender px-6 py-3 text-sm font-semibold text-violet-deep transition hover:-translate-y-0.5 hover:bg-sun"
+            className="mt-2 inline-flex items-center justify-center rounded-full bg-accent px-6 py-3 text-sm font-semibold text-white transition-colors hover:bg-accent-900"
           >
             Kirim Pesan
           </button>
