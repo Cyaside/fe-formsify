@@ -8,6 +8,8 @@ type DraftSnapshot = {
   description: string;
   thankYouTitle: string;
   thankYouMessage: string;
+  isResponseClosed?: boolean;
+  responseLimit?: string;
   sections: EditorSection[];
   questions: EditorQuestion[];
   removedSectionIds: string[];

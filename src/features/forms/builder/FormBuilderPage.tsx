@@ -107,6 +107,8 @@ export default function FormBuilderPage({ initialFormId }: Readonly<FormBuilderP
       description: string;
       thankYouTitle: string;
       thankYouMessage: string;
+      isResponseClosed: boolean;
+      responseLimit: string;
       sections: EditorSection[];
       questions: EditorQuestion[];
       removedSectionIds: string[];
@@ -123,8 +125,12 @@ export default function FormBuilderPage({ initialFormId }: Readonly<FormBuilderP
     error,
     thankYouTitle,
     thankYouMessage,
+    isResponseClosed,
+    responseLimit,
     setThankYouTitle,
     setThankYouMessage,
+    setIsResponseClosed,
+    setResponseLimit,
     questionsLocked,
     questionsLockNote,
     setQuestionsLocked,
@@ -182,6 +188,8 @@ export default function FormBuilderPage({ initialFormId }: Readonly<FormBuilderP
       description: string;
       thankYouTitle: string;
       thankYouMessage: string;
+      isResponseClosed: boolean;
+      responseLimit: string;
       sections: EditorSection[];
       questions: EditorQuestion[];
       removedSectionIds: string[];
@@ -193,6 +201,8 @@ export default function FormBuilderPage({ initialFormId }: Readonly<FormBuilderP
         description: snapshot.description,
         thankYouTitle: snapshot.thankYouTitle,
         thankYouMessage: snapshot.thankYouMessage,
+        isResponseClosed: snapshot.isResponseClosed,
+        responseLimit: snapshot.responseLimit,
         sections: snapshot.sections,
         questions: snapshot.questions,
         removedSectionIds: snapshot.removedSectionIds,
@@ -234,6 +244,8 @@ export default function FormBuilderPage({ initialFormId }: Readonly<FormBuilderP
       description,
       thankYouTitle,
       thankYouMessage,
+      isResponseClosed,
+      responseLimit,
       sections,
       questions,
       removedSectionIds,
@@ -244,6 +256,8 @@ export default function FormBuilderPage({ initialFormId }: Readonly<FormBuilderP
       description,
       thankYouTitle,
       thankYouMessage,
+      isResponseClosed,
+      responseLimit,
       sections,
       questions,
       removedSectionIds,
@@ -457,10 +471,14 @@ export default function FormBuilderPage({ initialFormId }: Readonly<FormBuilderP
             description={description}
             thankYouTitle={thankYouTitle}
             thankYouMessage={thankYouMessage}
+            isResponseClosed={isResponseClosed}
+            responseLimit={responseLimit}
             onChangeTitle={(value) => setFormMeta(value, description)}
             onChangeDescription={(value) => setFormMeta(title, value)}
             onChangeThankYouTitle={setThankYouTitle}
             onChangeThankYouMessage={setThankYouMessage}
+            onChangeIsResponseClosed={setIsResponseClosed}
+            onChangeResponseLimit={setResponseLimit}
           />
 
           {questionsLockNote ? (

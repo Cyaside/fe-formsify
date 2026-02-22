@@ -347,6 +347,12 @@ export default function PublicFillFormPage() {
   const currentPage = pages[currentPageIndex] ?? pages[0];
   const currentSection = currentPage?.section ?? null;
   const currentPageQuestions = currentPage?.questions ?? [];
+  const isManuallyClosed = Boolean(form?.isClosed);
+  const isResponseLimitReached =
+    typeof form?.responseLimit === "number" &&
+    typeof form?.responseCount === "number" &&
+    form.responseCount >= form.responseLimit;
+  const isResponseUnavailable = isManuallyClosed || isResponseLimitReached;
 
   const clearQuestionError = (questionId: string) => {
     setValidationErrors((prev) => {
@@ -404,7 +410,7 @@ export default function PublicFillFormPage() {
 
   const handleSubmit = async (event: React.SyntheticEvent<HTMLFormElement>) => {
     event.preventDefault();
-    if (!formId || submitting || !validateAnswers()) return;
+    if (!formId || submitting || isResponseUnavailable || !validateAnswers()) return;
     if (!claimAction()) return;
 
     setSubmitting(true);
@@ -440,8 +446,15 @@ export default function PublicFillFormPage() {
           </Card>
         ) : null}
         {error ? <Card className="border-rose/40 bg-rose/10 text-sm text-rose">{error}</Card> : null}
+        {!loading && !error && !unpublished && isResponseUnavailable ? (
+          <Card className="border-amber-300/50 bg-amber-100/40 text-sm text-amber-900">
+            {isManuallyClosed
+              ? "Form ini sudah ditutup dan tidak menerima respons baru."
+              : `Batas respons form ini sudah tercapai (${form?.responseLimit}).`}
+          </Card>
+        ) : null}
 
-        {!unpublished ? (
+        {!unpublished && !isResponseUnavailable ? (
           <FillFormContent
             form={form}
             orderedQuestions={orderedQuestions}

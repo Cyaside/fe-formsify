@@ -40,6 +40,8 @@ export type FormSummary = {
   createdAt: string;
   updatedAt: string;
   isPublished?: boolean;
+  isClosed?: boolean;
+  responseLimit?: number | null;
   owner?: FormOwner | null;
 };
 
@@ -50,6 +52,9 @@ export type FormDetail = {
   thankYouTitle?: string | null;
   thankYouMessage?: string | null;
   isPublished?: boolean;
+  isClosed?: boolean;
+  responseLimit?: number | null;
+  responseCount?: number;
   createdAt?: string;
   updatedAt?: string;
   owner?: FormOwner | null;
@@ -105,6 +110,8 @@ export type CreateFormPayload = {
   thankYouTitle?: string;
   thankYouMessage?: string;
   isPublished?: boolean;
+  isClosed?: boolean;
+  responseLimit?: number | null;
 };
 
 export type UpdateFormPayload = {
@@ -113,6 +120,8 @@ export type UpdateFormPayload = {
   thankYouTitle?: string;
   thankYouMessage?: string;
   isPublished?: boolean;
+  isClosed?: boolean;
+  responseLimit?: number | null;
 };
 
 export type CreateQuestionPayload = {
