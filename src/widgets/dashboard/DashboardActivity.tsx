@@ -19,7 +19,7 @@ export default function DashboardActivity({
     if (loading && items.length === 0) {
       return (
         <div className="rounded-2xl border border-border bg-surface-2 p-4 text-sm text-ink-muted">
-          Memuat aktivitas terbaru...
+          Loading recent activity...
         </div>
       );
     }
@@ -35,7 +35,7 @@ export default function DashboardActivity({
     if (items.length === 0) {
       return (
         <div className="rounded-2xl border border-border bg-surface-2 p-4 text-sm text-ink-muted">
-          Belum ada aktivitas yang bisa ditampilkan.
+          No activity to display yet.
         </div>
       );
     }
@@ -56,7 +56,7 @@ export default function DashboardActivity({
 
   return (
     <div className="rounded-3xl border border-border bg-surface p-6 shadow-soft">
-      <h2 className="text-lg font-semibold text-ink font-display">Aktivitas Terbaru</h2>
+      <h2 className="text-lg font-semibold text-ink font-display">Recent Activity</h2>
       <div className="mt-6 grid gap-4">
         {renderContent()}
       </div>

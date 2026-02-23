@@ -233,6 +233,9 @@ export default function FormBuilderPage({ initialFormId }: Readonly<FormBuilderP
       } catch (err) {
         const message = err instanceof ApiError ? err.message : "Failed to autosave";
         setSaveMessage(message);
+        if (options?.showGlobalLoading) {
+          throw err;
+        }
       } finally {
         savingRef.current = false;
       }
@@ -301,11 +304,12 @@ export default function FormBuilderPage({ initialFormId }: Readonly<FormBuilderP
 
   useEffect(() => {
     if (!hydrated || loading || error) return;
+    if (publishing || savingDraft) return;
     const timeout = globalThis.setTimeout(() => {
       void enqueueSave(savePayload, { showGlobalLoading: false });
     }, 500);
     return () => globalThis.clearTimeout(timeout);
-  }, [enqueueSave, error, hydrated, loading, savePayload]);
+  }, [enqueueSave, error, hydrated, loading, publishing, savePayload, savingDraft]);
 
   useUnsavedChangesNavigationGuard({
     enabled: hasUnsavedChanges || savingRef.current || queueRef.current !== null,

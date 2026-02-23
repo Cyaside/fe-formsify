@@ -11,14 +11,14 @@ import DashboardMobileMenu from "./DashboardMobileMenu";
 export default function DashboardHeader() {
   const { user, logout } = useAuth();
   const router = useRouter();
-  const displayName = user?.name || user?.email || "Pengguna";
+  const displayName = user?.name || user?.email || "User";
 
   return (
     <header className="mx-6 mt-6 flex flex-col gap-6 rounded-3xl border border-border bg-surface px-6 py-6 shadow-soft">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
           <Image
-            src="/logowithword.png"
+            src="/logo.png"
             alt="Formsify"
             width={180}
             height={48}
@@ -30,7 +30,7 @@ export default function DashboardHeader() {
               Dashboard
             </p>
             <p className="mt-1 text-sm text-ink-muted">
-              Overview cepat untuk aktivitas form kamu
+              Quick overview of your form activity
             </p>
           </div>
         </div>
@@ -44,13 +44,13 @@ export default function DashboardHeader() {
       <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
         <div>
           <h1 className="text-2xl font-semibold text-ink font-display md:text-3xl">
-            Selamat datang kembali, {displayName}
+            Welcome back, {displayName}
           </h1>
         </div>
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
           <div className="flex items-center gap-2 rounded-full border border-border bg-surface-2 px-4 py-2 text-sm text-ink-muted">
             <span className="h-2 w-2 rounded-full bg-accent" />
-            <span>Cari form, template, atau respon</span>
+            <span>Search forms, templates, or responses</span>
           </div>
           <div className="flex items-center gap-3">
             <Link href="/">

@@ -18,7 +18,7 @@ import {
 } from "@/shared/api/forms";
 
 const formatDate = (value: string) =>
-  new Intl.DateTimeFormat("id-ID", { dateStyle: "medium", timeStyle: "short" }).format(
+  new Intl.DateTimeFormat("en-US", { dateStyle: "medium", timeStyle: "short" }).format(
     new Date(value),
   );
 

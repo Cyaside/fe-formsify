@@ -60,7 +60,7 @@ export default function PublicFormDetailPage() {
 
   const updatedLabel = useMemo(() => {
     if (!form?.updatedAt) return "-";
-    return new Intl.DateTimeFormat("id-ID", {
+    return new Intl.DateTimeFormat("en-US", {
       dateStyle: "medium",
       timeStyle: "short",
     }).format(new Date(form.updatedAt));

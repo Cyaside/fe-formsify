@@ -23,8 +23,8 @@ type SectionPage = {
   questions: Question[];
 };
 
-const DEFAULT_THANK_YOU_TITLE = "Terima kasih!";
-const DEFAULT_THANK_YOU_MESSAGE = "Respons kamu sudah terekam.";
+const DEFAULT_THANK_YOU_TITLE = "Thank you!";
+const DEFAULT_THANK_YOU_MESSAGE = "Your response has been recorded.";
 
 const sortByOrder = <T extends { order: number }>(items: T[]) =>
   [...items].sort((a, b) => a.order - b.order);
@@ -446,8 +446,8 @@ export default function SharedPublicFormPage() {
         {!loading && !error && !unpublished && isResponseUnavailable ? (
           <Card className="border-amber-300/50 bg-amber-100/40 text-sm text-amber-900">
             {isManuallyClosed
-              ? "Form ini sudah ditutup dan tidak menerima respons baru."
-              : `Batas respons form ini sudah tercapai (${form?.responseLimit}).`}
+              ? "This form is closed and no longer accepts new responses."
+              : `This form has reached its response limit (${form?.responseLimit}).`}
           </Card>
         ) : null}
 

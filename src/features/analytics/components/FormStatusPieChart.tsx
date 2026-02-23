@@ -12,7 +12,7 @@ type FormStatusPieChartProps = {
   data: FormStatusDatum[];
 };
 
-const formatNumber = (value: number) => new Intl.NumberFormat("id-ID").format(value);
+const formatNumber = (value: number) => new Intl.NumberFormat("en-US").format(value);
 
 export default function FormStatusPieChart({ data }: FormStatusPieChartProps) {
   const total = data.reduce((sum, item) => sum + item.value, 0);
@@ -24,7 +24,7 @@ export default function FormStatusPieChart({ data }: FormStatusPieChartProps) {
   if (total === 0) {
     return (
       <div className="rounded-2xl border border-border bg-surface-2 p-4 text-sm text-ink-muted">
-        Belum ada data form untuk ditampilkan.
+        No form data available to display.
       </div>
     );
   }

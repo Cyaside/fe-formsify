@@ -72,7 +72,7 @@ export default function BuilderFormMetaCard({
               disabled={!isPublished}
               className="h-4 w-4 accent-accent"
             />
-            <span>{isPublished ? "Close responses (manual close)" : "Close (hanya untuk form published)"}</span>
+            <span>{isPublished ? "Close responses (manual close)" : "Close (published forms only)"}</span>
           </label>
           <Input
             type="number"
@@ -80,7 +80,7 @@ export default function BuilderFormMetaCard({
             step={1}
             value={responseLimit}
             onChange={(event) => onChangeResponseLimit(event.target.value)}
-            placeholder="Response limit (kosong = tanpa batas)"
+            placeholder="Response limit (empty = no limit)"
           />
         </div>
       </div>

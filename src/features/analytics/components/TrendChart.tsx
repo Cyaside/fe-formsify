@@ -15,16 +15,16 @@ import type { TrendBucket } from "../lib/trend";
 const formatDateLabel = (value: string, bucket: TrendBucket) => {
   const date = new Date(value);
   if (bucket === "month") {
-    return new Intl.DateTimeFormat("id-ID", { month: "short", year: "2-digit" }).format(
+    return new Intl.DateTimeFormat("en-US", { month: "short", year: "2-digit" }).format(
       date,
     );
   }
   if (bucket === "week") {
-    return new Intl.DateTimeFormat("id-ID", { day: "2-digit", month: "short" }).format(
+    return new Intl.DateTimeFormat("en-US", { day: "2-digit", month: "short" }).format(
       date,
     );
   }
-  return new Intl.DateTimeFormat("id-ID", { day: "2-digit", month: "short" }).format(date);
+  return new Intl.DateTimeFormat("en-US", { day: "2-digit", month: "short" }).format(date);
 };
 
 type TrendChartProps = {

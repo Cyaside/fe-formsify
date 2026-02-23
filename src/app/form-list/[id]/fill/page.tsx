@@ -449,8 +449,8 @@ export default function PublicFillFormPage() {
         {!loading && !error && !unpublished && isResponseUnavailable ? (
           <Card className="border-amber-300/50 bg-amber-100/40 text-sm text-amber-900">
             {isManuallyClosed
-              ? "Form ini sudah ditutup dan tidak menerima respons baru."
-              : `Batas respons form ini sudah tercapai (${form?.responseLimit}).`}
+              ? "This form is closed and no longer accepts new responses."
+              : `This form has reached its response limit (${form?.responseLimit}).`}
           </Card>
         ) : null}
 
