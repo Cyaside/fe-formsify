@@ -13,6 +13,7 @@ import {
   DEFAULT_THANK_YOU_TITLE,
   mapApiQuestionToEditor,
   mapApiSectionToEditor,
+  QUESTION_LOCK_MESSAGE,
 } from "../lib/formBuilderShared";
 
 type SnapshotSetter = (snapshot: {
@@ -84,7 +85,30 @@ export function useFormBuilderBootstrap({
         return;
       }
 
-      const localDraft = loadDraft(draftKey);
+      let formResponse: Awaited<ReturnType<typeof formsApi.detail>> | null = null;
+      try {
+        formResponse = await formsApi.detail(initialFormId);
+        if (!active) return;
+        if ((formResponse.data.responseCount ?? 0) > 0) {
+          clearDraft(draftKey);
+          setQuestionsLocked(true);
+          setQuestionsLockNote(QUESTION_LOCK_MESSAGE);
+        }
+      } catch (err) {
+        if (!active) return;
+        const message = err instanceof ApiError ? err.message : "Failed to load form";
+        setError(message);
+        setLoading(false);
+        return;
+      }
+      if (!formResponse) {
+        setError("Failed to load form");
+        setLoading(false);
+        return;
+      }
+
+      const localDraft =
+        (formResponse.data.responseCount ?? 0) > 0 ? null : loadDraft(draftKey);
       if (localDraft) {
         // Prevent a previously-created form (saved under legacy "new" draft key)
         // from polluting the next fresh "new form" page.
@@ -131,8 +155,7 @@ export function useFormBuilderBootstrap({
       }
 
       try {
-        const [formResponse, questionsResponse, sectionsResponse] = await Promise.all([
-          formsApi.detail(initialFormId),
+        const [questionsResponse, sectionsResponse] = await Promise.all([
           formsApi.questions(initialFormId),
           formsApi.sections(initialFormId),
         ]);

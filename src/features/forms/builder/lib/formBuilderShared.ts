@@ -15,7 +15,7 @@ import {
 export const DEFAULT_THANK_YOU_TITLE = "Thank you!";
 export const DEFAULT_THANK_YOU_MESSAGE = "Your response has been recorded.";
 export const QUESTION_LOCK_MESSAGE =
-  "This form already has submissions, so questions can no longer be created, edited, or deleted.";
+  "This form already has submissions, so existing questions and sections can no longer be edited. You can still add new questions/sections, close responses, or change the response limit.";
 export const PUBLISH_NO_QUESTION_MESSAGE =
   "Add at least one question before publishing.";
 
@@ -94,7 +94,7 @@ export const getPublishValidationMessage = (payload: {
 export const resolveBuilderActionErrorMessage = (err: unknown, fallback: string) => {
   if (!(err instanceof ApiError)) return fallback;
   if (err.status === 409) {
-    return "This form already has responses. The question structure can no longer be changed.";
+    return "This form already has responses. Existing questions/sections are locked, but you can still add new ones.";
   }
   return err.message || fallback;
 };

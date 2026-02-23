@@ -55,7 +55,6 @@ export default function BuilderToolbar({
               variant="secondary"
               className="min-w-0 gap-2"
               onClick={onAddSection}
-              disabled={questionsLocked}
             >
               <Plus size={16} />
               <span className="truncate">Add Section</span>
@@ -64,10 +63,8 @@ export default function BuilderToolbar({
               variant="secondary"
               className="min-w-0 gap-2"
               onClick={() => {
-                if (questionsLocked) return;
                 setAddMenuOpen((prev) => !prev);
               }}
-              disabled={questionsLocked}
             >
               <Plus size={16} />
               <span className="truncate">Add Question</span>
@@ -81,7 +78,6 @@ export default function BuilderToolbar({
                   key={type.value}
                   type="button"
                   onClick={() => {
-                    if (questionsLocked) return;
                     onAddQuestionType(type.value);
                     setAddMenuOpen(false);
                   }}

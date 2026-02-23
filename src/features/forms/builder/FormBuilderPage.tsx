@@ -42,7 +42,6 @@ import {
   mapApiQuestionToEditor,
   mapApiSectionToEditor,
   PUBLISH_NO_QUESTION_MESSAGE,
-  QUESTION_LOCK_MESSAGE,
   QUESTION_SORTABLE_PREFIX,
   resolveBuilderActionErrorMessage,
   SECTION_SORTABLE_PREFIX,
@@ -100,6 +99,11 @@ export default function FormBuilderPage({ initialFormId }: Readonly<FormBuilderP
   const [publishing, setPublishing] = useState(false);
   const [savingDraft, setSavingDraft] = useState(false);
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
+  const [lockedBaselineCaptured, setLockedBaselineCaptured] = useState(false);
+  const [lockedSectionIds, setLockedSectionIds] = useState<string[]>([]);
+  const [lockedQuestionIds, setLockedQuestionIds] = useState<string[]>([]);
+  const lockedSectionIdSet = useMemo(() => new Set(lockedSectionIds), [lockedSectionIds]);
+  const lockedQuestionIdSet = useMemo(() => new Set(lockedQuestionIds), [lockedQuestionIds]);
 
   const queueRef = useRef<null | {
     snapshot: {
@@ -155,11 +159,13 @@ export default function FormBuilderPage({ initialFormId }: Readonly<FormBuilderP
         formId: latestFormId,
         draftKey: activeDraftKey,
         questionsLocked,
-        questionsLockNote,
-        setSaveMessage: (value) => {
-          if (value === QUESTION_LOCK_MESSAGE || value === questionsLockNote) return;
-          setSaveMessage(value);
-        },
+        lockedSectionIds: lockedBaselineCaptured
+          ? lockedSectionIdSet
+          : new Set(snapshot.sections.filter((section) => !section.id.startsWith("temp_")).map((section) => section.id)),
+        lockedQuestionIds: lockedBaselineCaptured
+          ? lockedQuestionIdSet
+          : new Set(snapshot.questions.filter((question) => !question.id.startsWith("temp_")).map((question) => question.id)),
+        setSaveMessage,
         setFormId,
         setQuestionsLocked,
         setQuestionsLockNote,
@@ -180,8 +186,11 @@ export default function FormBuilderPage({ initialFormId }: Readonly<FormBuilderP
       formId,
       hydrated,
       initialFormId,
+      lockedBaselineCaptured,
       questionsLockNote,
       questionsLocked,
+      lockedQuestionIdSet,
+      lockedSectionIdSet,
       replaceQuestionId,
       replaceSectionId,
       setFormId,
@@ -290,7 +299,48 @@ export default function FormBuilderPage({ initialFormId }: Readonly<FormBuilderP
     lastSavedSnapshotKeyRef.current = null;
     setHasUnsavedChanges(false);
     setSaveMessage("Ready");
+    setLockedBaselineCaptured(false);
+    setLockedSectionIds([]);
+    setLockedQuestionIds([]);
   }, [initialFormId]);
+
+  useEffect(() => {
+    if (!questionsLocked) {
+      setLockedBaselineCaptured(false);
+      setLockedSectionIds([]);
+      setLockedQuestionIds([]);
+      return;
+    }
+    if (lockedBaselineCaptured) return;
+    if (!hydrated || loading || error) return;
+    setLockedSectionIds(
+      sections.filter((section) => !section.id.startsWith("temp_")).map((section) => section.id),
+    );
+    setLockedQuestionIds(
+      questions.filter((question) => !question.id.startsWith("temp_")).map((question) => question.id),
+    );
+    setLockedBaselineCaptured(true);
+  }, [error, hydrated, loading, lockedBaselineCaptured, questions, questionsLocked, sections]);
+
+  const isLockedSectionId = useCallback(
+    (id: string) =>
+      questionsLocked &&
+      (lockedBaselineCaptured ? lockedSectionIdSet.has(id) : !id.startsWith("temp_")),
+    [lockedBaselineCaptured, lockedSectionIdSet, questionsLocked],
+  );
+  const isLockedQuestionId = useCallback(
+    (id: string) =>
+      questionsLocked &&
+      (lockedBaselineCaptured ? lockedQuestionIdSet.has(id) : !id.startsWith("temp_")),
+    [lockedBaselineCaptured, lockedQuestionIdSet, questionsLocked],
+  );
+
+  useEffect(() => {
+    if (!questionsLockNote) return;
+    queueRef.current = null;
+    setHasUnsavedChanges(false);
+    setSaveMessage(questionsLockNote);
+  }, [questionsLockNote]);
 
   useEffect(() => {
     if (!hydrated || loading || error) return;
@@ -299,24 +349,45 @@ export default function FormBuilderPage({ initialFormId }: Readonly<FormBuilderP
       setHasUnsavedChanges(false);
       return;
     }
-    setHasUnsavedChanges(lastSavedSnapshotKeyRef.current !== savePayloadKey);
-  }, [error, hydrated, loading, savePayloadKey]);
+    const isDirty = lastSavedSnapshotKeyRef.current !== savePayloadKey;
+    setHasUnsavedChanges(isDirty);
+    if (isDirty && !publishing && !savingDraft) {
+      setSaveMessage(savingRef.current ? "Changes queued..." : "Unsaved changes");
+    }
+  }, [
+    error,
+    hydrated,
+    loading,
+    publishing,
+    questionsLockNote,
+    savePayloadKey,
+    savingDraft,
+  ]);
 
   useEffect(() => {
     if (!hydrated || loading || error) return;
     if (publishing || savingDraft) return;
+    if (lastSavedSnapshotKeyRef.current === savePayloadKey) return;
     const timeout = globalThis.setTimeout(() => {
       void enqueueSave(savePayload, { showGlobalLoading: false });
     }, 500);
     return () => globalThis.clearTimeout(timeout);
-  }, [enqueueSave, error, hydrated, loading, publishing, savePayload, savingDraft]);
+  }, [
+    enqueueSave,
+    error,
+    hydrated,
+    loading,
+    publishing,
+    savePayload,
+    savePayloadKey,
+    savingDraft,
+  ]);
 
   useUnsavedChangesNavigationGuard({
     enabled: hasUnsavedChanges || savingRef.current || queueRef.current !== null,
   });
 
   const handleAddSection = () => {
-    if (questionsLocked) return;
     addSection(createDefaultSection(orderedSections.length));
   };
 
@@ -331,7 +402,6 @@ export default function FormBuilderPage({ initialFormId }: Readonly<FormBuilderP
     sectionId: string,
     type: QuestionType = "SHORT_ANSWER",
   ) => {
-    if (questionsLocked) return;
     addQuestion(createDefaultQuestion(sectionId, type));
   };
 
@@ -340,8 +410,17 @@ export default function FormBuilderPage({ initialFormId }: Readonly<FormBuilderP
     handleAddQuestionToSection(targetSectionId, type);
   };
 
+  const handleSectionUpdate = useCallback(
+    (id: string, value: Partial<EditorSection>) => {
+      if (isLockedSectionId(id)) return;
+      updateSection(id, value);
+    },
+    [isLockedSectionId, updateSection],
+  );
+
   const handleQuestionUpdate = useCallback(
     (id: string, value: Partial<EditorQuestion>) => {
+      if (isLockedQuestionId(id)) return;
       if (value.sectionId) {
         const current = questions.find((question) => question.id === id);
         if (!current) return;
@@ -354,7 +433,7 @@ export default function FormBuilderPage({ initialFormId }: Readonly<FormBuilderP
       }
       updateQuestion(id, value);
     },
-    [questions, setQuestions, updateQuestion],
+    [isLockedQuestionId, questions, setQuestions, updateQuestion],
   );
 
   const handleDragEnd = (event: DragEndEvent) => {
@@ -469,10 +548,12 @@ export default function FormBuilderPage({ initialFormId }: Readonly<FormBuilderP
       orderedSections={orderedSections}
       questions={questions}
       questionsLocked={questionsLocked}
+      isLockedSectionId={isLockedSectionId}
+      isLockedQuestionId={isLockedQuestionId}
       sensors={sensors}
       onDragEnd={handleDragEnd}
       onAddSection={handleAddSection}
-      onUpdateSection={updateSection}
+      onUpdateSection={handleSectionUpdate}
       onMoveSection={moveSection}
       onDuplicateSection={duplicateSection}
       onRemoveSection={removeSection}
@@ -498,6 +579,7 @@ export default function FormBuilderPage({ initialFormId }: Readonly<FormBuilderP
             thankYouMessage={thankYouMessage}
             isResponseClosed={isResponseClosed}
             isPublished={isPublished}
+            questionsLocked={questionsLocked}
             responseLimit={responseLimit}
             onChangeTitle={(value) => setFormMeta(value, description)}
             onChangeDescription={(value) => setFormMeta(title, value)}
