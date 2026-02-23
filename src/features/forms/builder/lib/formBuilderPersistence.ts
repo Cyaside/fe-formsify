@@ -14,6 +14,8 @@ export type BuilderSaveSnapshot = {
   description: string;
   thankYouTitle: string;
   thankYouMessage: string;
+  isResponseClosed: boolean;
+  responseLimit: string;
   sections: EditorSection[];
   questions: EditorQuestion[];
   removedSectionIds: string[];
@@ -58,6 +60,8 @@ export const createSavedSnapshotKey = (snapshot: BuilderSaveSnapshot) =>
     description: snapshot.description,
     thankYouTitle: snapshot.thankYouTitle,
     thankYouMessage: snapshot.thankYouMessage,
+    isResponseClosed: snapshot.isResponseClosed,
+    responseLimit: snapshot.responseLimit,
     sections: snapshot.sections,
     questions: snapshot.questions,
     removedSectionIds: [],
@@ -95,6 +99,12 @@ export async function performFormBuilderSave({
 
   setSaveMessage("Saving changes...");
 
+  const normalizedResponseLimitInput = snapshot.responseLimit.trim();
+  const responseLimit =
+    normalizedResponseLimitInput.length === 0
+      ? null
+      : Number.parseInt(normalizedResponseLimitInput, 10);
+
   if (!activeFormId) {
     const created = await formsApi.create(
       {
@@ -102,6 +112,8 @@ export async function performFormBuilderSave({
         description: snapshot.description.trim() || null,
         thankYouTitle: snapshot.thankYouTitle.trim() || DEFAULT_THANK_YOU_TITLE,
         thankYouMessage: snapshot.thankYouMessage.trim() || DEFAULT_THANK_YOU_MESSAGE,
+        isClosed: snapshot.isResponseClosed,
+        responseLimit,
         isPublished: false,
       },
       requestOptions,
@@ -117,6 +129,8 @@ export async function performFormBuilderSave({
       description: snapshot.description.trim() || null,
       thankYouTitle: snapshot.thankYouTitle.trim() || DEFAULT_THANK_YOU_TITLE,
       thankYouMessage: snapshot.thankYouMessage.trim() || DEFAULT_THANK_YOU_MESSAGE,
+      isClosed: snapshot.isResponseClosed,
+      responseLimit,
     },
     requestOptions,
   );

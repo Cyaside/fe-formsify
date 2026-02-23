@@ -18,6 +18,11 @@ const manrope = Manrope({
 export const metadata: Metadata = {
   title: "Formsify",
   description: "Modern webform builder untuk tim yang ingin bergerak cepat.",
+  icons: {
+    icon: "/logo.png",
+    shortcut: "/logo.png",
+    apple: "/logo.png",
+  },
 };
 
 export default function RootLayout({

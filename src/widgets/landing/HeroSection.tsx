@@ -48,11 +48,11 @@ export default function HeroSection() {
         >
           <div className="relative z-10 w-full rounded-3xl border border-border bg-surface px-4 py-10 text-center shadow-soft md:px-8 md:py-14">
             <h1 className="mx-auto max-w-300 text-[56px] leading-[0.95] font-extrabold tracking-tight text-ink md:text-[96px]">
-              The simplest way to create forms
+              Create forms in the simplest way
             </h1>
             <p className="mt-6 mx-auto max-w-2xl text-lg text-ink-muted">
-              Say goodbye to boring forms. Meet Tally — the free, intuitive form builder you’ve been
-              looking for.
+              Build, publish, and manage forms in one place with a clean workflow for questions,
+              sections, and responses.
             </p>
 
             <div className="mt-8 flex items-center justify-center gap-3">
@@ -85,12 +85,12 @@ export default function HeroSection() {
                 href="/form-list"
                 className="inline-flex items-center rounded-full px-4 py-2 text-sm font-medium text-ink-muted transition-colors hover:text-accent focus:outline-none"
               >
-                Form list
+                Form List
               </Link>
             </div>
 
             <p className="mt-3 text-sm text-ink-muted">
-              {user ? "You are logged in." : "Login to create your forms"}
+              {user ? "You are logged in." : "Login to create and manage your forms."}
             </p>
           </div>
         </div>

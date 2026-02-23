@@ -43,6 +43,9 @@ export function useFormBuilderBootstrap({
   const [error, setError] = useState<string | null>(null);
   const [thankYouTitle, setThankYouTitle] = useState(DEFAULT_THANK_YOU_TITLE);
   const [thankYouMessage, setThankYouMessage] = useState(DEFAULT_THANK_YOU_MESSAGE);
+  const [isResponseClosed, setIsResponseClosed] = useState(false);
+  const [responseLimit, setResponseLimit] = useState("");
+  const [isPublished, setIsPublished] = useState(false);
   const [questionsLocked, setQuestionsLocked] = useState(false);
   const [questionsLockNote, setQuestionsLockNote] = useState<string | null>(null);
 
@@ -72,6 +75,9 @@ export function useFormBuilderBootstrap({
 
         setThankYouTitle(localDraft.thankYouTitle ?? DEFAULT_THANK_YOU_TITLE);
         setThankYouMessage(localDraft.thankYouMessage ?? DEFAULT_THANK_YOU_MESSAGE);
+        setIsResponseClosed(Boolean(localDraft.isPublished) && Boolean(localDraft.isResponseClosed));
+        setResponseLimit(localDraft.responseLimit ?? "");
+        setIsPublished(Boolean(localDraft.isPublished));
         setSnapshot({
           formId: localDraft.formId,
           title: localDraft.title,
@@ -91,6 +97,9 @@ export function useFormBuilderBootstrap({
         const initialQuestions = [createDefaultQuestion(initialSections[0].id)];
         setThankYouTitle(DEFAULT_THANK_YOU_TITLE);
         setThankYouMessage(DEFAULT_THANK_YOU_MESSAGE);
+        setIsResponseClosed(false);
+        setResponseLimit("");
+        setIsPublished(false);
         setSnapshot({
           formId: null,
           title: DEFAULT_FORM_TITLE,
@@ -137,6 +146,15 @@ export function useFormBuilderBootstrap({
 
         setThankYouTitle(formResponse.data.thankYouTitle || DEFAULT_THANK_YOU_TITLE);
         setThankYouMessage(formResponse.data.thankYouMessage || DEFAULT_THANK_YOU_MESSAGE);
+        setIsResponseClosed(
+          Boolean(formResponse.data.isPublished) && Boolean(formResponse.data.isClosed),
+        );
+        setResponseLimit(
+          typeof formResponse.data.responseLimit === "number"
+            ? String(formResponse.data.responseLimit)
+            : "",
+        );
+        setIsPublished(Boolean(formResponse.data.isPublished));
 
         setSnapshot({
           formId: formResponse.data.id,
@@ -172,8 +190,14 @@ export function useFormBuilderBootstrap({
     error,
     thankYouTitle,
     thankYouMessage,
+    isResponseClosed,
+    responseLimit,
+    isPublished,
     setThankYouTitle,
     setThankYouMessage,
+    setIsResponseClosed,
+    setResponseLimit,
+    setIsPublished,
     questionsLocked,
     questionsLockNote,
     setQuestionsLocked,

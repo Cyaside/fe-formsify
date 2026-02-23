@@ -1,5 +1,18 @@
+const unwrapEnvString = (value: string | undefined) => {
+  if (!value) return value;
+  const trimmed = value.trim();
+  if (
+    trimmed.length >= 2 &&
+    ((trimmed.startsWith('"') && trimmed.endsWith('"')) ||
+      (trimmed.startsWith("'") && trimmed.endsWith("'")))
+  ) {
+    return trimmed.slice(1, -1).trim();
+  }
+  return trimmed;
+};
+
 export const API_BASE_URL =
-  process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://localhost:4000";
+  unwrapEnvString(process.env.NEXT_PUBLIC_API_BASE_URL) ?? "http://localhost:4000";
 
 export class ApiError extends Error {
   status: number;
@@ -28,7 +41,11 @@ export async function apiRequest<T>(
     startGlobalLoading();
   }
 
-  const url = path.startsWith("http") ? path : `${API_BASE_URL}${path}`;
+  const url = path.startsWith("http")
+    ? path
+    : path.startsWith("/api/")
+      ? path
+      : `${API_BASE_URL}${path}`;
   const headers = new Headers(fetchOptions.headers);
 
   if (!headers.has("Content-Type") && body !== undefined) {

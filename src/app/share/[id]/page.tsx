@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useParams } from "next/navigation";
 import Button from "@/shared/ui/Button";
 import Card from "@/shared/ui/Card";
@@ -278,6 +278,7 @@ function FillFormContent({
 }
 
 export default function SharedPublicFormPage() {
+  const actionCooldownMs = 350;
   const params = useParams();
   const formId = Array.isArray(params?.id) ? params.id[0] : params?.id;
   const invalidFormId = !formId;
@@ -294,6 +295,7 @@ export default function SharedPublicFormPage() {
   const [submitMessage, setSubmitMessage] = useState<string | null>(null);
   const [submitted, setSubmitted] = useState(false);
   const [pageIndex, setPageIndex] = useState(0);
+  const lastActionAtRef = useRef(0);
 
   useEffect(() => {
     if (!formId) return;
@@ -347,6 +349,12 @@ export default function SharedPublicFormPage() {
   const currentPage = pages[currentPageIndex] ?? pages[0];
   const currentSection = currentPage?.section ?? null;
   const currentPageQuestions = currentPage?.questions ?? [];
+  const isManuallyClosed = Boolean(form?.isClosed);
+  const isResponseLimitReached =
+    typeof form?.responseLimit === "number" &&
+    typeof form?.responseCount === "number" &&
+    form.responseCount >= form.responseLimit;
+  const isResponseUnavailable = isManuallyClosed || isResponseLimitReached;
 
   const clearQuestionError = (questionId: string) => {
     setValidationErrors((prev) => {
@@ -393,9 +401,19 @@ export default function SharedPublicFormPage() {
     );
   };
 
+  const claimAction = () => {
+    const now = Date.now();
+    if (now - lastActionAtRef.current < actionCooldownMs) {
+      return false;
+    }
+    lastActionAtRef.current = now;
+    return true;
+  };
+
   const handleSubmit = async (event: React.SyntheticEvent<HTMLFormElement>) => {
     event.preventDefault();
-    if (!formId || !validateAnswers()) return;
+    if (!formId || submitting || isResponseUnavailable || !validateAnswers()) return;
+    if (!claimAction()) return;
 
     setSubmitting(true);
     setSubmitMessage(null);
@@ -425,13 +443,20 @@ export default function SharedPublicFormPage() {
           </Card>
         ) : null}
         {error ? <Card className="border-rose/40 bg-rose/10 text-sm text-rose">{error}</Card> : null}
+        {!loading && !error && !unpublished && isResponseUnavailable ? (
+          <Card className="border-amber-300/50 bg-amber-100/40 text-sm text-amber-900">
+            {isManuallyClosed
+              ? "Form ini sudah ditutup dan tidak menerima respons baru."
+              : `Batas respons form ini sudah tercapai (${form?.responseLimit}).`}
+          </Card>
+        ) : null}
 
         {submitted && !unpublished ? (
           <Card className="space-y-3 border-l-4 border-l-accent p-6 text-center">
             <h1 className="text-2xl font-semibold">{form?.thankYouTitle || DEFAULT_THANK_YOU_TITLE}</h1>
             <p className="text-sm text-ink-muted">{form?.thankYouMessage || DEFAULT_THANK_YOU_MESSAGE}</p>
           </Card>
-        ) : !unpublished ? (
+        ) : !unpublished && !isResponseUnavailable ? (
           <FillFormContent
             form={form}
             orderedQuestions={orderedQuestions}
@@ -441,9 +466,13 @@ export default function SharedPublicFormPage() {
             totalPages={totalPages}
             onNextPage={() => {
               if (!validateCurrentPage()) return;
+              if (!claimAction()) return;
               setPageIndex((prev) => Math.min(prev + 1, totalPages - 1));
             }}
-            onPrevPage={() => setPageIndex((prev) => Math.max(prev - 1, 0))}
+            onPrevPage={() => {
+              if (!claimAction()) return;
+              setPageIndex((prev) => Math.max(prev - 1, 0));
+            }}
             answers={answers}
             validationErrors={validationErrors}
             submitting={submitting}

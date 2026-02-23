@@ -1,56 +1,68 @@
-"use client"
+"use client";
 
 import Container from "@/shared/ui/Container";
 
 const steps = [
   {
-    title: "Rancang Struktur",
-    desc: "Tentukan field, logic, dan flow yang kamu butuhkan.",
+    title: "Create a Draft Form",
+    desc: "Start with the form title and description, then save it as a draft before publishing.",
+    color: "var(--accent-700)",
+    bg: "var(--surface)",
   },
   {
-    title: "Kustom Visual",
-    desc: "Atur warna, tipografi, dan animasi ringan.",
+    title: "Arrange Sections and Questions",
+    desc: "Add the right question types and organize the order so the form is easy to follow.",
+    color: "var(--warning)",
+    bg: "var(--surface)",
   },
   {
-    title: "Publikasi",
-    desc: "Bagikan tautan atau embed ke produkmu.",
+    title: "Publish and Share",
+    desc: "Publish the form when ready, then send the public link to respondents.",
+    color: "var(--success)",
+    bg: "var(--surface)",
   },
   {
-    title: "Optimasi",
-    desc: "Pantau data, iterasi, dan tingkatkan konversi.",
+    title: "Track Responses",
+    desc: "Review submissions, answer details, and response summaries for quick evaluation.",
+    color: "var(--danger)",
+    bg: "var(--surface)",
   },
 ];
 
 export default function StepsSection() {
   return (
     <section id="steps" className="relative overflow-hidden bg-page py-20 md:py-28">
-      {/* decorations removed for this section */}
       <Container>
         <div className="relative z-10 mb-6 text-center">
           <p className="mb-3 text-sm font-semibold uppercase tracking-[0.2em] text-accent/80">Workflow</p>
           <h2 className="font-extrabold leading-tight text-ink" style={{ fontSize: "clamp(2rem, 5vw, 3.25rem)" }}>
-            Langkah demi langkah yang{" "}
-            <span className="text-accent">saling tersambung</span>
+            From <span className="text-accent">draft</span> to <span className="text-accent">insights</span>
           </h2>
-          <p className="mx-auto mt-5 max-w-lg text-base leading-relaxed text-ink-muted">
-            Setiap tahap menyatu, memastikan alur pembuatan form tetap rapi dan efisien.
+          <p className="mx-auto mt-5 max-w-2xl text-base leading-relaxed text-ink-muted">
+            A simple flow that matches the core Formsify experience: build, structure, publish, and review.
           </p>
         </div>
+
         <div className="mt-12 flex flex-col gap-4 md:flex-row md:items-stretch md:gap-0">
           {steps.map((step, index) => (
             <div
               key={step.title}
-              className={`step-card relative flex-1 rounded-[28px] border border-border bg-surface px-8 py-6 text-ink shadow-soft transition md:px-12 md:first:ml-0 md:-ml-6 ${
-                index === 0 ? "border-accent/30 bg-accent-100/40 dark:bg-accent/8" : ""
-              } ${
+              className={`step-card relative flex-1 rounded-[28px] border border-border px-8 py-6 text-ink shadow-soft transition md:px-12 md:first:ml-0 md:-ml-6 ${
                 index === 0 ? "z-40" : index === 1 ? "z-30" : index === 2 ? "z-20" : "z-10"
               }`}
+              style={{ backgroundColor: step.bg }}
             >
-              <span className="text-xs font-semibold uppercase tracking-[0.3em] text-ink-muted">
+              <div className="absolute inset-x-0 top-0 h-1.5 rounded-t-[28px]" style={{ backgroundColor: step.color }} aria-hidden="true" />
+
+              <span
+                className="inline-flex rounded-full border px-3 py-1 text-xs font-semibold uppercase tracking-[0.22em]"
+                style={{ color: step.color, borderColor: step.color }}
+              >
                 Step {index + 1}
               </span>
-              <h3 className="mt-4 text-sm font-semibold text-ink break-words">{step.title}</h3>
-              <p className="mt-2 text-sm leading-6 text-ink-muted break-words">{step.desc}</p>
+
+              <h3 className="mt-4 break-words text-base font-semibold text-ink">{step.title}</h3>
+              <p className="mt-2 break-words text-sm leading-6 text-ink-muted">{step.desc}</p>
             </div>
           ))}
         </div>
@@ -58,4 +70,3 @@ export default function StepsSection() {
     </section>
   );
 }
-

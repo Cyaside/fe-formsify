@@ -19,6 +19,7 @@ import { formsApi, type FormSummary } from "@/shared/api/forms";
 
 type SortType = "newest" | "oldest";
 type FilterType = "all" | "draft" | "published";
+type DisplayStatus = "draft" | "published" | "closed";
 
 export default function DashboardFormsPage() {
   const queryClient = useQueryClient();
@@ -56,7 +57,7 @@ export default function DashboardFormsPage() {
 
     return forms.map((form) => ({
       ...form,
-      status: form.isPublished ? "published" : "draft",
+      status: (form.isClosed ? "closed" : form.isPublished ? "published" : "draft") as DisplayStatus,
       updatedLabel: formatter.format(new Date(form.updatedAt)),
     }));
   }, [forms]);
@@ -149,10 +150,18 @@ export default function DashboardFormsPage() {
                       <div className="mb-2 flex items-center justify-between gap-2">
                         <h2 className="line-clamp-1 text-base font-semibold">{form.title}</h2>
                         <div className="flex items-center gap-2">
-                          <Badge variant={form.status === "published" ? "published" : "draft"}>
+                          <Badge
+                            variant={
+                              form.status === "closed"
+                                ? "closed"
+                                : form.status === "published"
+                                  ? "published"
+                                  : "draft"
+                            }
+                          >
                             {form.status}
                           </Badge>
-                          {form.status === "published" ? (
+                          {form.status !== "draft" ? (
                             <Button
                               size="sm"
                               variant="ghost"

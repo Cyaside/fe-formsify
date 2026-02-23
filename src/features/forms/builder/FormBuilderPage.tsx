@@ -107,6 +107,8 @@ export default function FormBuilderPage({ initialFormId }: Readonly<FormBuilderP
       description: string;
       thankYouTitle: string;
       thankYouMessage: string;
+      isResponseClosed: boolean;
+      responseLimit: string;
       sections: EditorSection[];
       questions: EditorQuestion[];
       removedSectionIds: string[];
@@ -123,8 +125,14 @@ export default function FormBuilderPage({ initialFormId }: Readonly<FormBuilderP
     error,
     thankYouTitle,
     thankYouMessage,
+    isResponseClosed,
+    isPublished,
+    responseLimit,
     setThankYouTitle,
     setThankYouMessage,
+    setIsResponseClosed,
+    setResponseLimit,
+    setIsPublished,
     questionsLocked,
     questionsLockNote,
     setQuestionsLocked,
@@ -146,7 +154,10 @@ export default function FormBuilderPage({ initialFormId }: Readonly<FormBuilderP
         draftKey,
         questionsLocked,
         questionsLockNote,
-        setSaveMessage,
+        setSaveMessage: (value) => {
+          if (value === QUESTION_LOCK_MESSAGE || value === questionsLockNote) return;
+          setSaveMessage(value);
+        },
         setFormId,
         setQuestionsLocked,
         setQuestionsLockNote,
@@ -182,6 +193,8 @@ export default function FormBuilderPage({ initialFormId }: Readonly<FormBuilderP
       description: string;
       thankYouTitle: string;
       thankYouMessage: string;
+      isResponseClosed: boolean;
+      responseLimit: string;
       sections: EditorSection[];
       questions: EditorQuestion[];
       removedSectionIds: string[];
@@ -189,10 +202,13 @@ export default function FormBuilderPage({ initialFormId }: Readonly<FormBuilderP
     }, options?: { showGlobalLoading?: boolean }) => {
       saveDraft(draftKey, {
         formId,
+        isPublished,
         title: snapshot.title,
         description: snapshot.description,
         thankYouTitle: snapshot.thankYouTitle,
         thankYouMessage: snapshot.thankYouMessage,
+        isResponseClosed: snapshot.isResponseClosed,
+        responseLimit: snapshot.responseLimit,
         sections: snapshot.sections,
         questions: snapshot.questions,
         removedSectionIds: snapshot.removedSectionIds,
@@ -225,7 +241,7 @@ export default function FormBuilderPage({ initialFormId }: Readonly<FormBuilderP
         });
       }
     },
-    [draftKey, formId, performSave],
+    [draftKey, formId, isPublished, performSave],
   );
 
   const savePayload = useMemo<BuilderSaveSnapshot>(
@@ -234,6 +250,8 @@ export default function FormBuilderPage({ initialFormId }: Readonly<FormBuilderP
       description,
       thankYouTitle,
       thankYouMessage,
+      isResponseClosed,
+      responseLimit,
       sections,
       questions,
       removedSectionIds,
@@ -244,6 +262,8 @@ export default function FormBuilderPage({ initialFormId }: Readonly<FormBuilderP
       description,
       thankYouTitle,
       thankYouMessage,
+      isResponseClosed,
+      responseLimit,
       sections,
       questions,
       removedSectionIds,
@@ -393,7 +413,8 @@ export default function FormBuilderPage({ initialFormId }: Readonly<FormBuilderP
           { showGlobalLoading: true },
         );
       }
-      setSaveMessage("Published");
+      setIsPublished(true);
+      setSaveMessage(isResponseClosed ? "Closed" : "Published");
       router.push("/dashboard/forms");
     } catch (err) {
       setSaveMessage(resolveBuilderActionErrorMessage(err, "Failed to publish"));
@@ -410,10 +431,12 @@ export default function FormBuilderPage({ initialFormId }: Readonly<FormBuilderP
       if (latestFormId) {
         await formsApi.update(
           latestFormId,
-          { isPublished: false },
+          { isPublished: false, isClosed: false },
           { showGlobalLoading: true },
         );
       }
+      setIsPublished(false);
+      setIsResponseClosed(false);
       setSaveMessage("Draft saved");
       router.push("/dashboard/forms");
     } catch (err) {
@@ -457,10 +480,15 @@ export default function FormBuilderPage({ initialFormId }: Readonly<FormBuilderP
             description={description}
             thankYouTitle={thankYouTitle}
             thankYouMessage={thankYouMessage}
+            isResponseClosed={isResponseClosed}
+            isPublished={isPublished}
+            responseLimit={responseLimit}
             onChangeTitle={(value) => setFormMeta(value, description)}
             onChangeDescription={(value) => setFormMeta(title, value)}
             onChangeThankYouTitle={setThankYouTitle}
             onChangeThankYouMessage={setThankYouMessage}
+            onChangeIsResponseClosed={setIsResponseClosed}
+            onChangeResponseLimit={setResponseLimit}
           />
 
           {questionsLockNote ? (
@@ -477,6 +505,8 @@ export default function FormBuilderPage({ initialFormId }: Readonly<FormBuilderP
             savingDraft={savingDraft}
             questionsCount={questions.length}
             publishNoQuestionMessage={PUBLISH_NO_QUESTION_MESSAGE}
+            publishButtonLabel={isPublished ? "Update" : "Publish"}
+            showSaveDraftButton={!isPublished}
             onAddSection={handleAddSection}
             onAddQuestionType={handleAddQuestionFromToolbar}
             onPublish={handlePublish}

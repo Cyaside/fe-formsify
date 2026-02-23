@@ -4,10 +4,13 @@ const DRAFT_PREFIX = "formsify:draft:";
 
 type DraftSnapshot = {
   formId: string | null;
+  isPublished?: boolean;
   title: string;
   description: string;
   thankYouTitle: string;
   thankYouMessage: string;
+  isResponseClosed?: boolean;
+  responseLimit?: string;
   sections: EditorSection[];
   questions: EditorQuestion[];
   removedSectionIds: string[];
