@@ -119,7 +119,7 @@ export default function FormBuilderPage({ initialFormId }: Readonly<FormBuilderP
   const savingRef = useRef(false);
   const lastSavedSnapshotKeyRef = useRef<string | null>(null);
 
-  const draftKey = initialFormId ?? "new";
+  const bootstrapDraftKey = initialFormId ?? "new";
   const {
     loading,
     error,
@@ -139,19 +139,21 @@ export default function FormBuilderPage({ initialFormId }: Readonly<FormBuilderP
     setQuestionsLockNote,
   } = useFormBuilderBootstrap({
     initialFormId,
-    draftKey,
+    draftKey: bootstrapDraftKey,
     setSnapshot,
     reset,
   });
 
   const performSave = useCallback(
     async (snapshot: BuilderSaveSnapshot, options?: { showGlobalLoading?: boolean }) => {
+      const latestFormId = useFormEditorStore.getState().formId ?? formId;
+      const activeDraftKey = initialFormId ?? latestFormId ?? "new";
       const result = await performFormBuilderSave({
         snapshot,
         options,
         hydrated,
-        formId,
-        draftKey,
+        formId: latestFormId,
+        draftKey: activeDraftKey,
         questionsLocked,
         questionsLockNote,
         setSaveMessage: (value) => {
@@ -175,9 +177,9 @@ export default function FormBuilderPage({ initialFormId }: Readonly<FormBuilderP
     [
       clearRemovedQuestionIds,
       clearRemovedSectionIds,
-      draftKey,
       formId,
       hydrated,
+      initialFormId,
       questionsLockNote,
       questionsLocked,
       replaceQuestionId,
@@ -200,8 +202,10 @@ export default function FormBuilderPage({ initialFormId }: Readonly<FormBuilderP
       removedSectionIds: string[];
       removedQuestionIds: string[];
     }, options?: { showGlobalLoading?: boolean }) => {
-      saveDraft(draftKey, {
-        formId,
+      const latestFormId = useFormEditorStore.getState().formId ?? formId;
+      const activeDraftKey = initialFormId ?? latestFormId ?? "new";
+      saveDraft(activeDraftKey, {
+        formId: latestFormId,
         isPublished,
         title: snapshot.title,
         description: snapshot.description,
@@ -241,7 +245,7 @@ export default function FormBuilderPage({ initialFormId }: Readonly<FormBuilderP
         });
       }
     },
-    [draftKey, formId, isPublished, performSave],
+    [formId, initialFormId, isPublished, performSave],
   );
 
   const savePayload = useMemo<BuilderSaveSnapshot>(
@@ -276,6 +280,14 @@ export default function FormBuilderPage({ initialFormId }: Readonly<FormBuilderP
     [sections],
   );
   const savePayloadKey = useMemo(() => createSavedSnapshotKey(savePayload), [savePayload]);
+
+  useEffect(() => {
+    queueRef.current = null;
+    savingRef.current = false;
+    lastSavedSnapshotKeyRef.current = null;
+    setHasUnsavedChanges(false);
+    setSaveMessage("Ready");
+  }, [initialFormId]);
 
   useEffect(() => {
     if (!hydrated || loading || error) return;

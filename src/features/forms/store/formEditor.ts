@@ -233,7 +233,7 @@ export const useFormEditorStore = create<EditorState>((set) => ({
         question.sectionId === tempId ? { ...question, sectionId: nextId } : question,
       ),
     })),
-  setQuestions: (questions) => set({ questions }),
+  setQuestions: (questions) => set({ questions: normalizeQuestionOrders(questions) }),
   reorderQuestions: (fromIndex, toIndex) =>
     set((state) => ({
       questions: reorderQuestions(state.questions, fromIndex, toIndex),
@@ -244,7 +244,7 @@ export const useFormEditorStore = create<EditorState>((set) => ({
       title: snapshot.title,
       description: snapshot.description,
       sections: normalizeSectionOrders(snapshot.sections),
-      questions: snapshot.questions,
+      questions: normalizeQuestionOrders(snapshot.questions),
       removedSectionIds: snapshot.removedSectionIds,
       removedQuestionIds: snapshot.removedQuestionIds,
       hydrated: snapshot.hydrated ?? true,

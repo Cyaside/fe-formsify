@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { ApiError } from "@/shared/api/client";
 import { formsApi } from "@/shared/api/forms";
-import { loadDraft } from "@/features/forms/lib/formPersistence";
+import { clearDraft, loadDraft } from "@/features/forms/lib/formPersistence";
 import type { EditorQuestion, EditorSection } from "@/features/forms/store/formEditor";
 import { DEFAULT_FORM_TITLE } from "../lib/constants";
 import {
@@ -49,6 +49,8 @@ export function useFormBuilderBootstrap({
   const [questionsLocked, setQuestionsLocked] = useState(false);
   const [questionsLockNote, setQuestionsLockNote] = useState<string | null>(null);
 
+  const isDraftArray = <T,>(value: unknown): value is T[] => Array.isArray(value);
+
   useEffect(() => {
     let active = true;
 
@@ -58,41 +60,9 @@ export function useFormBuilderBootstrap({
       setQuestionsLocked(false);
       setQuestionsLockNote(null);
 
-      const localDraft = loadDraft(draftKey);
-      if (localDraft) {
-        const draftSections =
-          localDraft.sections && localDraft.sections.length > 0
-            ? localDraft.sections
-            : [createDefaultSection(0)];
-        const fallbackSectionId = draftSections[0].id;
-        const draftQuestions =
-          localDraft.questions.length > 0
-            ? localDraft.questions.map((question) => ({
-                ...question,
-                sectionId: question.sectionId || fallbackSectionId,
-              }))
-            : [createDefaultQuestion(fallbackSectionId)];
-
-        setThankYouTitle(localDraft.thankYouTitle ?? DEFAULT_THANK_YOU_TITLE);
-        setThankYouMessage(localDraft.thankYouMessage ?? DEFAULT_THANK_YOU_MESSAGE);
-        setIsResponseClosed(Boolean(localDraft.isPublished) && Boolean(localDraft.isResponseClosed));
-        setResponseLimit(localDraft.responseLimit ?? "");
-        setIsPublished(Boolean(localDraft.isPublished));
-        setSnapshot({
-          formId: localDraft.formId,
-          title: localDraft.title,
-          description: localDraft.description,
-          sections: draftSections,
-          questions: draftQuestions,
-          removedSectionIds: localDraft.removedSectionIds ?? [],
-          removedQuestionIds: localDraft.removedQuestionIds ?? [],
-          hydrated: true,
-        });
-        setLoading(false);
-        return;
-      }
-
       if (!initialFormId) {
+        // Always start fresh on /forms/new and remove leftover local draft data.
+        clearDraft(draftKey);
         const initialSections = [createDefaultSection(0)];
         const initialQuestions = [createDefaultQuestion(initialSections[0].id)];
         setThankYouTitle(DEFAULT_THANK_YOU_TITLE);
@@ -112,6 +82,52 @@ export function useFormBuilderBootstrap({
         });
         setLoading(false);
         return;
+      }
+
+      const localDraft = loadDraft(draftKey);
+      if (localDraft) {
+        // Prevent a previously-created form (saved under legacy "new" draft key)
+        // from polluting the next fresh "new form" page.
+        if (!initialFormId && localDraft.formId) {
+          clearDraft(draftKey);
+        } else {
+          const draftSections =
+            isDraftArray<EditorSection>(localDraft.sections) && localDraft.sections.length > 0
+              ? localDraft.sections
+              : [createDefaultSection(0)];
+          const fallbackSectionId = draftSections[0].id;
+          const draftQuestions =
+            isDraftArray<EditorQuestion>(localDraft.questions) && localDraft.questions.length > 0
+              ? localDraft.questions.map((question) => ({
+                  ...question,
+                  sectionId: question.sectionId || fallbackSectionId,
+                }))
+              : [createDefaultQuestion(fallbackSectionId)];
+
+          setThankYouTitle(localDraft.thankYouTitle ?? DEFAULT_THANK_YOU_TITLE);
+          setThankYouMessage(localDraft.thankYouMessage ?? DEFAULT_THANK_YOU_MESSAGE);
+          setIsResponseClosed(
+            Boolean(localDraft.isPublished) && Boolean(localDraft.isResponseClosed),
+          );
+          setResponseLimit(localDraft.responseLimit ?? "");
+          setIsPublished(Boolean(localDraft.isPublished));
+          setSnapshot({
+            formId: localDraft.formId,
+            title: localDraft.title,
+            description: localDraft.description,
+            sections: draftSections,
+            questions: draftQuestions,
+            removedSectionIds: isDraftArray<string>(localDraft.removedSectionIds)
+              ? localDraft.removedSectionIds
+              : [],
+            removedQuestionIds: isDraftArray<string>(localDraft.removedQuestionIds)
+              ? localDraft.removedQuestionIds
+              : [],
+            hydrated: true,
+          });
+          setLoading(false);
+          return;
+        }
       }
 
       try {
