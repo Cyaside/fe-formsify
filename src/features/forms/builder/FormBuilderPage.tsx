@@ -53,6 +53,7 @@ import {
 } from "./lib/formBuilderPersistence";
 import { useFormBuilderBootstrap } from "./hooks/useFormBuilderBootstrap";
 import { useUnsavedChangesNavigationGuard } from "./hooks/useUnsavedChangesNavigationGuard";
+import { getBuilderCollabRolloutGuard } from "../collab/rollout";
 
 type FormBuilderPageProps = {
   initialFormId?: string;
@@ -147,6 +148,8 @@ export default function FormBuilderPage({ initialFormId }: Readonly<FormBuilderP
     setSnapshot,
     reset,
   });
+  const { useLegacyBuilderFlow: shouldUseLegacyBuilderFlow } =
+    getBuilderCollabRolloutGuard();
 
   const performSave = useCallback(
     async (snapshot: BuilderSaveSnapshot, options?: { showGlobalLoading?: boolean }) => {
@@ -365,6 +368,7 @@ export default function FormBuilderPage({ initialFormId }: Readonly<FormBuilderP
   ]);
 
   useEffect(() => {
+    if (!shouldUseLegacyBuilderFlow) return;
     if (!hydrated || loading || error) return;
     if (publishing || savingDraft) return;
     if (lastSavedSnapshotKeyRef.current === savePayloadKey) return;
@@ -381,6 +385,7 @@ export default function FormBuilderPage({ initialFormId }: Readonly<FormBuilderP
     savePayload,
     savePayloadKey,
     savingDraft,
+    shouldUseLegacyBuilderFlow,
   ]);
 
   useUnsavedChangesNavigationGuard({
