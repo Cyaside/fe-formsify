@@ -6,6 +6,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import Container from "@/shared/ui/Container";
 import { ApiError } from "@/shared/api/client";
 import { useAuth } from "@/features/auth/AuthProvider";
+import GoogleSignInButton from "@/features/auth/GoogleSignInButton";
 
 function RegisterPageContent() {
   const router = useRouter();
@@ -55,6 +56,16 @@ function RegisterPageContent() {
             <p className="mt-2 text-sm text-ink-muted">
               Start building forms with a clean and measurable workflow.
             </p>
+          </div>
+
+          <GoogleSignInButton intent="register" nextPath={next} />
+
+          <div className="my-5 flex items-center gap-3" aria-hidden="true">
+            <div className="h-px flex-1 bg-border" />
+            <span className="text-xs font-semibold uppercase tracking-[0.2em] text-ink-muted">
+              Or sign up with email
+            </span>
+            <div className="h-px flex-1 bg-border" />
           </div>
 
           <form onSubmit={handleSubmit} className="flex flex-col gap-4">

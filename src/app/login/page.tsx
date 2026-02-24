@@ -6,6 +6,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import Container from "@/shared/ui/Container";
 import { ApiError } from "@/shared/api/client";
 import { useAuth } from "@/features/auth/AuthProvider";
+import GoogleSignInButton from "@/features/auth/GoogleSignInButton";
 
 function LoginPageContent() {
   const router = useRouter();
@@ -55,6 +56,16 @@ function LoginPageContent() {
             </p>
           </div>
 
+          <GoogleSignInButton intent="login" nextPath={next} />
+
+          <div className="my-5 flex items-center gap-3" aria-hidden="true">
+            <div className="h-px flex-1 bg-border" />
+            <span className="text-xs font-semibold uppercase tracking-[0.2em] text-ink-muted">
+              Or continue with email
+            </span>
+            <div className="h-px flex-1 bg-border" />
+          </div>
+
           <form onSubmit={handleSubmit} className="flex flex-col gap-4">
             <label className="text-xs font-semibold uppercase tracking-[0.28em] text-accent">
               <span>Email</span>
@@ -99,7 +110,7 @@ function LoginPageContent() {
           </form>
 
           <p className="mt-6 text-center text-sm text-ink-muted">
-            Don't have an account?{" "}
+            Don&apos;t have an account?{" "}
             <Link href="/register" className="font-semibold text-accent hover:text-accent-900">
               Register
             </Link>

@@ -16,7 +16,10 @@ const unwrapEnvString = (value?: string) => {
 const normalizeBaseUrl = (value?: string) => unwrapEnvString(value)?.replace(/\/+$/, "");
 
 const assertNoSensitivePublicEnv = () => {
-  const allowedPublicKeys = new Set(["NEXT_PUBLIC_API_BASE_URL"]);
+  const allowedPublicKeys = new Set([
+    "NEXT_PUBLIC_API_BASE_URL",
+    "NEXT_PUBLIC_GOOGLE_CLIENT_ID",
+  ]);
   const sensitivePublicKeys = Object.keys(process.env).filter((key) => {
     if (!key.startsWith("NEXT_PUBLIC_")) return false;
     if (allowedPublicKeys.has(key)) return false;
