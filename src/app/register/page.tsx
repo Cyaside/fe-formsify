@@ -6,6 +6,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import Container from "@/shared/ui/Container";
 import { ApiError } from "@/shared/api/client";
 import { useAuth } from "@/features/auth/AuthProvider";
+import GoogleSignInButton from "@/features/auth/GoogleSignInButton";
 
 function RegisterPageContent() {
   const router = useRouter();
@@ -33,7 +34,8 @@ function RegisterPageContent() {
       await register(name, email, password);
       router.replace(next);
     } catch (err) {
-      const message = err instanceof ApiError ? err.message : "Gagal register. Coba lagi.";
+      const message =
+        err instanceof ApiError ? err.message : "Registration failed. Please try again.";
       setError(message);
     } finally {
       setLoading(false);
@@ -49,23 +51,33 @@ function RegisterPageContent() {
               Register
             </p>
             <h1 className="mt-3 text-3xl font-semibold text-ink font-display">
-              Buat akun Formsify
+              Create a Formsify account
             </h1>
             <p className="mt-2 text-sm text-ink-muted">
-              Mulai bangun form yang rapi dan terukur.
+              Start building forms with a clean and measurable workflow.
             </p>
+          </div>
+
+          <GoogleSignInButton intent="register" nextPath={next} />
+
+          <div className="my-5 flex items-center gap-3" aria-hidden="true">
+            <div className="h-px flex-1 bg-border" />
+            <span className="text-xs font-semibold uppercase tracking-[0.2em] text-ink-muted">
+              Or sign up with email
+            </span>
+            <div className="h-px flex-1 bg-border" />
           </div>
 
           <form onSubmit={handleSubmit} className="flex flex-col gap-4">
             <label className="text-xs font-semibold uppercase tracking-[0.28em] text-accent">
-              Nama
+              Name
               <input
                 type="text"
                 name="name"
                 autoComplete="name"
                 value={name}
                 onChange={(event) => setName(event.target.value)}
-                placeholder="Nama lengkap"
+                placeholder="Full name"
                 className="mt-3 w-full rounded-2xl border border-border bg-surface-2 px-4 py-3 text-sm text-ink placeholder:text-ink-muted focus:border-accent-500 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-500/25"
               />
             </label>
@@ -90,7 +102,7 @@ function RegisterPageContent() {
                 autoComplete="new-password"
                 value={password}
                 onChange={(event) => setPassword(event.target.value)}
-                placeholder="Minimal 6 karakter"
+                placeholder="Minimum 6 characters"
                 className="mt-3 w-full rounded-2xl border border-border bg-surface-2 px-4 py-3 text-sm text-ink placeholder:text-ink-muted focus:border-accent-500 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-500/25"
                 required
               />
@@ -107,19 +119,19 @@ function RegisterPageContent() {
               disabled={loading}
               className="mt-2 inline-flex items-center justify-center rounded-full bg-accent px-6 py-3 text-sm font-semibold text-white transition-colors hover:bg-accent-900 disabled:cursor-not-allowed disabled:opacity-70"
             >
-              {loading ? "Membuat akun..." : "Daftar"}
+              {loading ? "Creating account..." : "Sign Up"}
             </button>
           </form>
 
           <p className="mt-6 text-center text-sm text-ink-muted">
-            Sudah punya akun?{" "}
+            Already have an account?{" "}
             <Link href="/login" className="font-semibold text-accent hover:text-accent-900">
               Login
             </Link>
           </p>
           <p className="mt-3 text-center text-xs text-ink-muted">
             <Link href="/" className="hover:text-ink">
-              Kembali ke landing page
+              Back to landing page
             </Link>
           </p>
         </div>

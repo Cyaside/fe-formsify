@@ -50,7 +50,7 @@ export default function DashboardFormsPage() {
 
 
   const displayedForms = useMemo(() => {
-    const formatter = new Intl.DateTimeFormat("id-ID", {
+    const formatter = new Intl.DateTimeFormat("en-US", {
       dateStyle: "medium",
       timeStyle: "short",
     });

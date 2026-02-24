@@ -58,7 +58,7 @@ export default function AnalyticsPage() {
     const published = forms.filter((form) => form.isPublished).length;
     const draft = forms.length - published;
     return [
-      { label: "Dipublish", value: published, color: "var(--accent-700)" },
+      { label: "Published", value: published, color: "var(--accent-700)" },
       { label: "Draft", value: draft, color: "var(--accent-300)" },
     ];
   }, [forms]);
@@ -151,11 +151,11 @@ export default function AnalyticsPage() {
                   <Card className="space-y-4">
                     <div>
                       <p className="text-xs uppercase tracking-[0.24em] text-ink-muted">
-                        Status Form
+                        Form Status
                       </p>
-                      <h3 className="mt-2 text-lg font-semibold">Distribusi Form</h3>
+                      <h3 className="mt-2 text-lg font-semibold">Form Distribution</h3>
                       <p className="text-xs text-ink-muted">
-                        Perbandingan form dipublish vs draft
+                        Comparison of published vs draft forms
                       </p>
                     </div>
 

@@ -8,7 +8,7 @@ type Options = {
 };
 
 const DEFAULT_MESSAGE =
-  "Perubahan belum tersimpan sepenuhnya. Yakin ingin meninggalkan halaman builder?";
+  "Some changes have not been fully saved. Are you sure you want to leave the builder page?";
 
 export function useUnsavedChangesNavigationGuard({
   enabled,

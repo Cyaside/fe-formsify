@@ -13,7 +13,7 @@ export default function DashboardSidebar() {
       <div className="sticky top-6 flex h-[calc(100vh-3rem)] flex-col gap-8 rounded-3xl border border-border bg-surface p-6 shadow-soft">
         <div className="flex items-center gap-3">
           <Image
-            src="/logowithword.png"
+            src="/logo.png"
             alt="Formsify"
             width={180}
             height={48}

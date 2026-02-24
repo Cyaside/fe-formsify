@@ -12,12 +12,12 @@ import {
   requiresOptions,
 } from "./constants";
 
-export const DEFAULT_THANK_YOU_TITLE = "Terima kasih!";
-export const DEFAULT_THANK_YOU_MESSAGE = "Respons kamu sudah terekam.";
+export const DEFAULT_THANK_YOU_TITLE = "Thank you!";
+export const DEFAULT_THANK_YOU_MESSAGE = "Your response has been recorded.";
 export const QUESTION_LOCK_MESSAGE =
-  "Sorry the forms already has submission you cant edit, create and delete the questions it anymore";
+  "This form already has submissions, so existing questions and sections can no longer be edited. You can still add new questions/sections, close responses, or change the response limit.";
 export const PUBLISH_NO_QUESTION_MESSAGE =
-  "Tambahkan minimal satu pertanyaan sebelum publish.";
+  "Add at least one question before publishing.";
 
 export const SECTION_SORTABLE_PREFIX = "section:";
 export const QUESTION_SORTABLE_PREFIX = "question:";
@@ -61,11 +61,11 @@ export const getPublishValidationMessage = (payload: {
   questions: EditorQuestion[];
 }) => {
   if (!payload.title.trim()) {
-    return "Judul form wajib diisi sebelum publish.";
+    return "Form title is required before publishing.";
   }
 
   if (payload.sections.length === 0) {
-    return "Form harus memiliki minimal satu section sebelum publish.";
+    return "A form must have at least one section before publishing.";
   }
 
   if (payload.questions.length === 0) {
@@ -75,15 +75,15 @@ export const getPublishValidationMessage = (payload: {
   const sectionIds = new Set(payload.sections.map((section) => section.id));
   for (const question of payload.questions) {
     if (!sectionIds.has(question.sectionId)) {
-      return "Ada pertanyaan yang belum terhubung ke section yang valid.";
+      return "There is a question that is not linked to a valid section.";
     }
     if (!question.title.trim()) {
-      return "Semua pertanyaan harus memiliki judul sebelum publish.";
+      return "All questions must have a title before publishing.";
     }
     if (requiresOptions(question.type)) {
       const validOptions = question.options.filter((option) => option.trim().length > 0);
       if (validOptions.length === 0) {
-        return "Pertanyaan pilihan wajib memiliki minimal satu opsi.";
+        return "Choice questions must have at least one option.";
       }
     }
   }
@@ -94,7 +94,7 @@ export const getPublishValidationMessage = (payload: {
 export const resolveBuilderActionErrorMessage = (err: unknown, fallback: string) => {
   if (!(err instanceof ApiError)) return fallback;
   if (err.status === 409) {
-    return "Form sudah memiliki respons. Struktur pertanyaan tidak bisa diubah lagi.";
+    return "This form already has responses. Existing questions/sections are locked, but you can still add new ones.";
   }
   return err.message || fallback;
 };

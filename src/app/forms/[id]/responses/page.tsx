@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import Link from "next/link";
 import { useParams } from "next/navigation";
@@ -9,16 +9,15 @@ import Button from "@/shared/ui/Button";
 import Card from "@/shared/ui/Card";
 import Container from "@/shared/ui/Container";
 import Modal from "@/shared/ui/Modal";
+import ResponseAnswerCards from "@/features/forms/responses/components/ResponseAnswerCards";
 import { ApiError } from "@/shared/api/client";
 import {
   formsApi,
-  type QuestionType,
-  type ResponseRecord,
   type ResponsesPayload,
 } from "@/shared/api/forms";
 
 const formatDate = (value: string) =>
-  new Intl.DateTimeFormat("id-ID", { dateStyle: "medium", timeStyle: "short" }).format(
+  new Intl.DateTimeFormat("en-US", { dateStyle: "medium", timeStyle: "short" }).format(
     new Date(value),
   );
 
@@ -61,6 +60,8 @@ export default function FormResponsesPage() {
       : null);
 
   const activeResponse = responses[activeIndex] ?? null;
+  const activeResponseDetailHref =
+    formId && activeResponse ? `/forms/${formId}/responses/${activeResponse.id}` : null;
 
   useEffect(() => {
     setActiveIndex(0);
@@ -75,42 +76,6 @@ export default function FormResponsesPage() {
   useEffect(() => {
     setActiveIndex((prev) => Math.min(prev, Math.max(0, responses.length - 1)));
   }, [responses.length]);
-
-  const groupedAnswers = useMemo(() => {
-    if (!activeResponse) return [];
-
-    const grouped = new Map<
-      string,
-      {
-        questionTitle: string;
-        type: QuestionType;
-        entries: string[];
-      }
-    >();
-
-    activeResponse.answers.forEach((answer) => {
-      const key = answer.question.id;
-      const existing = grouped.get(key) ?? {
-        questionTitle: answer.question.title,
-        type: answer.question.type,
-        entries: [],
-      };
-
-      let resolved = "-";
-      if (answer.question.type === "SHORT_ANSWER") {
-        resolved = answer.text?.trim() || "(empty)";
-      } else if (answer.optionId) {
-        resolved =
-          answer.question.options.find((option) => option.id === answer.optionId)?.label ||
-          "(option removed)";
-      }
-
-      existing.entries.push(resolved);
-      grouped.set(key, existing);
-    });
-
-    return Array.from(grouped.values());
-  }, [activeResponse]);
 
   const handleDeleteCurrent = async () => {
     if (!formId || !activeResponse) return;
@@ -188,8 +153,8 @@ export default function FormResponsesPage() {
 
         {activeResponse ? (
           <>
-            <Card className="flex flex-wrap items-center justify-between gap-3 p-4">
-              <div className="flex items-center gap-2">
+            <Card className="flex flex-wrap items-center gap-3 p-4">
+              <div className="flex shrink-0 items-center gap-2">
                 <Button
                   variant="secondary"
                   size="sm"
@@ -214,10 +179,28 @@ export default function FormResponsesPage() {
                 </Button>
               </div>
 
-              <p className="text-sm font-medium">
-                {activeIndex + 1} of {responses.length} (page {page} of {totalPages})
+              <div className="min-w-0 flex-1 space-y-1">
+                <p className="text-sm font-medium">
+                  {activeIndex + 1} of {responses.length} (page {page} of {totalPages})
+                </p>
+                {activeResponseDetailHref ? (
+                  <div className="flex min-w-0 flex-wrap items-center gap-2">
+                    <span className="shrink-0 rounded bg-surface-2 px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-ink-muted">
+                      Response
+                    </span>
+                    <Link
+                      href={activeResponseDetailHref}
+                      className="inline-flex h-7 items-center rounded-md border border-border bg-surface px-2 text-xs text-accent transition-colors hover:border-accent-500/40 hover:bg-surface-2 hover:underline"
+                      title={activeResponseDetailHref}
+                    >
+                      View Response Page
+                    </Link>
+                  </div>
+                ) : null}
+              </div>
+              <p className="shrink-0 whitespace-nowrap text-xs text-ink-muted">
+                Submitted: {formatDate(activeResponse.createdAt)}
               </p>
-              <p className="text-xs text-ink-muted">Submitted: {formatDate(activeResponse.createdAt)}</p>
             </Card>
 
             <Card className="flex flex-wrap items-center justify-between gap-3 p-4">
@@ -241,23 +224,13 @@ export default function FormResponsesPage() {
                   <ChevronRight size={14} />
                 </Button>
               </div>
-              <p className="text-sm text-ink-muted">
-                Total responses: {totalResponses}
-              </p>
+              <p className="text-sm text-ink-muted">Total responses: {totalResponses}</p>
             </Card>
 
-            <div className="space-y-3">
-              {groupedAnswers.map((item, index) => (
-                <Card key={`${item.questionTitle}-${index}`} className="space-y-2 p-5">
-                  <h2 className="text-base font-medium">{item.questionTitle}</h2>
-                  <ul className="list-disc space-y-1 pl-4 text-sm text-ink-muted">
-                    {item.entries.map((entry, entryIndex) => (
-                      <li key={`${item.questionTitle}-${entryIndex}`}>{entry}</li>
-                    ))}
-                  </ul>
-                </Card>
-              ))}
-            </div>
+            <ResponseAnswerCards
+              answers={activeResponse.answers}
+              emptyMessage="No answers in this response."
+            />
           </>
         ) : null}
 

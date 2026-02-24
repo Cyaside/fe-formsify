@@ -22,6 +22,8 @@ type BuilderSectionBlockProps = Readonly<{
   sectionQuestions: EditorQuestion[];
   orderedSections: EditorSection[];
   questionsLocked: boolean;
+  isLockedSectionId: (id: string) => boolean;
+  isLockedQuestionId: (id: string) => boolean;
   onUpdateSection: (id: string, value: Partial<EditorSection>) => void;
   onMoveSection: (id: string, direction: -1 | 1) => void;
   onDuplicateSection: (id: string) => void;
@@ -42,6 +44,7 @@ function SectionHeaderCard({
   totalSections,
   canDeleteSection,
   questionsLocked,
+  isLockedSectionId,
   onUpdateSection,
   onMoveSection,
   onDuplicateSection,
@@ -55,6 +58,7 @@ function SectionHeaderCard({
   totalSections: number;
   canDeleteSection: boolean;
   questionsLocked: boolean;
+  isLockedSectionId: (id: string) => boolean;
   onUpdateSection: (id: string, value: Partial<EditorSection>) => void;
   onMoveSection: (id: string, direction: -1 | 1) => void;
   onDuplicateSection: (id: string) => void;
@@ -63,6 +67,8 @@ function SectionHeaderCard({
   dragAttributes?: DraggableAttributes;
   dragListeners?: SyntheticListenerMap;
 }>) {
+  const sectionReadOnly = isLockedSectionId(section.id);
+
   return (
     <Card className="border-t-4 border-t-accent/70 p-4 md:p-5">
       <div className="flex flex-wrap items-start justify-between gap-3">
@@ -84,7 +90,7 @@ function SectionHeaderCard({
                 onUpdateSection(section.id, { title: event.target.value })
               }
               placeholder={`Section ${sectionIndex + 1}`}
-              disabled={questionsLocked}
+              disabled={sectionReadOnly}
             />
             <Textarea
               value={section.description}
@@ -93,7 +99,7 @@ function SectionHeaderCard({
               }
               placeholder="Section description (optional)"
               className="min-h-[68px]"
-              disabled={questionsLocked}
+              disabled={sectionReadOnly}
             />
           </div>
         </div>
@@ -129,7 +135,6 @@ function SectionHeaderCard({
             variant="secondary"
             size="sm"
             onClick={() => onAddQuestionToSection(section.id)}
-            disabled={questionsLocked}
           >
             Add question
           </Button>
@@ -158,6 +163,8 @@ export default function BuilderSectionBlock({
   sectionQuestions,
   orderedSections,
   questionsLocked,
+  isLockedSectionId,
+  isLockedQuestionId,
   onUpdateSection,
   onMoveSection,
   onDuplicateSection,
@@ -172,9 +179,9 @@ export default function BuilderSectionBlock({
   onMoveOption,
 }: BuilderSectionBlockProps) {
   const canDeleteSection =
-    !questionsLocked &&
     totalSections > 1 &&
-    sectionQuestions.length === 0;
+    sectionQuestions.length === 0 &&
+    !isLockedSectionId(section.id);
 
   return (
     <SortableSectionContainer sectionId={section.id} readOnly={questionsLocked}>
@@ -186,6 +193,7 @@ export default function BuilderSectionBlock({
             totalSections={totalSections}
             canDeleteSection={canDeleteSection}
             questionsLocked={questionsLocked}
+            isLockedSectionId={isLockedSectionId}
             onUpdateSection={onUpdateSection}
             onMoveSection={onMoveSection}
             onDuplicateSection={onDuplicateSection}
@@ -204,22 +212,25 @@ export default function BuilderSectionBlock({
               items={sectionQuestions.map((question) => toQuestionSortableId(question.id))}
               strategy={verticalListSortingStrategy}
             >
-              {sectionQuestions.map((question, index) => (
-                <SortableQuestionItem
-                  key={question.id}
-                  index={index}
-                  question={question}
-                  sections={orderedSections}
-                  onUpdate={onQuestionUpdate}
-                  onDuplicate={onDuplicateQuestion}
-                  onDelete={onRemoveQuestion}
-                  onAddOption={onAddOption}
-                  onUpdateOption={onUpdateOption}
-                  onRemoveOption={onRemoveOption}
-                  onMoveOption={onMoveOption}
-                  readOnly={questionsLocked}
-                />
-              ))}
+              {sectionQuestions.map((question, index) => {
+                const questionReadOnly = isLockedQuestionId(question.id);
+                return (
+                  <SortableQuestionItem
+                    key={question.id}
+                    index={index}
+                    question={question}
+                    sections={orderedSections}
+                    onUpdate={onQuestionUpdate}
+                    onDuplicate={onDuplicateQuestion}
+                    onDelete={onRemoveQuestion}
+                    onAddOption={onAddOption}
+                    onUpdateOption={onUpdateOption}
+                    onRemoveOption={onRemoveOption}
+                    onMoveOption={onMoveOption}
+                    readOnly={questionReadOnly}
+                  />
+                );
+              })}
             </SortableContext>
           )}
         </div>

@@ -11,6 +11,7 @@ type BuilderFormMetaCardProps = Readonly<{
   thankYouMessage: string;
   isResponseClosed: boolean;
   isPublished: boolean;
+  questionsLocked: boolean;
   responseLimit: string;
   onChangeTitle: (value: string) => void;
   onChangeDescription: (value: string) => void;
@@ -27,6 +28,7 @@ export default function BuilderFormMetaCard({
   thankYouMessage,
   isResponseClosed,
   isPublished,
+  questionsLocked,
   responseLimit,
   onChangeTitle,
   onChangeDescription,
@@ -41,12 +43,14 @@ export default function BuilderFormMetaCard({
         <Input
           value={title}
           onChange={(event) => onChangeTitle(event.target.value)}
+          disabled={questionsLocked}
           className="h-12 border-none bg-transparent px-0 text-3xl font-semibold shadow-none focus:border-none"
           placeholder="Form title"
         />
         <Textarea
           value={description}
           onChange={(event) => onChangeDescription(event.target.value)}
+          disabled={questionsLocked}
           className="min-h-20 resize-none border-none bg-transparent px-0 py-0 text-sm text-ink-muted shadow-none focus:border-none"
           placeholder="Form description"
         />
@@ -54,11 +58,13 @@ export default function BuilderFormMetaCard({
           <Input
             value={thankYouTitle}
             onChange={(event) => onChangeThankYouTitle(event.target.value)}
+            disabled={questionsLocked}
             placeholder="Thank you title"
           />
           <Textarea
             value={thankYouMessage}
             onChange={(event) => onChangeThankYouMessage(event.target.value)}
+            disabled={questionsLocked}
             className="min-h-11 resize-none"
             placeholder="Thank you message"
           />
@@ -72,7 +78,7 @@ export default function BuilderFormMetaCard({
               disabled={!isPublished}
               className="h-4 w-4 accent-accent"
             />
-            <span>{isPublished ? "Close responses (manual close)" : "Close (hanya untuk form published)"}</span>
+            <span>{isPublished ? "Close responses (manual close)" : "Close (published forms only)"}</span>
           </label>
           <Input
             type="number"
@@ -80,7 +86,7 @@ export default function BuilderFormMetaCard({
             step={1}
             value={responseLimit}
             onChange={(event) => onChangeResponseLimit(event.target.value)}
-            placeholder="Response limit (kosong = tanpa batas)"
+            placeholder="Response limit (empty = no limit)"
           />
         </div>
       </div>

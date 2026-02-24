@@ -33,7 +33,8 @@ type PerformFormBuilderSaveParams = {
   formId: string | null;
   draftKey: string;
   questionsLocked: boolean;
-  questionsLockNote: string | null;
+  lockedSectionIds: ReadonlySet<string>;
+  lockedQuestionIds: ReadonlySet<string>;
   setSaveMessage: (value: string) => void;
   setFormId: (id: string | null) => void;
   setQuestionsLocked: (value: boolean) => void;
@@ -75,7 +76,8 @@ export async function performFormBuilderSave({
   formId,
   draftKey,
   questionsLocked,
-  questionsLockNote,
+  lockedSectionIds,
+  lockedQuestionIds,
   setSaveMessage,
   setFormId,
   setQuestionsLocked,
@@ -136,11 +138,129 @@ export async function performFormBuilderSave({
   );
 
   if (questionsLocked) {
+    if (!activeFormId) return { status: "skipped" };
+
+    for (const questionId of snapshot.removedQuestionIds) {
+      if (lockedQuestionIds.has(questionId)) continue;
+      try {
+        await formsApi.removeQuestion(questionId, requestOptions);
+      } catch (err) {
+        if (err instanceof ApiError && err.status === 409) {
+          lockBuilder(setQuestionsLocked, setQuestionsLockNote, setSaveMessage);
+          return { status: "locked" };
+        }
+        throw err;
+      }
+    }
+
+    const sectionIdMap = new Map<string, string>();
+    const normalizedSections = snapshot.sections.map((section, index) => ({
+      ...section,
+      title: section.title.trim() || `Section ${index + 1}`,
+      description: section.description.trim() || null,
+      order: index,
+    }));
+
+    try {
+      for (const sectionId of snapshot.removedSectionIds) {
+        if (lockedSectionIds.has(sectionId)) continue;
+        await formsApi.removeSection(sectionId, requestOptions);
+      }
+
+      for (const section of normalizedSections) {
+        if (section.id.startsWith("temp_")) {
+          const createdSection = await formsApi.createSection(
+            activeFormId,
+            {
+              title: section.title,
+              description: section.description,
+              order: section.order,
+            },
+            requestOptions,
+          );
+          sectionIdMap.set(section.id, createdSection.data.id);
+          replaceSectionId(section.id, createdSection.data.id);
+          continue;
+        }
+
+        if (lockedSectionIds.has(section.id)) continue;
+        await formsApi.updateSection(
+          section.id,
+          {
+            title: section.title,
+            description: section.description,
+            order: section.order,
+          },
+          requestOptions,
+        );
+      }
+    } catch (err) {
+      if (err instanceof ApiError && err.status === 409) {
+        lockBuilder(setQuestionsLocked, setQuestionsLockNote, setSaveMessage);
+        return { status: "locked" };
+      }
+      throw err;
+    }
+
+    const orderCounter = new Map<string, number>();
+    const normalizedQuestions = snapshot.questions.map((question) => {
+      const resolvedSectionId = sectionIdMap.get(question.sectionId) ?? question.sectionId;
+      const nextOrder = orderCounter.get(resolvedSectionId) ?? 0;
+      orderCounter.set(resolvedSectionId, nextOrder + 1);
+      return {
+        ...question,
+        sectionId: resolvedSectionId,
+        order: nextOrder,
+      };
+    });
+
+    try {
+      for (const question of normalizedQuestions) {
+        const payload = {
+          title: question.title.trim() || DEFAULT_QUESTION_TITLE,
+          description: question.description.trim() || null,
+          type: mapUiTypeToApiType(question.type),
+          required: question.required,
+          order: question.order,
+          sectionId: question.sectionId,
+          options: requiresOptions(question.type)
+            ? question.options.map((item) => item.trim()).filter((item) => item.length > 0)
+            : [],
+        };
+
+        if (requiresOptions(question.type) && payload.options.length === 0) {
+          payload.options = ["Option 1"];
+        }
+
+        if (question.id.startsWith("temp_")) {
+          const createdQuestion = await formsApi.createQuestion(
+            activeFormId,
+            payload,
+            requestOptions,
+          );
+          replaceQuestionId(question.id, createdQuestion.data.id);
+          continue;
+        }
+
+        if (lockedQuestionIds.has(question.id)) continue;
+        await formsApi.updateQuestion(question.id, payload, requestOptions);
+      }
+    } catch (err) {
+      if (err instanceof ApiError && err.status === 409) {
+        lockBuilder(setQuestionsLocked, setQuestionsLockNote, setSaveMessage);
+        return { status: "locked" };
+      }
+      throw err;
+    }
+
     clearRemovedSectionIds();
     clearRemovedQuestionIds();
     clearDraft(draftKey);
-    setSaveMessage(questionsLockNote ?? QUESTION_LOCK_MESSAGE);
-    return { status: "locked" };
+    setSaveMessage("All changes saved");
+    return {
+      status: "saved",
+      savedSnapshotKey: createSavedSnapshotKey(snapshot),
+    };
   }
 
   for (const questionId of snapshot.removedQuestionIds) {

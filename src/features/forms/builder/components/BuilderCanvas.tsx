@@ -15,6 +15,8 @@ type BuilderCanvasProps = Readonly<{
   orderedSections: EditorSection[];
   questions: EditorQuestion[];
   questionsLocked: boolean;
+  isLockedSectionId: (id: string) => boolean;
+  isLockedQuestionId: (id: string) => boolean;
   sensors: ComponentProps<typeof DndContext>["sensors"];
   onDragEnd: (event: DragEndEvent) => void;
   onAddSection: () => void;
@@ -38,6 +40,8 @@ export default function BuilderCanvas({
   orderedSections,
   questions,
   questionsLocked,
+  isLockedSectionId,
+  isLockedQuestionId,
   sensors,
   onDragEnd,
   onAddSection,
@@ -65,7 +69,7 @@ export default function BuilderCanvas({
     return (
       <Card className="space-y-3 text-sm text-ink-muted">
         <p>No sections yet.</p>
-        <Button variant="secondary" onClick={onAddSection} disabled={questionsLocked}>
+        <Button variant="secondary" onClick={onAddSection}>
           Add Section
         </Button>
       </Card>
@@ -93,6 +97,8 @@ export default function BuilderCanvas({
                 sectionQuestions={sectionQuestions}
                 orderedSections={orderedSections}
                 questionsLocked={questionsLocked}
+                isLockedSectionId={isLockedSectionId}
+                isLockedQuestionId={isLockedQuestionId}
                 onUpdateSection={onUpdateSection}
                 onMoveSection={onMoveSection}
                 onDuplicateSection={onDuplicateSection}

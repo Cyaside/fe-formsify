@@ -9,8 +9,8 @@ import Container from "@/shared/ui/Container";
 import { ApiError } from "@/shared/api/client";
 import { formsApi, type FormDetail } from "@/shared/api/forms";
 
-const DEFAULT_THANK_YOU_TITLE = "Terima kasih!";
-const DEFAULT_THANK_YOU_MESSAGE = "Respons kamu sudah terekam.";
+const DEFAULT_THANK_YOU_TITLE = "Thank you!";
+const DEFAULT_THANK_YOU_MESSAGE = "Your response has been recorded.";
 
 export default function SubmissionThankYouPage() {
   const params = useParams();

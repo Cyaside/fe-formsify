@@ -26,14 +26,14 @@ const getMonthRange = () => {
     to: toDateInput(end),
     start,
     end,
-    label: new Intl.DateTimeFormat("id-ID", { month: "long", year: "numeric" }).format(
+    label: new Intl.DateTimeFormat("en-US", { month: "long", year: "numeric" }).format(
       today,
     ),
   };
 };
 
 const formatNumber = (value: number, options?: Intl.NumberFormatOptions) =>
-  new Intl.NumberFormat("id-ID", options).format(value);
+  new Intl.NumberFormat("en-US", options).format(value);
 
 const formatRelativeTime = (date: Date) => {
   const diff = date.getTime() - Date.now();
@@ -41,14 +41,14 @@ const formatRelativeTime = (date: Date) => {
   const minute = 60 * 1000;
   const hour = 60 * minute;
   const day = 24 * hour;
-  const rtf = new Intl.RelativeTimeFormat("id-ID", { numeric: "auto" });
+  const rtf = new Intl.RelativeTimeFormat("en-US", { numeric: "auto" });
 
   if (abs < minute) return rtf.format(Math.round(diff / 1000), "second");
   if (abs < hour) return rtf.format(Math.round(diff / minute), "minute");
   if (abs < day) return rtf.format(Math.round(diff / hour), "hour");
   if (abs < 7 * day) return rtf.format(Math.round(diff / day), "day");
 
-  return new Intl.DateTimeFormat("id-ID", { dateStyle: "medium" }).format(date);
+  return new Intl.DateTimeFormat("en-US", { dateStyle: "medium" }).format(date);
 };
 
 export default function DashboardPage() {
@@ -75,14 +75,14 @@ export default function DashboardPage() {
   const forms = formsData?.data ?? [];
   const formsErrorMessage = useMemo(() => {
     if (!formsError) return null;
-    return formsError instanceof ApiError ? formsError.message : "Gagal memuat form.";
+    return formsError instanceof ApiError ? formsError.message : "Failed to load forms.";
   }, [formsError]);
 
   const analyticsErrorMessage = useMemo(() => {
     if (!analyticsError) return null;
     return analyticsError instanceof ApiError
       ? analyticsError.message
-      : "Gagal memuat analytics.";
+      : "Failed to load analytics.";
   }, [analyticsError]);
 
   const sortedForms = useMemo(() => {
@@ -120,29 +120,29 @@ export default function DashboardPage() {
     const totalFormsLabel = formatNumber(formMetrics.totalForms);
     return [
       {
-        label: "Form Aktif",
+        label: "Active Forms",
         value: formsReady ? formatNumber(formMetrics.activeForms) : "-",
-        meta: formsReady ? `${totalFormsLabel} total` : "Memuat...",
+        meta: formsReady ? `${totalFormsLabel} total` : "Loading...",
       },
       {
-        label: "Response Bulan Ini",
+        label: "Responses This Month",
         value: analyticsReady
           ? formatNumber(analyticsData?.data.totals.responses ?? 0, {
               notation: "compact",
               maximumFractionDigits: 1,
             })
           : "-",
-        meta: analyticsReady ? monthRange.label : "Memuat...",
+        meta: analyticsReady ? monthRange.label : "Loading...",
       },
       {
-        label: "Form Baru Bulan Ini",
+        label: "New Forms This Month",
         value: formsReady ? formatNumber(formMetrics.newFormsThisMonth) : "-",
-        meta: formsReady ? monthRange.label : "Memuat...",
+        meta: formsReady ? monthRange.label : "Loading...",
       },
       {
-        label: "Draft Form",
+        label: "Draft Forms",
         value: formsReady ? formatNumber(formMetrics.draftForms) : "-",
-        meta: formsReady ? `${totalFormsLabel} total` : "Memuat...",
+        meta: formsReady ? `${totalFormsLabel} total` : "Loading...",
       },
     ];
   }, [
@@ -172,14 +172,14 @@ export default function DashboardPage() {
     if (analyticsReady) {
       if (latestResponse) {
         items.push({
-          title: "Respons Terbaru",
-          detail: `${formatNumber(latestResponse.count)} respon masuk`,
+          title: "Latest Responses",
+          detail: `${formatNumber(latestResponse.count)} responses received`,
           time: formatRelativeTime(new Date(latestResponse.date)),
         });
       } else {
         items.push({
-          title: "Respons Bulan Ini",
-          detail: "Belum ada respon yang masuk.",
+          title: "Responses This Month",
+          detail: "No responses received yet.",
           time: monthRange.label,
         });
       }
@@ -189,16 +189,16 @@ export default function DashboardPage() {
       sortedForms.slice(0, 2).forEach((form) => {
         items.push({
           title: form.title,
-          detail: form.isPublished ? "Form dipublish atau diperbarui" : "Draft diperbarui",
+          detail: form.isPublished ? "Form published or updated" : "Draft updated",
           time: formatRelativeTime(new Date(form.updatedAt)),
         });
       });
 
       if (items.length < 3 && formMetrics.draftForms > 0) {
         items.push({
-          title: "Perlu Dipublish",
-          detail: `${formatNumber(formMetrics.draftForms)} form masih draft`,
-          time: "Saat ini",
+          title: "Needs Publishing",
+          detail: `${formatNumber(formMetrics.draftForms)} forms are still drafts`,
+          time: "Now",
         });
       }
     }

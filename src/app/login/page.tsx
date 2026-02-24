@@ -6,6 +6,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import Container from "@/shared/ui/Container";
 import { ApiError } from "@/shared/api/client";
 import { useAuth } from "@/features/auth/AuthProvider";
+import GoogleSignInButton from "@/features/auth/GoogleSignInButton";
 
 function LoginPageContent() {
   const router = useRouter();
@@ -32,7 +33,7 @@ function LoginPageContent() {
       await login(email, password);
       router.replace(next);
     } catch (err) {
-      const message = err instanceof ApiError ? err.message : "Gagal login. Coba lagi.";
+      const message = err instanceof ApiError ? err.message : "Login failed. Please try again.";
       setError(message);
     } finally {
       setLoading(false);
@@ -48,11 +49,21 @@ function LoginPageContent() {
               Login
             </p>
             <h1 className="mt-3 text-3xl font-semibold text-ink font-display">
-              Selamat datang kembali
+              Welcome back
             </h1>
             <p className="mt-2 text-sm text-ink-muted">
-              Masuk untuk mengelola form dan melihat dashboard kamu.
+              Sign in to manage forms and view your dashboard.
             </p>
+          </div>
+
+          <GoogleSignInButton intent="login" nextPath={next} />
+
+          <div className="my-5 flex items-center gap-3" aria-hidden="true">
+            <div className="h-px flex-1 bg-border" />
+            <span className="text-xs font-semibold uppercase tracking-[0.2em] text-ink-muted">
+              Or continue with email
+            </span>
+            <div className="h-px flex-1 bg-border" />
           </div>
 
           <form onSubmit={handleSubmit} className="flex flex-col gap-4">
@@ -77,7 +88,7 @@ function LoginPageContent() {
                 autoComplete="current-password"
                 value={password}
                 onChange={(event) => setPassword(event.target.value)}
-                placeholder="Minimal 6 karakter"
+                placeholder="Minimum 6 characters"
                 className="mt-3 w-full rounded-2xl border border-border bg-surface-2 px-4 py-3 text-sm text-ink placeholder:text-ink-muted focus:border-accent-500 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-500/25"
                 required
               />
@@ -94,19 +105,19 @@ function LoginPageContent() {
               disabled={loading}
               className="mt-2 inline-flex items-center justify-center rounded-full bg-accent px-6 py-3 text-sm font-semibold text-white transition-colors hover:bg-accent-900 disabled:cursor-not-allowed disabled:opacity-70"
             >
-              {loading ? "Memproses..." : "Masuk"}
+              {loading ? "Processing..." : "Sign In"}
             </button>
           </form>
 
           <p className="mt-6 text-center text-sm text-ink-muted">
-            Belum punya akun?{" "}
+            Don&apos;t have an account?{" "}
             <Link href="/register" className="font-semibold text-accent hover:text-accent-900">
               Register
             </Link>
           </p>
           <p className="mt-3 text-center text-xs text-ink-muted">
             <Link href="/" className="hover:text-ink">
-              Kembali ke landing page
+              Back to landing page
             </Link>
           </p>
         </div>
