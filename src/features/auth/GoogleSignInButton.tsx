@@ -65,9 +65,12 @@ const GoogleMark = () => (
 );
 
 export default function GoogleSignInButton({ intent, nextPath }: GoogleSignInButtonProps) {
-  const [scriptReady, setScriptReady] = useState(
-    () => Boolean((globalThis as GoogleWindow | undefined)?.google?.accounts?.oauth2),
-  );
+  const [scriptReady, setScriptReady] = useState(() => {
+    if (typeof window === "undefined") {
+      return false;
+    }
+    return Boolean((window as GoogleWindow).google?.accounts?.oauth2);
+  });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
