@@ -6,10 +6,12 @@ import {
   COLLAB_EVENTS,
   type CollabEditingTarget,
   type CollabErrorPayload,
+  type CollabJoinedPayload,
   type CollabOpPayload,
   type CollabOpRejectedPayload,
   type CollabParticipant,
   type CollabRole,
+  type CollabSyncPayload,
 } from "./types";
 
 type UseFormCollaborationParams = {
@@ -27,6 +29,13 @@ type UseFormCollaborationResult = {
   participants: CollabParticipant[];
   lastError: CollabErrorPayload | null;
   lastOpRejected: CollabOpRejectedPayload | null;
+  latestSnapshotEvent:
+    | {
+        source: "joined" | "sync";
+        sequence: number;
+        payload: CollabJoinedPayload | CollabSyncPayload;
+      }
+    | null;
   sendPresenceUpdate: (editingTarget: CollabEditingTarget) => void;
   requestSync: () => void;
   sendOp: (op: CollabOpPayload) => void;
@@ -47,6 +56,8 @@ export function useFormCollaboration({
   const [participants, setParticipants] = useState<CollabParticipant[]>([]);
   const [lastError, setLastError] = useState<CollabErrorPayload | null>(null);
   const [lastOpRejected, setLastOpRejected] = useState<CollabOpRejectedPayload | null>(null);
+  const [latestSnapshotEvent, setLatestSnapshotEvent] = useState<UseFormCollaborationResult["latestSnapshotEvent"]>(null);
+  const snapshotSequenceRef = useRef(0);
 
   useEffect(() => {
     setLastError(null);
@@ -64,6 +75,7 @@ export function useFormCollaboration({
       setRole(null);
       setVersion(null);
       setParticipants([]);
+      setLatestSnapshotEvent(null);
       if (socket) {
         socket.disconnect();
       }
@@ -79,6 +91,7 @@ export function useFormCollaboration({
       setJoined(false);
       setRole(null);
       setParticipants([]);
+      setLatestSnapshotEvent(null);
     };
 
     const joinForm = () => {
@@ -121,6 +134,12 @@ export function useFormCollaboration({
       setVersion(payload.version);
       setParticipants(payload.participants);
       setJoined(true);
+      snapshotSequenceRef.current += 1;
+      setLatestSnapshotEvent({
+        source: "joined",
+        sequence: snapshotSequenceRef.current,
+        payload,
+      });
     });
 
     socket.on(COLLAB_EVENTS.presence, (payload) => {
@@ -131,6 +150,12 @@ export function useFormCollaboration({
     socket.on(COLLAB_EVENTS.sync, (payload) => {
       if (payload.formId !== formId) return;
       setVersion(payload.version);
+      snapshotSequenceRef.current += 1;
+      setLatestSnapshotEvent({
+        source: "sync",
+        sequence: snapshotSequenceRef.current,
+        payload,
+      });
     });
 
     socket.on(COLLAB_EVENTS.opApplied, (payload) => {
@@ -196,9 +221,9 @@ export function useFormCollaboration({
     participants,
     lastError,
     lastOpRejected,
+    latestSnapshotEvent,
     sendPresenceUpdate: actions.sendPresenceUpdate,
     requestSync: actions.requestSync,
     sendOp: actions.sendOp,
   };
 }
-

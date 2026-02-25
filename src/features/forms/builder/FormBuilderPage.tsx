@@ -13,7 +13,7 @@ import RequireAuth from "@/features/auth/RequireAuth";
 import Container from "@/shared/ui/Container";
 import Card from "@/shared/ui/Card";
 import { ApiError } from "@/shared/api/client";
-import { formsApi } from "@/shared/api/forms";
+import { formsApi, type BuilderSnapshot } from "@/shared/api/forms";
 import {
   saveDraft,
 } from "@/features/forms/lib/formPersistence";
@@ -41,6 +41,8 @@ import {
   getPublishValidationMessage,
   mapApiQuestionToEditor,
   mapApiSectionToEditor,
+  mapBuilderSnapshotQuestionToEditor,
+  mapBuilderSnapshotSectionToEditor,
   PUBLISH_NO_QUESTION_MESSAGE,
   QUESTION_SORTABLE_PREFIX,
   resolveBuilderActionErrorMessage,
@@ -124,6 +126,11 @@ export default function FormBuilderPage({ initialFormId }: Readonly<FormBuilderP
   }>(null);
   const savingRef = useRef(false);
   const lastSavedSnapshotKeyRef = useRef<string | null>(null);
+  const collabAppliedSnapshotSequenceRef = useRef<number>(0);
+  const suppressCollabOpBroadcastRef = useRef(false);
+  const collabBroadcastTimerRef = useRef<ReturnType<typeof globalThis.setTimeout> | null>(null);
+  const collabLastBroadcastPayloadKeyRef = useRef<string | null>(null);
+  const collabLastConflictOpIdRef = useRef<string | null>(null);
 
   const bootstrapDraftKey = initialFormId ?? "new";
   const {
@@ -159,6 +166,76 @@ export default function FormBuilderPage({ initialFormId }: Readonly<FormBuilderP
     enabled: enableRealtimeCollab && hydrated && !loading && !error && Boolean(formId),
     formId,
   });
+
+  const applyRemoteBuilderSnapshot = useCallback(
+    (
+      source: "joined" | "sync" | "rest",
+      remoteFormId: string,
+      snapshot: BuilderSnapshot,
+      version: number,
+    ) => {
+      const mappedSections = snapshot.sections
+        .toSorted((a, b) => a.order - b.order)
+        .map((section, index) => mapBuilderSnapshotSectionToEditor(section, index));
+      const mappedQuestions = snapshot.questions
+        .toSorted((a, b) => {
+          const sectionOrderA =
+            mappedSections.find((section) => section.id === a.sectionId)?.order ?? 0;
+          const sectionOrderB =
+            mappedSections.find((section) => section.id === b.sectionId)?.order ?? 0;
+          if (sectionOrderA !== sectionOrderB) return sectionOrderA - sectionOrderB;
+          return a.order - b.order;
+        })
+        .map((question, index) => mapBuilderSnapshotQuestionToEditor(question, index));
+
+      suppressCollabOpBroadcastRef.current = true;
+      setSnapshot({
+        formId: remoteFormId,
+        title: snapshot.title,
+        description: snapshot.description ?? "",
+        sections: mappedSections,
+        questions: mappedQuestions,
+        removedSectionIds: [],
+        removedQuestionIds: [],
+        hydrated: true,
+      });
+      setThankYouTitle(snapshot.thankYouTitle);
+      setThankYouMessage(snapshot.thankYouMessage);
+      setIsResponseClosed(Boolean(snapshot.isClosed));
+      setResponseLimit(
+        typeof snapshot.responseLimit === "number" ? String(snapshot.responseLimit) : "",
+      );
+
+      const nextSavedKey = createSavedSnapshotKey({
+        title: snapshot.title,
+        description: snapshot.description ?? "",
+        thankYouTitle: snapshot.thankYouTitle,
+        thankYouMessage: snapshot.thankYouMessage,
+        isResponseClosed: Boolean(snapshot.isClosed),
+        responseLimit:
+          typeof snapshot.responseLimit === "number" ? String(snapshot.responseLimit) : "",
+        sections: mappedSections,
+        questions: mappedQuestions,
+        removedSectionIds: [],
+        removedQuestionIds: [],
+      });
+      lastSavedSnapshotKeyRef.current = nextSavedKey;
+      collabLastBroadcastPayloadKeyRef.current = nextSavedKey;
+      setHasUnsavedChanges(false);
+      setSaveMessage(
+        source === "joined"
+          ? `Collab synced (v${version})`
+          : source === "sync"
+            ? `Collab resynced (v${version})`
+            : `Collab snapshot refreshed (v${version})`,
+      );
+
+      globalThis.setTimeout(() => {
+        suppressCollabOpBroadcastRef.current = false;
+      }, 0);
+    },
+    [setIsResponseClosed, setResponseLimit, setSnapshot, setThankYouMessage, setThankYouTitle],
+  );
 
   const performSave = useCallback(
     async (snapshot: BuilderSaveSnapshot, options?: { showGlobalLoading?: boolean }) => {
@@ -306,9 +383,111 @@ export default function FormBuilderPage({ initialFormId }: Readonly<FormBuilderP
   const savePayloadKey = useMemo(() => createSavedSnapshotKey(savePayload), [savePayload]);
 
   useEffect(() => {
+    const event = collab.latestSnapshotEvent;
+    if (!event) return;
+    if (collabAppliedSnapshotSequenceRef.current >= event.sequence) return;
+    collabAppliedSnapshotSequenceRef.current = event.sequence;
+
+    const { payload, source } = event;
+    if (!payload.snapshot) return;
+    if (!hydrated || loading || error) return;
+    if (publishing || savingDraft || savingRef.current) return;
+
+    const localDirty =
+      lastSavedSnapshotKeyRef.current !== null && lastSavedSnapshotKeyRef.current !== savePayloadKey;
+    if (localDirty) {
+      setSaveMessage(`Remote changes detected (v${payload.version}). Sync skipped due to local edits.`);
+      return;
+    }
+
+    applyRemoteBuilderSnapshot(source, payload.formId, payload.snapshot, payload.version);
+  }, [
+    applyRemoteBuilderSnapshot,
+    collab.latestSnapshotEvent,
+    error,
+    hydrated,
+    loading,
+    publishing,
+    savePayloadKey,
+    savingDraft,
+  ]);
+
+  useEffect(() => {
+    if (!collab.lastOpRejected) return;
+    if (collab.lastOpRejected.reason !== "BASE_VERSION_MISMATCH") return;
+    if (collabLastConflictOpIdRef.current === collab.lastOpRejected.opId) return;
+    collabLastConflictOpIdRef.current = collab.lastOpRejected.opId;
+    setSaveMessage(`Version conflict detected (v${collab.lastOpRejected.latestVersion}). Syncing...`);
+    collab.requestSync();
+  }, [collab.lastOpRejected, collab.requestSync]);
+
+  useEffect(() => {
+    if (!collab.enabled || !collab.connected || !collab.joined || !formId) return;
+    collab.sendPresenceUpdate({ kind: "form", field: "builder" });
+    return () => {
+      collab.sendPresenceUpdate(null);
+    };
+  }, [collab.connected, collab.enabled, collab.joined, collab.sendPresenceUpdate, formId]);
+
+  useEffect(() => {
+    if (!enableRealtimeCollab) return;
+    if (!collab.connected || !collab.joined || !formId) return;
+    if (!hydrated || loading || error) return;
+    if (collab.version === null) return;
+    if (lastSavedSnapshotKeyRef.current === null) return;
+    if (suppressCollabOpBroadcastRef.current) return;
+    if (savePayloadKey === lastSavedSnapshotKeyRef.current) return;
+    if (collabLastBroadcastPayloadKeyRef.current === savePayloadKey) return;
+
+    collabLastBroadcastPayloadKeyRef.current = savePayloadKey;
+    if (collabBroadcastTimerRef.current !== null) {
+      globalThis.clearTimeout(collabBroadcastTimerRef.current);
+    }
+    collabBroadcastTimerRef.current = globalThis.setTimeout(() => {
+      collabBroadcastTimerRef.current = null;
+      collab.sendOp({
+        formId,
+        opId: `op_${Date.now()}_${Math.random().toString(16).slice(2)}`,
+        baseVersion: collab.version ?? 0,
+        type: "builder.snapshot.intent",
+        payload: {
+          savePayloadKey,
+          changedAt: new Date().toISOString(),
+        },
+      });
+    }, 200);
+
+    return () => {
+      if (collabBroadcastTimerRef.current !== null) {
+        globalThis.clearTimeout(collabBroadcastTimerRef.current);
+        collabBroadcastTimerRef.current = null;
+      }
+    };
+  }, [
+    collab.connected,
+    collab.joined,
+    collab.sendOp,
+    collab.version,
+    enableRealtimeCollab,
+    error,
+    formId,
+    hydrated,
+    loading,
+    savePayloadKey,
+  ]);
+
+  useEffect(() => {
+    if (collabBroadcastTimerRef.current !== null) {
+      globalThis.clearTimeout(collabBroadcastTimerRef.current);
+      collabBroadcastTimerRef.current = null;
+    }
     queueRef.current = null;
     savingRef.current = false;
     lastSavedSnapshotKeyRef.current = null;
+    collabAppliedSnapshotSequenceRef.current = 0;
+    collabLastBroadcastPayloadKeyRef.current = null;
+    collabLastConflictOpIdRef.current = null;
+    suppressCollabOpBroadcastRef.current = false;
     setHasUnsavedChanges(false);
     setSaveMessage("Ready");
     setLockedBaselineCaptured(false);

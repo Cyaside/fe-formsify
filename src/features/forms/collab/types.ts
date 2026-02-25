@@ -1,3 +1,5 @@
+import type { BuilderSnapshot } from "@/shared/api/forms";
+
 export const COLLAB_EVENTS = {
   ready: "collab:ready",
   error: "collab:error",
@@ -55,7 +57,7 @@ export type CollabJoinAck =
 export type CollabJoinedPayload = {
   formId: string;
   version: number;
-  snapshot: null;
+  snapshot: BuilderSnapshot | null;
   participants: CollabParticipant[];
 };
 
@@ -102,7 +104,7 @@ export type CollabSyncRequestPayload = {
 export type CollabSyncPayload = {
   formId: string;
   version: number;
-  snapshot: null;
+  snapshot: BuilderSnapshot | null;
 };
 
 export type CollabReadyPayload = {
