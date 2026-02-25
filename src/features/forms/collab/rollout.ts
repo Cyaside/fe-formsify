@@ -1,5 +1,6 @@
 type BuilderCollabRolloutGuard = {
   collabFlagEnabled: boolean;
+  enableRealtimeCollab: boolean;
   useLegacyBuilderFlow: boolean;
   reason: "disabled_by_flag" | "collab_runtime_not_ready";
 };
@@ -18,6 +19,7 @@ export const getBuilderCollabRolloutGuard = (): BuilderCollabRolloutGuard => {
   if (!FORM_COLLAB_ROLLOUT_ENABLED) {
     return {
       collabFlagEnabled: false,
+      enableRealtimeCollab: false,
       useLegacyBuilderFlow: true,
       reason: "disabled_by_flag",
     };
@@ -26,6 +28,7 @@ export const getBuilderCollabRolloutGuard = (): BuilderCollabRolloutGuard => {
   // Guardrail rollout: flag can be turned on safely before the realtime runtime ships.
   return {
     collabFlagEnabled: true,
+    enableRealtimeCollab: true,
     useLegacyBuilderFlow: true,
     reason: "collab_runtime_not_ready",
   };

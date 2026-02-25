@@ -123,3 +123,23 @@ export type CollabErrorPayload = {
     | "UNKNOWN";
 };
 
+export interface CollabServerToClientEvents {
+  [COLLAB_EVENTS.ready]: (payload: CollabReadyPayload) => void;
+  [COLLAB_EVENTS.error]: (payload: CollabErrorPayload) => void;
+  [COLLAB_EVENTS.joined]: (payload: CollabJoinedPayload) => void;
+  [COLLAB_EVENTS.presence]: (payload: CollabPresencePayload) => void;
+  [COLLAB_EVENTS.opApplied]: (payload: CollabOpAppliedPayload) => void;
+  [COLLAB_EVENTS.opRejected]: (payload: CollabOpRejectedPayload) => void;
+  [COLLAB_EVENTS.sync]: (payload: CollabSyncPayload) => void;
+}
+
+export interface CollabClientToServerEvents {
+  [COLLAB_EVENTS.join]: (
+    payload: CollabJoinPayload,
+    ack?: (response: CollabJoinAck) => void,
+  ) => void;
+  [COLLAB_EVENTS.leave]: (payload: CollabJoinPayload) => void;
+  [COLLAB_EVENTS.presenceUpdate]: (payload: CollabPresenceUpdatePayload) => void;
+  [COLLAB_EVENTS.op]: (payload: CollabOpPayload) => void;
+  [COLLAB_EVENTS.syncRequest]: (payload: CollabSyncRequestPayload) => void;
+}

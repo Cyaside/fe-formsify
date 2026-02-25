@@ -54,6 +54,7 @@ import {
 import { useFormBuilderBootstrap } from "./hooks/useFormBuilderBootstrap";
 import { useUnsavedChangesNavigationGuard } from "./hooks/useUnsavedChangesNavigationGuard";
 import { getBuilderCollabRolloutGuard } from "../collab/rollout";
+import { useFormCollaboration } from "../collab/useFormCollaboration";
 
 type FormBuilderPageProps = {
   initialFormId?: string;
@@ -148,8 +149,16 @@ export default function FormBuilderPage({ initialFormId }: Readonly<FormBuilderP
     setSnapshot,
     reset,
   });
-  const { useLegacyBuilderFlow: shouldUseLegacyBuilderFlow } =
+  const {
+    collabFlagEnabled,
+    enableRealtimeCollab,
+    useLegacyBuilderFlow: shouldUseLegacyBuilderFlow,
+  } =
     getBuilderCollabRolloutGuard();
+  const collab = useFormCollaboration({
+    enabled: enableRealtimeCollab && hydrated && !loading && !error && Boolean(formId),
+    formId,
+  });
 
   const performSave = useCallback(
     async (snapshot: BuilderSaveSnapshot, options?: { showGlobalLoading?: boolean }) => {
@@ -597,6 +606,37 @@ export default function FormBuilderPage({ initialFormId }: Readonly<FormBuilderP
           {questionsLockNote ? (
             <Card className="mb-4 border-rose/40 bg-rose/10 text-sm text-rose">
               {questionsLockNote}
+            </Card>
+          ) : null}
+
+          {collabFlagEnabled ? (
+            <Card className="mb-4 border-sky-500/30 bg-sky-500/5 text-sm text-ink">
+              <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
+                <span className="font-medium">Collab beta</span>
+                <span className="text-ink-muted">
+                  {collab.connecting
+                    ? "Connecting..."
+                    : collab.connected
+                      ? collab.joined
+                        ? "Connected"
+                        : "Connected (joining room)"
+                      : "Disconnected"}
+                </span>
+                <span className="text-ink-muted">
+                  Participants: {collab.participants.length}
+                </span>
+                <span className="text-ink-muted">
+                  Version: {collab.version ?? "-"}
+                </span>
+                {collab.role ? (
+                  <span className="text-ink-muted">Role: {collab.role}</span>
+                ) : null}
+              </div>
+              {collab.lastError ? (
+                <p className="mt-2 text-xs text-rose">
+                  {collab.lastError.code}: {collab.lastError.message}
+                </p>
+              ) : null}
             </Card>
           ) : null}
 

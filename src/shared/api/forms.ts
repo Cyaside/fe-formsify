@@ -177,6 +177,48 @@ export type ResponsesListParams = {
   limit?: number;
 };
 
+export type BuilderSnapshotSection = {
+  id: string;
+  title: string;
+  description?: string | null;
+  order: number;
+};
+
+export type BuilderSnapshotQuestion = {
+  id: string;
+  sectionId: string;
+  title: string;
+  description?: string | null;
+  type: QuestionType;
+  required: boolean;
+  order: number;
+  options: string[];
+};
+
+export type BuilderSnapshot = {
+  title: string;
+  description?: string | null;
+  thankYouTitle: string;
+  thankYouMessage: string;
+  isClosed: boolean;
+  responseLimit: number | null;
+  sections: BuilderSnapshotSection[];
+  questions: BuilderSnapshotQuestion[];
+};
+
+export type BuilderSnapshotResponse = {
+  data: {
+    formId: string;
+    version: number;
+    snapshot: BuilderSnapshot;
+  };
+};
+
+export type UpdateBuilderSnapshotPayload = {
+  baseVersion: number;
+  snapshot: BuilderSnapshot;
+};
+
 type RequestOptions = {
   showGlobalLoading?: boolean;
 };
@@ -203,6 +245,8 @@ export const formsApi = {
     apiRequest<{ data: Question[] }>(`/api/forms/${formId}/questions`),
   sections: (formId: string) =>
     apiRequest<{ data: Section[] }>(`/api/forms/${formId}/sections`),
+  builderSnapshot: (formId: string) =>
+    apiRequest<BuilderSnapshotResponse>(`/api/forms/${formId}/builder-snapshot`),
   create: (payload: CreateFormPayload, options?: RequestOptions) =>
     apiRequest<{ data: { id: string } }>("/api/forms", {
       method: "POST",
@@ -236,6 +280,16 @@ export const formsApi = {
     }),
   update: (formId: string, payload: UpdateFormPayload, options?: RequestOptions) =>
     apiRequest(`/api/forms/${formId}`, {
+      method: "PUT",
+      body: payload,
+      showGlobalLoading: options?.showGlobalLoading,
+    }),
+  updateBuilderSnapshot: (
+    formId: string,
+    payload: UpdateBuilderSnapshotPayload,
+    options?: RequestOptions,
+  ) =>
+    apiRequest<BuilderSnapshotResponse>(`/api/forms/${formId}/builder-snapshot`, {
       method: "PUT",
       body: payload,
       showGlobalLoading: options?.showGlobalLoading,
