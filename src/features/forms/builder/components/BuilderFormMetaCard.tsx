@@ -28,7 +28,7 @@ function PresenceBadge({ label }: Readonly<{ label: string | null }>) {
   if (!label) return null;
   return (
     <p className="text-xs font-medium text-sky-700">
-      Sedang diedit: {label}
+      Being edited by: {label}
     </p>
   );
 }

@@ -279,6 +279,8 @@ const buildQuery = (params?: Record<string, string | number | undefined>) => {
 export const formsApi = {
   list: (params?: FormsListParams) =>
     apiRequest<{ data: FormSummary[] }>(`/api/forms${buildQuery(params)}`),
+  listCollaborations: (params?: FormsListParams) =>
+    apiRequest<{ data: FormSummary[] }>(`/api/forms/collaborations${buildQuery(params)}`),
   listPublic: (params?: { page?: number; limit?: number }) =>
     apiRequest<{ data: FormSummary[] }>(`/api/forms/public${buildQuery(params)}`),
   detail: (formId: string) =>

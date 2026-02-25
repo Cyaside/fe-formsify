@@ -120,7 +120,7 @@ export default function CollaboratorManagerCard({
     if (!formId) return;
     const normalizedEmail = email.trim();
     if (!normalizedEmail) {
-      setSaveState({ loading: false, message: null, error: "Email collaborator wajib diisi" });
+      setSaveState({ loading: false, message: null, error: "Collaborator email is required" });
       return;
     }
 
@@ -137,14 +137,14 @@ export default function CollaboratorManagerCard({
       setEmail("");
       setSaveState({
         loading: false,
-        message: `Collaborator ${response.data.user.email} ditambahkan`,
+        message: `Collaborator ${response.data.user.email} added`,
         error: null,
       });
     } catch (error) {
       setSaveState({
         loading: false,
         message: null,
-        error: error instanceof Error ? error.message : "Gagal menambah collaborator",
+        error: error instanceof Error ? error.message : "Failed to add collaborator",
       });
     }
   };
@@ -158,14 +158,14 @@ export default function CollaboratorManagerCard({
       setCollaborators((prev) => prev.filter((item) => item.userId !== userId));
       setSaveState({
         loading: false,
-        message: "Collaborator dihapus",
+        message: "Collaborator removed",
         error: null,
       });
     } catch (error) {
       setSaveState({
         loading: false,
         message: null,
-        error: error instanceof Error ? error.message : "Gagal menghapus collaborator",
+        error: error instanceof Error ? error.message : "Failed to remove collaborator",
       });
     } finally {
       setPendingRowUserId(null);
@@ -180,7 +180,7 @@ export default function CollaboratorManagerCard({
         <div>
           <h2 className="text-sm font-semibold text-ink">Collaborators</h2>
           <p className="text-xs text-ink-muted">
-            Kelola akses owner/editor untuk form ini.
+            Manage owner/editor access for this form.
           </p>
         </div>
         <Button
@@ -197,23 +197,23 @@ export default function CollaboratorManagerCard({
 
       {!formId ? (
         <div className="mt-3 rounded-xl border border-border bg-surface-2 px-3 py-2 text-sm text-ink-muted">
-          Simpan form terlebih dahulu untuk mengelola collaborator.
+          Save the form first before managing collaborators.
         </div>
       ) : null}
 
       {loading ? (
-        <div className="mt-3 text-sm text-ink-muted">Memuat collaborator...</div>
+        <div className="mt-3 text-sm text-ink-muted">Loading collaborators...</div>
       ) : null}
 
       {accessState === "forbidden" ? (
         <div className="mt-3 rounded-xl border border-border bg-surface-2 px-3 py-2 text-sm text-ink-muted">
-          Hanya owner yang bisa mengelola collaborator.
+          Only the owner can manage collaborators.
         </div>
       ) : null}
 
       {accessState === "unsupported" ? (
         <div className="mt-3 rounded-xl border border-border bg-surface-2 px-3 py-2 text-sm text-ink-muted">
-          Endpoint collaborator belum tersedia (cek feature flag backend).
+          Collaborator endpoint is not available yet (check backend feature flag).
         </div>
       ) : null}
 
@@ -247,7 +247,7 @@ export default function CollaboratorManagerCard({
 
           <div className="space-y-2">
             <p className="text-xs font-medium uppercase tracking-[0.2em] text-ink-muted">
-              Tambah Collaborator
+              Add Collaborator
             </p>
             <div className="grid gap-2 md:grid-cols-[minmax(0,1fr)_auto]">
               <Input
@@ -257,14 +257,14 @@ export default function CollaboratorManagerCard({
                 onChange={(event) => setEmail(event.target.value)}
                 disabled={saveState.loading || pendingRowUserId !== null}
               />
-              <Button
-                className="gap-1.5"
-                onClick={handleAdd}
-                disabled={!email.trim() || saveState.loading || pendingRowUserId !== null}
-              >
-                <UserPlus size={14} />
-                Tambah
-              </Button>
+                <Button
+                  className="gap-1.5"
+                  onClick={handleAdd}
+                  disabled={!email.trim() || saveState.loading || pendingRowUserId !== null}
+                >
+                  <UserPlus size={14} />
+                  Add
+                </Button>
             </div>
           </div>
 
@@ -274,7 +274,7 @@ export default function CollaboratorManagerCard({
             </p>
             {collaborators.length === 0 ? (
               <div className="rounded-xl border border-border bg-surface-2 px-3 py-2 text-sm text-ink-muted">
-                Belum ada collaborator.
+                No collaborators yet.
               </div>
             ) : (
               <div className="space-y-2">
@@ -289,16 +289,16 @@ export default function CollaboratorManagerCard({
                       <div className="flex items-center text-xs font-medium uppercase tracking-[0.2em] text-ink-muted">
                         Editor
                       </div>
-                      <Button
-                        variant="danger"
-                        size="sm"
-                        className="gap-1.5"
-                        onClick={() => void handleRemove(item.userId)}
-                        disabled={rowPending || saveState.loading}
-                      >
-                        <Trash2 size={14} />
-                        Hapus
-                      </Button>
+                        <Button
+                          variant="danger"
+                          size="sm"
+                          className="gap-1.5"
+                          onClick={() => void handleRemove(item.userId)}
+                          disabled={rowPending || saveState.loading}
+                        >
+                          <Trash2 size={14} />
+                          Remove
+                        </Button>
                     </div>
                   );
                 })}

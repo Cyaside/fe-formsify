@@ -50,7 +50,7 @@ type QuestionCardProps = {
 
 function PresenceBadge({ label }: Readonly<{ label: string | null | undefined }>) {
   if (!label) return null;
-  return <p className="text-xs font-medium text-sky-700">Sedang diedit: {label}</p>;
+  return <p className="text-xs font-medium text-sky-700">Being edited by: {label}</p>;
 }
 
 export default function QuestionCard({

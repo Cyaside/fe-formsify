@@ -11,6 +11,7 @@ import Card from "@/shared/ui/Card";
 import Input from "@/shared/ui/Input";
 import Modal from "@/shared/ui/Modal";
 import Select from "@/shared/ui/Select";
+import { FORM_COLLAB_ROLLOUT_ENABLED } from "@/features/forms/collab/rollout";
 import DashboardHeader from "@/widgets/dashboard/DashboardHeader";
 import DashboardMobileNav from "@/widgets/dashboard/DashboardMobileNav";
 import DashboardSidebar from "@/widgets/dashboard/DashboardSidebar";
@@ -38,8 +39,21 @@ export default function DashboardFormsPage() {
     queryFn: () => formsApi.list({ search: searchKeyword || undefined, status: filter, sort }),
     placeholderData: (previous) => previous,
   });
+  const {
+    data: sharedData,
+    isLoading: isSharedLoading,
+    isFetching: isSharedFetching,
+    error: sharedQueryError,
+  } = useQuery({
+    queryKey: ["forms", "collaborations", { search: searchKeyword, filter, sort }],
+    queryFn: () =>
+      formsApi.listCollaborations({ search: searchKeyword || undefined, status: filter, sort }),
+    placeholderData: (previous) => previous,
+    enabled: FORM_COLLAB_ROLLOUT_ENABLED,
+  });
 
   const forms = useMemo(() => data?.data ?? [], [data]);
+  const sharedForms = useMemo(() => sharedData?.data ?? [], [sharedData]);
   const errorMessage =
     error ??
     (queryError
@@ -47,20 +61,32 @@ export default function DashboardFormsPage() {
         ? queryError.message
         : "Failed to load forms"
       : null);
+  const sharedErrorMessage = useMemo(() => {
+    if (!FORM_COLLAB_ROLLOUT_ENABLED || !sharedQueryError) return null;
+    if (sharedQueryError instanceof ApiError && sharedQueryError.status === 404) {
+      return "Collaboration dashboard is not available yet (check ENABLE_FORM_COLLAB on the backend).";
+    }
+    return sharedQueryError instanceof ApiError
+      ? sharedQueryError.message
+      : "Failed to load collaboration forms";
+  }, [sharedQueryError]);
 
 
-  const displayedForms = useMemo(() => {
+  const toDisplayedForms = (items: FormSummary[]) => {
     const formatter = new Intl.DateTimeFormat("en-US", {
       dateStyle: "medium",
       timeStyle: "short",
     });
 
-    return forms.map((form) => ({
+    return items.map((form) => ({
       ...form,
       status: (form.isClosed ? "closed" : form.isPublished ? "published" : "draft") as DisplayStatus,
       updatedLabel: formatter.format(new Date(form.updatedAt)),
     }));
-  }, [forms]);
+  };
+
+  const displayedForms = useMemo(() => toDisplayedForms(forms), [forms]);
+  const displayedSharedForms = useMemo(() => toDisplayedForms(sharedForms), [sharedForms]);
 
   const handleDeleteForm = async () => {
     if (!deleteTarget) return;
@@ -150,6 +176,7 @@ export default function DashboardFormsPage() {
                       <div className="mb-2 flex items-center justify-between gap-2">
                         <h2 className="line-clamp-1 text-base font-semibold">{form.title}</h2>
                         <div className="flex items-center gap-2">
+                          <Badge variant="owned">Owned</Badge>
                           <Badge
                             variant={
                               form.status === "closed"
@@ -209,6 +236,96 @@ export default function DashboardFormsPage() {
                   </Card>
                 ))}
               </div>
+
+              {FORM_COLLAB_ROLLOUT_ENABLED ? (
+                <section className="space-y-4">
+                  <div className="flex flex-wrap items-center justify-between gap-2">
+                    <div>
+                      <p className="text-xs uppercase tracking-[0.24em] text-sky-700">
+                        Collaboration
+                      </p>
+                      <h3 className="mt-1 text-xl font-semibold">Invited Forms (Editor)</h3>
+                      <p className="text-sm text-ink-muted">
+                        Only forms where you were invited as an editor.
+                      </p>
+                    </div>
+                  </div>
+
+                  {isSharedLoading ? (
+                    <Card className="text-sm text-ink-muted">Loading collaboration forms...</Card>
+                  ) : null}
+                  {!isSharedLoading && isSharedFetching ? (
+                    <Card className="text-sm text-ink-muted">
+                      Updating collaboration forms...
+                    </Card>
+                  ) : null}
+                  {sharedErrorMessage ? (
+                    <Card className="border-rose/40 bg-rose/10 text-sm text-rose">
+                      {sharedErrorMessage}
+                    </Card>
+                  ) : null}
+                  {!isSharedLoading && !sharedErrorMessage && displayedSharedForms.length === 0 ? (
+                    <Card className="text-sm text-ink-muted">
+                      No collaboration forms found.
+                    </Card>
+                  ) : null}
+
+                  <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+                    {displayedSharedForms.map((form) => (
+                      <Card key={`shared-${form.id}`} className="flex h-full flex-col justify-between gap-4 p-5">
+                        <div>
+                          <div className="mb-2 flex items-center justify-between gap-2">
+                            <h2 className="line-clamp-1 text-base font-semibold">{form.title}</h2>
+                            <div className="flex items-center gap-2">
+                              <Badge variant="collab">Collaborator</Badge>
+                              <Badge
+                                variant={
+                                  form.status === "closed"
+                                    ? "closed"
+                                    : form.status === "published"
+                                      ? "published"
+                                      : "draft"
+                                }
+                              >
+                                {form.status}
+                              </Badge>
+                              {form.status !== "draft" ? (
+                                <Button
+                                  size="sm"
+                                  variant="ghost"
+                                  className="gap-1"
+                                  onClick={() => handleCopyShareUrl(form.id)}
+                                >
+                                  <Copy size={13} />
+                                  {copiedShareId === form.id ? "Copied" : "Share URL"}
+                                </Button>
+                              ) : null}
+                            </div>
+                          </div>
+                          <p className="line-clamp-3 text-sm text-ink-muted">
+                            {form.description || "No description"}
+                          </p>
+                        </div>
+
+                        <div>
+                          <p className="text-xs text-ink-muted">
+                            Owner: {form.owner?.name || form.owner?.email || "Unknown"}
+                          </p>
+                          <p className="text-xs text-ink-muted">Last edited: {form.updatedLabel}</p>
+                          <div className="mt-3 flex flex-wrap gap-2">
+                            <Link href={`/forms/${form.id}/edit`}>
+                              <Button size="sm" variant="secondary">Edit</Button>
+                            </Link>
+                            <Link href={`/forms/${form.id}/view`}>
+                              <Button size="sm" variant="ghost">View</Button>
+                            </Link>
+                          </div>
+                        </div>
+                      </Card>
+                    ))}
+                  </div>
+                </section>
+              ) : null}
             </main>
           </div>
         </div>
