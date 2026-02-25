@@ -1,99 +1,12 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import Link from "next/link";
 import { useParams } from "next/navigation";
-import Button from "@/shared/ui/Button";
-import Card from "@/shared/ui/Card";
-import Container from "@/shared/ui/Container";
-import ResponseAnswerCards from "@/features/forms/responses/components/ResponseAnswerCards";
-import { ApiError } from "@/shared/api/client";
-import {
-  formsApi,
-  type ResponseDetailPayload,
-} from "@/shared/api/forms";
+import FormResponseDetailPage from "@/features/forms/responses/FormResponseDetailPage";
 
-const formatDate = (value: string) =>
-  new Intl.DateTimeFormat("en-US", { dateStyle: "medium", timeStyle: "short" }).format(
-    new Date(value),
-  );
-
-export default function FormResponseDetailPage() {
+export default function Page() {
   const params = useParams();
   const formId = Array.isArray(params?.id) ? params.id[0] : params?.id;
   const responseId = Array.isArray(params?.responseId) ? params.responseId[0] : params?.responseId;
 
-  const [payload, setPayload] = useState<ResponseDetailPayload | null>(null);
-  const [loading, setLoading] = useState(Boolean(formId && responseId));
-  const [error, setError] = useState<string | null>(null);
-
-  useEffect(() => {
-    if (!formId || !responseId) return;
-
-    setLoading(true);
-    setError(null);
-
-    formsApi
-      .responseDetail(formId, responseId)
-      .then((result) => setPayload(result))
-      .catch((err) => {
-        const message = err instanceof ApiError ? err.message : "Failed to load response";
-        setError(message);
-      })
-      .finally(() => setLoading(false));
-  }, [formId, responseId]);
-
-  const responseApiPath =
-    formId && responseId ? `/api/forms/${formId}/responses/${responseId}` : null;
-
-  return (
-    <div className="min-h-screen bg-page py-8 text-ink">
-      <Container className="max-w-4xl space-y-4">
-        <div className="flex flex-wrap items-center justify-between gap-2">
-          <div className="flex items-center gap-2">
-            <Link href="/dashboard/forms">
-              <Button variant="secondary">Back to Forms</Button>
-            </Link>
-          </div>
-          {formId ? (
-            <Link href={`/forms/${formId}/responses`}>
-              <Button size="sm">Back to Response List</Button>
-            </Link>
-          ) : null}
-        </div>
-
-        {loading ? <Card className="text-sm text-ink-muted">Loading response...</Card> : null}
-        {error ? <Card className="border-rose/40 bg-rose/10 text-sm text-rose">{error}</Card> : null}
-
-        {payload ? (
-          <>
-            <Card className="space-y-2 border-l-4 border-l-accent p-6">
-              <h1 className="text-2xl font-semibold">{payload.form.title}</h1>
-              <p className="text-sm text-ink-muted">
-                {payload.form.description || "No description"}
-              </p>
-              <div className="flex flex-wrap items-center gap-2 pt-1">
-                <p className="text-xs text-ink-muted">
-                  Submitted: {formatDate(payload.data.createdAt)}
-                </p>
-                {responseApiPath ? (
-                  <code
-                    className="min-w-0 truncate rounded bg-surface-2 px-2 py-1 text-[11px] text-ink-muted"
-                    title={responseApiPath}
-                  >
-                    {responseApiPath}
-                  </code>
-                ) : null}
-              </div>
-            </Card>
-
-            <ResponseAnswerCards
-              answers={payload.data.answers}
-              emptyMessage="No answers in this response."
-            />
-          </>
-        ) : null}
-      </Container>
-    </div>
-  );
+  return <FormResponseDetailPage initialFormId={formId} initialResponseId={responseId} />;
 }
