@@ -16,7 +16,7 @@ export const COLLAB_EVENTS = {
   sync: "collab:sync",
 } as const;
 
-export type CollabRole = "OWNER" | "EDITOR" | "VIEWER" | "NONE";
+export type CollabRole = "OWNER" | "EDITOR" | "NONE";
 
 export type CollabEditingTarget =
   | null

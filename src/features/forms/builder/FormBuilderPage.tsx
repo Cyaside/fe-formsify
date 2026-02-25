@@ -32,6 +32,7 @@ import {
   requiresOptions,
 } from "./lib/constants";
 import BuilderCanvas from "./components/BuilderCanvas";
+import CollaboratorManagerCard from "./components/CollaboratorManagerCard";
 import BuilderFormMetaCard from "./components/BuilderFormMetaCard";
 import BuilderToolbar from "./components/BuilderToolbar";
 import {
@@ -485,7 +486,6 @@ export default function FormBuilderPage({ initialFormId }: Readonly<FormBuilderP
         collab.connected &&
         collab.joined &&
         collab.role !== null &&
-        collab.role !== "VIEWER" &&
         collab.version !== null &&
         !questionsLocked &&
         Boolean((useFormEditorStore.getState().formId ?? formId));
@@ -1205,6 +1205,11 @@ export default function FormBuilderPage({ initialFormId }: Readonly<FormBuilderP
               ) : null}
             </Card>
           ) : null}
+
+          <CollaboratorManagerCard
+            enabled={collabFlagEnabled}
+            formId={formId}
+          />
 
           <BuilderToolbar
             formId={formId}

@@ -219,6 +219,48 @@ export type UpdateBuilderSnapshotPayload = {
   snapshot: BuilderSnapshot;
 };
 
+export type CollaboratorRole = "OWNER" | "EDITOR";
+
+export type CollaboratorUser = {
+  id: string;
+  email: string;
+  name?: string | null;
+};
+
+export type FormCollaborator = {
+  formId: string;
+  userId: string;
+  role: "EDITOR";
+  createdAt: string;
+  updatedAt: string;
+  user: CollaboratorUser;
+};
+
+export type FormOwnerCollaborator = {
+  userId: string;
+  role: "OWNER";
+  user: CollaboratorUser;
+};
+
+export type FormCollaboratorsResponse = {
+  owner: FormOwnerCollaborator | null;
+  data: FormCollaborator[];
+};
+
+export type CreateCollaboratorPayload =
+  | {
+      email: string;
+      role: "EDITOR";
+    }
+  | {
+      userId: string;
+      role: "EDITOR";
+    };
+
+export type UpdateCollaboratorPayload = {
+  role: "EDITOR";
+};
+
 type RequestOptions = {
   showGlobalLoading?: boolean;
 };
@@ -247,6 +289,34 @@ export const formsApi = {
     apiRequest<{ data: Section[] }>(`/api/forms/${formId}/sections`),
   builderSnapshot: (formId: string) =>
     apiRequest<BuilderSnapshotResponse>(`/api/forms/${formId}/builder-snapshot`),
+  collaborators: (formId: string) =>
+    apiRequest<FormCollaboratorsResponse>(`/api/forms/${formId}/collaborators`),
+  addCollaborator: (
+    formId: string,
+    payload: CreateCollaboratorPayload,
+    options?: RequestOptions,
+  ) =>
+    apiRequest<{ data: FormCollaborator }>(`/api/forms/${formId}/collaborators`, {
+      method: "POST",
+      body: payload,
+      showGlobalLoading: options?.showGlobalLoading,
+    }),
+  updateCollaborator: (
+    formId: string,
+    userId: string,
+    payload: UpdateCollaboratorPayload,
+    options?: RequestOptions,
+  ) =>
+    apiRequest<{ data: FormCollaborator }>(`/api/forms/${formId}/collaborators/${userId}`, {
+      method: "PATCH",
+      body: payload,
+      showGlobalLoading: options?.showGlobalLoading,
+    }),
+  removeCollaborator: (formId: string, userId: string, options?: RequestOptions) =>
+    apiRequest(`/api/forms/${formId}/collaborators/${userId}`, {
+      method: "DELETE",
+      showGlobalLoading: options?.showGlobalLoading,
+    }),
   create: (payload: CreateFormPayload, options?: RequestOptions) =>
     apiRequest<{ data: { id: string } }>("/api/forms", {
       method: "POST",
