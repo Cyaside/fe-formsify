@@ -12,6 +12,7 @@ import {
   type CollabOpRejectedPayload,
   type CollabParticipant,
   type CollabRole,
+  type CollabStatusPayload,
   type CollabSyncPayload,
 } from "./types";
 
@@ -36,6 +37,12 @@ type UseFormCollaborationResult = {
       }
     | null;
   lastOpRejected: CollabOpRejectedPayload | null;
+  latestStatusEvent:
+    | {
+        sequence: number;
+        payload: CollabStatusPayload;
+      }
+    | null;
   latestSnapshotEvent:
     | {
         source: "joined" | "sync";
@@ -66,14 +73,18 @@ export function useFormCollaboration({
   const [latestOpAppliedEvent, setLatestOpAppliedEvent] =
     useState<UseFormCollaborationResult["latestOpAppliedEvent"]>(null);
   const [lastOpRejected, setLastOpRejected] = useState<CollabOpRejectedPayload | null>(null);
+  const [latestStatusEvent, setLatestStatusEvent] =
+    useState<UseFormCollaborationResult["latestStatusEvent"]>(null);
   const [latestSnapshotEvent, setLatestSnapshotEvent] = useState<UseFormCollaborationResult["latestSnapshotEvent"]>(null);
   const snapshotSequenceRef = useRef(0);
   const opAppliedSequenceRef = useRef(0);
+  const statusSequenceRef = useRef(0);
 
   useEffect(() => {
     setLastError(null);
     setLatestOpAppliedEvent(null);
     setLastOpRejected(null);
+    setLatestStatusEvent(null);
   }, [formId, enabled]);
 
   useEffect(() => {
@@ -88,6 +99,7 @@ export function useFormCollaboration({
       setVersion(null);
       setParticipants([]);
       setLatestOpAppliedEvent(null);
+      setLatestStatusEvent(null);
       setLatestSnapshotEvent(null);
       if (socket) {
         socket.disconnect();
@@ -105,6 +117,7 @@ export function useFormCollaboration({
       setRole(null);
       setParticipants([]);
       setLatestOpAppliedEvent(null);
+      setLatestStatusEvent(null);
       setLatestSnapshotEvent(null);
     };
 
@@ -188,6 +201,18 @@ export function useFormCollaboration({
       setVersion(payload.latestVersion);
     });
 
+    socket.on(COLLAB_EVENTS.status, (payload) => {
+      if (payload.formId !== formId) return;
+      if (Number.isInteger(payload.latestVersion) && (payload.latestVersion as number) >= 0) {
+        setVersion(payload.latestVersion as number);
+      }
+      statusSequenceRef.current += 1;
+      setLatestStatusEvent({
+        sequence: statusSequenceRef.current,
+        payload,
+      });
+    });
+
     socket.connect();
 
     return () => {
@@ -245,6 +270,7 @@ export function useFormCollaboration({
     lastError,
     latestOpAppliedEvent,
     lastOpRejected,
+    latestStatusEvent,
     latestSnapshotEvent,
     sendPresenceUpdate: actions.sendPresenceUpdate,
     requestSync: actions.requestSync,

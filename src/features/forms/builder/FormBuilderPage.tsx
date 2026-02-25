@@ -504,6 +504,12 @@ export default function FormBuilderPage({ initialFormId }: Readonly<FormBuilderP
               collab.requestSync();
               return;
             }
+            if (/locked/i.test(err.message) || /responses/i.test(err.message)) {
+              setQuestionsLocked(true);
+              setQuestionsLockNote(err.message);
+              setSaveMessage(err.message);
+              collab.requestSync();
+            }
           }
 
           const shouldFallbackToLegacy =
@@ -536,8 +542,8 @@ export default function FormBuilderPage({ initialFormId }: Readonly<FormBuilderP
           : new Set(snapshot.questions.filter((question) => !question.id.startsWith("temp_")).map((question) => question.id)),
         setSaveMessage,
         setFormId,
-        setQuestionsLocked,
-        setQuestionsLockNote,
+      setQuestionsLocked,
+      setQuestionsLockNote,
         clearRemovedSectionIds,
         clearRemovedQuestionIds,
         replaceSectionId,
@@ -748,6 +754,31 @@ export default function FormBuilderPage({ initialFormId }: Readonly<FormBuilderP
     setSaveMessage(`Version conflict detected (v${collab.lastOpRejected.latestVersion}). Syncing...`);
     collab.requestSync();
   }, [collab.lastOpRejected, collab.requestSync]);
+
+  useEffect(() => {
+    const event = collab.latestStatusEvent;
+    if (!event || !formId) return;
+    if (event.payload.formId !== formId) return;
+
+    if (event.payload.kind === "RESPONSES_LOCKED") {
+      setQuestionsLocked(true);
+      setQuestionsLockNote(event.payload.message);
+      setSaveMessage(event.payload.message);
+      collab.requestSync();
+      return;
+    }
+
+    if (event.payload.kind === "RESYNC_REQUIRED") {
+      setSaveMessage(event.payload.message);
+      collab.requestSync();
+    }
+  }, [
+    collab.latestStatusEvent,
+    collab.requestSync,
+    formId,
+    setQuestionsLocked,
+    setQuestionsLockNote,
+  ]);
 
   useEffect(() => {
     if (!collab.enabled || !collab.connected || !collab.joined || !formId) return;
