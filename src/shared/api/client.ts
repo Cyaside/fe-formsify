@@ -16,12 +16,57 @@ export const API_BASE_URL =
 
 export class ApiError extends Error {
   status: number;
+  details?: unknown;
 
-  constructor(status: number, message: string) {
+  constructor(status: number, message: string, details?: unknown) {
     super(message);
     this.status = status;
+    this.details = details;
   }
 }
+
+type ValidationIssue = {
+  path?: string;
+  message?: string;
+};
+
+const formatFieldName = (path: string) => {
+  const normalized = path.replace(/^body\./, "");
+  const field = normalized.split(".")[0];
+  if (field === "email") return "Email";
+  if (field === "password") return "Password";
+  if (field === "name") return "Name";
+  return field.charAt(0).toUpperCase() + field.slice(1);
+};
+
+const buildApiErrorMessage = (payload: unknown, fallback: string) => {
+  if (!payload || typeof payload !== "object") return fallback;
+
+  const record = payload as { message?: unknown; errors?: unknown };
+  const baseMessage =
+    typeof record.message === "string" && record.message.trim()
+      ? record.message.trim()
+      : fallback;
+
+  if (!Array.isArray(record.errors) || record.errors.length === 0) {
+    return baseMessage;
+  }
+
+  const firstIssue = record.errors.find(
+    (item): item is ValidationIssue =>
+      !!item && typeof item === "object" && ("message" in item || "path" in item),
+  );
+
+  if (!firstIssue || typeof firstIssue.message !== "string") {
+    return baseMessage;
+  }
+
+  if (typeof firstIssue.path === "string" && firstIssue.path.startsWith("body.")) {
+    return `${formatFieldName(firstIssue.path)}: ${firstIssue.message}`;
+  }
+
+  return firstIssue.message || baseMessage;
+};
 
 type ApiRequestOptions = Omit<RequestInit, "body"> & {
   token?: string | null;
@@ -74,11 +119,8 @@ export async function apiRequest<T>(
       : await response.text();
 
     if (!response.ok) {
-      const message =
-        typeof payload === "object" && payload !== null && "message" in payload
-          ? String((payload as { message?: string }).message ?? response.statusText)
-          : response.statusText;
-      throw new ApiError(response.status, message);
+      const message = buildApiErrorMessage(payload, response.statusText);
+      throw new ApiError(response.status, message, payload);
     }
 
     return payload as T;

@@ -17,6 +17,7 @@ function RegisterPageContent() {
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
@@ -29,6 +30,12 @@ function RegisterPageContent() {
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     setError(null);
+
+    if (password !== confirmPassword) {
+      setError("Password and confirm password do not match.");
+      return;
+    }
+
     setLoading(true);
     try {
       await register(name, email, password);
@@ -77,8 +84,9 @@ function RegisterPageContent() {
                 autoComplete="name"
                 value={name}
                 onChange={(event) => setName(event.target.value)}
-                placeholder="Full name"
+                placeholder="Your display name"
                 className="mt-3 w-full rounded-2xl border border-border bg-surface-2 px-4 py-3 text-sm text-ink placeholder:text-ink-muted focus:border-accent-500 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-500/25"
+                required
               />
             </label>
             <label className="text-xs font-semibold uppercase tracking-[0.28em] text-accent">
@@ -103,6 +111,19 @@ function RegisterPageContent() {
                 value={password}
                 onChange={(event) => setPassword(event.target.value)}
                 placeholder="Minimum 6 characters"
+                className="mt-3 w-full rounded-2xl border border-border bg-surface-2 px-4 py-3 text-sm text-ink placeholder:text-ink-muted focus:border-accent-500 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-500/25"
+                required
+              />
+            </label>
+            <label className="text-xs font-semibold uppercase tracking-[0.28em] text-accent">
+              Confirm Password
+              <input
+                type="password"
+                name="confirmPassword"
+                autoComplete="new-password"
+                value={confirmPassword}
+                onChange={(event) => setConfirmPassword(event.target.value)}
+                placeholder="Repeat your password"
                 className="mt-3 w-full rounded-2xl border border-border bg-surface-2 px-4 py-3 text-sm text-ink placeholder:text-ink-muted focus:border-accent-500 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-500/25"
                 required
               />
