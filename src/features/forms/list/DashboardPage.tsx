@@ -72,7 +72,7 @@ export default function DashboardPage() {
     enabled: Boolean(user),
   });
 
-  const forms = formsData?.data ?? [];
+  const forms = useMemo(() => formsData?.data ?? [], [formsData?.data]);
   const formsErrorMessage = useMemo(() => {
     if (!formsError) return null;
     return formsError instanceof ApiError ? formsError.message : "Failed to load forms.";
@@ -116,45 +116,34 @@ export default function DashboardPage() {
   const formsReady = !formsLoading && !formsErrorMessage;
   const analyticsReady = !analyticsLoading && !analyticsErrorMessage;
 
-  const stats = useMemo(() => {
-    const totalFormsLabel = formatNumber(formMetrics.totalForms);
-    return [
-      {
-        label: "Active Forms",
-        value: formsReady ? formatNumber(formMetrics.activeForms) : "-",
-        meta: formsReady ? `${totalFormsLabel} total` : "Loading...",
-      },
-      {
-        label: "Responses This Month",
-        value: analyticsReady
-          ? formatNumber(analyticsData?.data.totals.responses ?? 0, {
-              notation: "compact",
-              maximumFractionDigits: 1,
-            })
-          : "-",
-        meta: analyticsReady ? monthRange.label : "Loading...",
-      },
-      {
-        label: "New Forms This Month",
-        value: formsReady ? formatNumber(formMetrics.newFormsThisMonth) : "-",
-        meta: formsReady ? monthRange.label : "Loading...",
-      },
-      {
-        label: "Draft Forms",
-        value: formsReady ? formatNumber(formMetrics.draftForms) : "-",
-        meta: formsReady ? `${totalFormsLabel} total` : "Loading...",
-      },
-    ];
-  }, [
-    analyticsData?.data.totals.responses,
-    analyticsReady,
-    formMetrics.activeForms,
-    formMetrics.draftForms,
-    formMetrics.newFormsThisMonth,
-    formMetrics.totalForms,
-    formsReady,
-    monthRange.label,
-  ]);
+  const totalFormsLabel = formatNumber(formMetrics.totalForms);
+  const stats = [
+    {
+      label: "Active Forms",
+      value: formsReady ? formatNumber(formMetrics.activeForms) : "-",
+      meta: formsReady ? `${totalFormsLabel} total` : "Loading...",
+    },
+    {
+      label: "Responses This Month",
+      value: analyticsReady
+        ? formatNumber(analyticsData?.data.totals.responses ?? 0, {
+            notation: "compact",
+            maximumFractionDigits: 1,
+          })
+        : "-",
+      meta: analyticsReady ? monthRange.label : "Loading...",
+    },
+    {
+      label: "New Forms This Month",
+      value: formsReady ? formatNumber(formMetrics.newFormsThisMonth) : "-",
+      meta: formsReady ? monthRange.label : "Loading...",
+    },
+    {
+      label: "Draft Forms",
+      value: formsReady ? formatNumber(formMetrics.draftForms) : "-",
+      meta: formsReady ? `${totalFormsLabel} total` : "Loading...",
+    },
+  ];
 
   const latestResponse = useMemo(() => {
     const trend = analyticsData?.data.responseTrend ?? [];

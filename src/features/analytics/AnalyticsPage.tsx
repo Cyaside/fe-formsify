@@ -53,7 +53,7 @@ export default function AnalyticsPage() {
     () => buildTrendSeries(rawTrend, from, to, bucket),
     [bucket, from, rawTrend, to],
   );
-  const forms = formsData?.data ?? [];
+  const forms = useMemo(() => formsData?.data ?? [], [formsData?.data]);
   const formStatusData = useMemo(() => {
     const published = forms.filter((form) => form.isPublished).length;
     const draft = forms.length - published;

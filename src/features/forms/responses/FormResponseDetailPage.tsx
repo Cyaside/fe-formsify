@@ -1,7 +1,7 @@
 "use client";
 
-import { useEffect, useState } from "react";
 import Link from "next/link";
+import { useQuery } from "@tanstack/react-query";
 import Button from "@/shared/ui/Button";
 import Card from "@/shared/ui/Card";
 import Container from "@/shared/ui/Container";
@@ -26,26 +26,21 @@ export default function FormResponseDetailPage({
 }>) {
   const formId = initialFormId;
   const responseId = initialResponseId;
-
-  const [payload, setPayload] = useState<ResponseDetailPayload | null>(null);
-  const [loading, setLoading] = useState(Boolean(formId && responseId));
-  const [error, setError] = useState<string | null>(null);
-
-  useEffect(() => {
-    if (!formId || !responseId) return;
-
-    setLoading(true);
-    setError(null);
-
-    formsApi
-      .responseDetail(formId, responseId)
-      .then((result) => setPayload(result))
-      .catch((err) => {
-        const message = err instanceof ApiError ? err.message : "Failed to load response";
-        setError(message);
-      })
-      .finally(() => setLoading(false));
-  }, [formId, responseId]);
+  const enabled = Boolean(formId && responseId);
+  const {
+    data: payload,
+    isLoading: loading,
+    error: queryError,
+  } = useQuery<ResponseDetailPayload>({
+    queryKey: ["form-response-detail", formId, responseId],
+    queryFn: () => formsApi.responseDetail(formId!, responseId!),
+    enabled,
+  });
+  const error = queryError
+    ? queryError instanceof ApiError
+      ? queryError.message
+      : "Failed to load response"
+    : null;
 
   const responseApiPath =
     formId && responseId ? `/api/forms/${formId}/responses/${responseId}` : null;

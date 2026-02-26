@@ -12,7 +12,6 @@ import ResponseAnswerCards from "@/features/forms/responses/components/ResponseA
 import { ApiError } from "@/shared/api/client";
 import {
   formsApi,
-  type ResponsesPayload,
 } from "@/shared/api/forms";
 
 const formatDate = (value: string) =>
