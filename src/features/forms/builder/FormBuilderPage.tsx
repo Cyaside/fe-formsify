@@ -13,22 +13,13 @@ import { useAuth } from "@/features/auth/AuthProvider";
 import RequireAuth from "@/features/auth/RequireAuth";
 import Container from "@/shared/ui/Container";
 import Card from "@/shared/ui/Card";
-import { ApiError } from "@/shared/api/client";
-import { formsApi, type BuilderSnapshot } from "@/shared/api/forms";
-import {
-  clearDraft,
-  saveDraft,
-} from "@/features/forms/lib/formPersistence";
+import { formsApi } from "@/shared/api/forms";
 import {
   useFormEditorStore,
   type EditorSection,
   type EditorQuestion,
   type QuestionType,
 } from "@/features/forms/store/formEditor";
-import {
-  mapUiTypeToApiType,
-  requiresOptions,
-} from "./lib/constants";
 import BuilderCanvas from "./components/BuilderCanvas";
 import CollaboratorManagerCard from "./components/CollaboratorManagerCard";
 import BuilderFormMetaCard from "./components/BuilderFormMetaCard";
@@ -36,8 +27,6 @@ import BuilderToolbar from "./components/BuilderToolbar";
 import {
   createDefaultQuestion,
   createDefaultSection,
-  DEFAULT_THANK_YOU_MESSAGE,
-  DEFAULT_THANK_YOU_TITLE,
   fromSortableId,
   getPublishValidationMessage,
   PUBLISH_NO_QUESTION_MESSAGE,
@@ -47,11 +36,15 @@ import {
 } from "./lib/formBuilderShared";
 import {
   createSavedSnapshotKey,
-  performFormBuilderSave,
   type BuilderSaveSnapshot,
 } from "./lib/formBuilderPersistence";
 import { useFormBuilderBootstrap } from "./hooks/useFormBuilderBootstrap";
 import { useBuilderCollabBridge } from "./hooks/useBuilderCollabBridge";
+import {
+  useBuilderSaveQueue,
+  type QueuedBuilderSaveRequest,
+} from "./hooks/useBuilderSaveQueue";
+import { useBuilderLockState } from "./hooks/useBuilderLockState";
 import { useUnsavedChangesNavigationGuard } from "./hooks/useUnsavedChangesNavigationGuard";
 import { getBuilderCollabRolloutGuard } from "../collab/rollout";
 import { useFormCollaboration } from "../collab/useFormCollaboration";
@@ -102,27 +95,7 @@ export default function FormBuilderPage({ initialFormId }: Readonly<FormBuilderP
   const [publishing, setPublishing] = useState(false);
   const [savingDraft, setSavingDraft] = useState(false);
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
-  const [lockedBaselineCaptured, setLockedBaselineCaptured] = useState(false);
-  const [lockedSectionIds, setLockedSectionIds] = useState<string[]>([]);
-  const [lockedQuestionIds, setLockedQuestionIds] = useState<string[]>([]);
-  const lockedSectionIdSet = useMemo(() => new Set(lockedSectionIds), [lockedSectionIds]);
-  const lockedQuestionIdSet = useMemo(() => new Set(lockedQuestionIds), [lockedQuestionIds]);
-
-  const queueRef = useRef<null | {
-    snapshot: {
-      title: string;
-      description: string;
-      thankYouTitle: string;
-      thankYouMessage: string;
-      isResponseClosed: boolean;
-      responseLimit: string;
-      sections: EditorSection[];
-      questions: EditorQuestion[];
-      removedSectionIds: string[];
-      removedQuestionIds: string[];
-    };
-    showGlobalLoading?: boolean;
-  }>(null);
+  const queueRef = useRef<QueuedBuilderSaveRequest | null>(null);
   const savingRef = useRef(false);
   const lastSavedSnapshotKeyRef = useRef<string | null>(null);
 
@@ -223,289 +196,53 @@ export default function FormBuilderPage({ initialFormId }: Readonly<FormBuilderP
     setQuestionsLocked,
     setQuestionsLockNote,
   });
+  const {
+    lockedBaselineCaptured,
+    lockedSectionIdSet,
+    lockedQuestionIdSet,
+    isLockedSectionId,
+    isLockedQuestionId,
+  } = useBuilderLockState({
+    initialFormId,
+    questionsLocked,
+    questionsLockNote,
+    hydrated,
+    loading,
+    error,
+    sections,
+    questions,
+    queueRef,
+    savingRef,
+    lastSavedSnapshotKeyRef,
+    setHasUnsavedChanges,
+    setSaveMessage,
+  });
 
-  const performSave = useCallback(
-    async (snapshot: BuilderSaveSnapshot, options?: { showGlobalLoading?: boolean }) => {
-      const performVersionedSnapshotSave = async () => {
-        const latestFormId = useFormEditorStore.getState().formId ?? formId;
-        const activeDraftKey = initialFormId ?? latestFormId ?? "new";
-        if (!latestFormId) {
-          throw new ApiError(400, "Versioned snapshot save requires a persisted form");
-        }
-        if (collab.version === null) {
-          throw new ApiError(409, "Collaboration version is not ready");
-        }
-
-        const normalizedResponseLimitInput = snapshot.responseLimit.trim();
-        const parsedResponseLimit =
-          normalizedResponseLimitInput.length === 0
-            ? null
-            : Number.parseInt(normalizedResponseLimitInput, 10);
-        const responseLimit = Number.isFinite(parsedResponseLimit)
-          ? parsedResponseLimit
-          : null;
-
-        const builderSnapshotPayload: BuilderSnapshot = {
-          title: snapshot.title.trim(),
-          description: snapshot.description.trim() || null,
-          thankYouTitle: snapshot.thankYouTitle.trim() || DEFAULT_THANK_YOU_TITLE,
-          thankYouMessage: snapshot.thankYouMessage.trim() || DEFAULT_THANK_YOU_MESSAGE,
-          isClosed: snapshot.isResponseClosed,
-          responseLimit,
-          sections: snapshot.sections.map((section, index) => ({
-            id: section.id,
-            title: section.title,
-            description: section.description || null,
-            order: index,
-          })),
-          questions: snapshot.questions.map((question) => ({
-            id: question.id,
-            sectionId: question.sectionId,
-            title: question.title,
-            description: question.description || null,
-            type: mapUiTypeToApiType(question.type),
-            required: question.required,
-            order: question.order,
-            options: requiresOptions(question.type)
-              ? question.options.map((item) => item.trim()).filter((item) => item.length > 0)
-              : [],
-          })),
-        };
-
-        setSaveMessage("Saving changes...");
-
-        const response = await formsApi.updateBuilderSnapshot(
-          latestFormId,
-          {
-            baseVersion: collab.version,
-            snapshot: builderSnapshotPayload,
-          },
-          { showGlobalLoading: options?.showGlobalLoading },
-        );
-
-        clearRemovedSectionIds();
-        clearRemovedQuestionIds();
-        clearDraft(activeDraftKey);
-        collab.setKnownVersion(response.data.version);
-        const savedSnapshotKey = applyRemoteBuilderSnapshot(
-          "rest",
-          response.data.formId,
-          response.data.snapshot,
-          response.data.version,
-        );
-
-        return {
-          status: "saved" as const,
-          savedSnapshotKey,
-        };
-      };
-
-      const canUseVersionedSnapshotSave =
-        enableRealtimeCollab &&
-        collab.connected &&
-        collab.joined &&
-        collab.role !== null &&
-        collab.version !== null &&
-        !questionsLocked &&
-        Boolean((useFormEditorStore.getState().formId ?? formId));
-
-      if (canUseVersionedSnapshotSave) {
-        try {
-          const result = await performVersionedSnapshotSave();
-          lastSavedSnapshotKeyRef.current = result.savedSnapshotKey;
-          setHasUnsavedChanges(false);
-          return;
-        } catch (err) {
-          if (err instanceof ApiError && err.status === 409) {
-            const isVersionConflict = /version conflict/i.test(err.message);
-            if (isVersionConflict) {
-              setSaveMessage("Collaboration version conflict. Syncing latest changes...");
-              collab.requestSync();
-              return;
-            }
-            if (/locked/i.test(err.message) || /responses/i.test(err.message)) {
-              setQuestionsLocked(true);
-              setQuestionsLockNote(err.message);
-              setSaveMessage(err.message);
-              collab.requestSync();
-            }
-          }
-
-          const shouldFallbackToLegacy =
-            err instanceof ApiError
-              ? err.status === 404 ||
-                err.status === 400 ||
-                (err.status === 409 && !/version conflict/i.test(err.message))
-              : true;
-
-          if (!shouldFallbackToLegacy) {
-            throw err;
-          }
-        }
-      }
-
-      const latestFormId = useFormEditorStore.getState().formId ?? formId;
-      const activeDraftKey = initialFormId ?? latestFormId ?? "new";
-      const result = await performFormBuilderSave({
-        snapshot,
-        options,
-        hydrated,
-        formId: latestFormId,
-        draftKey: activeDraftKey,
-        questionsLocked,
-        lockedSectionIds: lockedBaselineCaptured
-          ? lockedSectionIdSet
-          : new Set(snapshot.sections.filter((section) => !section.id.startsWith("temp_")).map((section) => section.id)),
-        lockedQuestionIds: lockedBaselineCaptured
-          ? lockedQuestionIdSet
-          : new Set(snapshot.questions.filter((question) => !question.id.startsWith("temp_")).map((question) => question.id)),
-        setSaveMessage,
-        setFormId,
-        setQuestionsLocked,
-        setQuestionsLockNote,
-        clearRemovedSectionIds,
-        clearRemovedQuestionIds,
-        replaceSectionId,
-        replaceQuestionId,
-      });
-
-      if (result.status === "saved") {
-        lastSavedSnapshotKeyRef.current = result.savedSnapshotKey;
-        setHasUnsavedChanges(false);
-      }
-    },
-    [
-      applyRemoteBuilderSnapshot,
-      clearRemovedQuestionIds,
-      clearRemovedSectionIds,
-      formId,
-      hydrated,
-      collab,
-      enableRealtimeCollab,
-      initialFormId,
-      lockedBaselineCaptured,
-      questionsLocked,
-      lockedQuestionIdSet,
-      lockedSectionIdSet,
-      replaceQuestionId,
-      replaceSectionId,
-      setFormId,
-      setHasUnsavedChanges,
-      setQuestionsLockNote,
-      setQuestionsLocked,
-    ],
-  );
-
-  const enqueueSave = useCallback(
-    async (snapshot: {
-      title: string;
-      description: string;
-      thankYouTitle: string;
-      thankYouMessage: string;
-      isResponseClosed: boolean;
-      responseLimit: string;
-      sections: EditorSection[];
-      questions: EditorQuestion[];
-      removedSectionIds: string[];
-      removedQuestionIds: string[];
-    }, options?: { showGlobalLoading?: boolean }) => {
-      const latestFormId = useFormEditorStore.getState().formId ?? formId;
-      const activeDraftKey = initialFormId ?? latestFormId ?? "new";
-      saveDraft(activeDraftKey, {
-        formId: latestFormId,
-        isPublished,
-        title: snapshot.title,
-        description: snapshot.description,
-        thankYouTitle: snapshot.thankYouTitle,
-        thankYouMessage: snapshot.thankYouMessage,
-        isResponseClosed: snapshot.isResponseClosed,
-        responseLimit: snapshot.responseLimit,
-        sections: snapshot.sections,
-        questions: snapshot.questions,
-        removedSectionIds: snapshot.removedSectionIds,
-        removedQuestionIds: snapshot.removedQuestionIds,
-      });
-
-      if (savingRef.current) {
-        queueRef.current = {
-          snapshot,
-          showGlobalLoading: options?.showGlobalLoading,
-        };
-        return;
-      }
-
-      savingRef.current = true;
-      try {
-        await performSave(snapshot, options);
-      } catch (err) {
-        const message = err instanceof ApiError ? err.message : "Failed to autosave";
-        setSaveMessage(message);
-        if (options?.showGlobalLoading) {
-          throw err;
-        }
-      } finally {
-        savingRef.current = false;
-      }
-
-      if (queueRef.current) {
-        const queued = queueRef.current;
-        queueRef.current = null;
-        await enqueueSave(queued.snapshot, {
-          showGlobalLoading: queued.showGlobalLoading,
-        });
-      }
-    },
-    [formId, initialFormId, isPublished, performSave],
-  );
-
-  useEffect(() => {
-    queueRef.current = null;
-    savingRef.current = false;
-    lastSavedSnapshotKeyRef.current = null;
-    setHasUnsavedChanges(false);
-    setSaveMessage("Ready");
-    setLockedBaselineCaptured(false);
-    setLockedSectionIds([]);
-    setLockedQuestionIds([]);
-  }, [initialFormId]);
-
-  useEffect(() => {
-    if (!questionsLocked) {
-      setLockedBaselineCaptured(false);
-      setLockedSectionIds([]);
-      setLockedQuestionIds([]);
-      return;
-    }
-    if (lockedBaselineCaptured) return;
-    if (!hydrated || loading || error) return;
-    setLockedSectionIds(
-      sections.filter((section) => !section.id.startsWith("temp_")).map((section) => section.id),
-    );
-    setLockedQuestionIds(
-      questions.filter((question) => !question.id.startsWith("temp_")).map((question) => question.id),
-    );
-    setLockedBaselineCaptured(true);
-  }, [error, hydrated, loading, lockedBaselineCaptured, questions, questionsLocked, sections]);
-
-  const isLockedSectionId = useCallback(
-    (id: string) =>
-      questionsLocked &&
-      (lockedBaselineCaptured ? lockedSectionIdSet.has(id) : !id.startsWith("temp_")),
-    [lockedBaselineCaptured, lockedSectionIdSet, questionsLocked],
-  );
-  const isLockedQuestionId = useCallback(
-    (id: string) =>
-      questionsLocked &&
-      (lockedBaselineCaptured ? lockedQuestionIdSet.has(id) : !id.startsWith("temp_")),
-    [lockedBaselineCaptured, lockedQuestionIdSet, questionsLocked],
-  );
-
-  useEffect(() => {
-    if (!questionsLockNote) return;
-    queueRef.current = null;
-    setHasUnsavedChanges(false);
-    setSaveMessage(questionsLockNote);
-  }, [questionsLockNote]);
+  const { enqueueSave } = useBuilderSaveQueue({
+    formId,
+    initialFormId,
+    hydrated,
+    isPublished,
+    questionsLocked,
+    enableRealtimeCollab,
+    collab,
+    lockedBaselineCaptured,
+    lockedSectionIdSet,
+    lockedQuestionIdSet,
+    queueRef,
+    savingRef,
+    lastSavedSnapshotKeyRef,
+    setSaveMessage,
+    setHasUnsavedChanges,
+    setQuestionsLocked,
+    setQuestionsLockNote,
+    setFormId,
+    clearRemovedSectionIds,
+    clearRemovedQuestionIds,
+    replaceSectionId,
+    replaceQuestionId,
+    applyRemoteBuilderSnapshot,
+  });
 
   useEffect(() => {
     if (!hydrated || loading || error) return;
