@@ -7,11 +7,12 @@ import Container from "@/shared/ui/Container";
 import { ApiError } from "@/shared/api/client";
 import { useAuth } from "@/features/auth/AuthProvider";
 import GoogleSignInButton from "@/features/auth/GoogleSignInButton";
+import { sanitizeNextPath } from "@/features/auth/googleOAuth";
 
 function LoginPageContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const next = searchParams.get("next") ?? "/";
+  const next = sanitizeNextPath(searchParams.get("next"), "login");
   const { login, user } = useAuth();
 
   const [email, setEmail] = useState("");

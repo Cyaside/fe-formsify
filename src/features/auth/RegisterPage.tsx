@@ -7,11 +7,12 @@ import Container from "@/shared/ui/Container";
 import { ApiError } from "@/shared/api/client";
 import { useAuth } from "@/features/auth/AuthProvider";
 import GoogleSignInButton from "@/features/auth/GoogleSignInButton";
+import { sanitizeNextPath } from "@/features/auth/googleOAuth";
 
 function RegisterPageContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const next = searchParams.get("next") ?? "/dashboard";
+  const next = sanitizeNextPath(searchParams.get("next"), "register");
   const { register, user } = useAuth();
 
   const [name, setName] = useState("");
