@@ -1,6 +1,7 @@
 "use client";
 
 import Image from "next/image";
+import { motion } from "framer-motion";
 import Container from "@/shared/ui/Container";
 import SectionHeading from "@/shared/ui/SectionHeading";
 
@@ -21,7 +22,14 @@ const highlights = [
 
 export default function AboutSection() {
   return (
-    <section id="about" className="bg-page py-16 md:py-24">
+    <motion.section
+      id="about"
+      className="py-16 md:py-24"
+      initial={{ opacity: 0, y: 28 }}
+      whileInView={{ opacity: 1, y: 0 }}
+      viewport={{ once: true, amount: 0.22 }}
+      transition={{ duration: 0.65, ease: "easeOut" }}
+    >
       <Container className="grid items-center gap-8 md:grid-cols-[1.05fr_0.95fr]">
         <div className="order-2 md:order-1">
           <SectionHeading
@@ -58,6 +66,6 @@ export default function AboutSection() {
           />
         </div>
       </Container>
-    </section>
+    </motion.section>
   );
 }

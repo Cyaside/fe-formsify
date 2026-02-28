@@ -1,5 +1,6 @@
 "use client";
 
+import { motion } from "framer-motion";
 import Container from "@/shared/ui/Container";
 
 const testimonials = [
@@ -36,7 +37,14 @@ export default function TestimonialsSection() {
   const items = [...testimonials, ...testimonials];
 
   return (
-    <section id="testimonials" className="relative overflow-hidden bg-page py-20 md:py-28">
+    <motion.section
+      id="testimonials"
+      className="relative overflow-hidden py-20 md:py-28"
+      initial={{ opacity: 0, y: 28 }}
+      whileInView={{ opacity: 1, y: 0 }}
+      viewport={{ once: true, amount: 0.2 }}
+      transition={{ duration: 0.65, ease: "easeOut" }}
+    >
       <Container>
         <div className="relative z-10 mb-14 text-center">
           <p className="mb-3 text-sm font-semibold uppercase tracking-[0.2em] text-accent/80">Reviews</p>
@@ -91,6 +99,6 @@ export default function TestimonialsSection() {
           to   { transform: translateX(-50%); }
         }
       `}</style>
-    </section>
+    </motion.section>
   );
 }

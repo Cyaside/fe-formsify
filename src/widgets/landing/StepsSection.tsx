@@ -1,5 +1,6 @@
 "use client";
 
+import { motion } from "framer-motion";
 import Container from "@/shared/ui/Container";
 
 const steps = [
@@ -31,7 +32,14 @@ const steps = [
 
 export default function StepsSection() {
   return (
-    <section id="steps" className="relative overflow-hidden bg-page py-20 md:py-28">
+    <motion.section
+      id="steps"
+      className="relative overflow-hidden py-20 md:py-28"
+      initial={{ opacity: 0, y: 28 }}
+      whileInView={{ opacity: 1, y: 0 }}
+      viewport={{ once: true, amount: 0.2 }}
+      transition={{ duration: 0.65, ease: "easeOut" }}
+    >
       <Container>
         <div className="relative z-10 mb-6 text-center">
           <p className="mb-3 text-sm font-semibold uppercase tracking-[0.2em] text-accent/80">Workflow</p>
@@ -45,8 +53,12 @@ export default function StepsSection() {
 
         <div className="mt-12 flex flex-col gap-4 md:flex-row md:items-stretch md:gap-0">
           {steps.map((step, index) => (
-            <div
+            <motion.div
               key={step.title}
+              initial={{ opacity: 0, y: 24 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true, amount: 0.32 }}
+              transition={{ duration: 0.5, delay: index * 0.08, ease: "easeOut" }}
               className={`step-card relative flex-1 rounded-[28px] border border-border px-8 py-6 text-ink shadow-soft transition md:px-12 md:first:ml-0 md:-ml-6 ${
                 index === 0 ? "z-40" : index === 1 ? "z-30" : index === 2 ? "z-20" : "z-10"
               }`}
@@ -63,10 +75,10 @@ export default function StepsSection() {
 
               <h3 className="mt-4 break-words text-base font-semibold text-ink">{step.title}</h3>
               <p className="mt-2 break-words text-sm leading-6 text-ink-muted">{step.desc}</p>
-            </div>
+            </motion.div>
           ))}
         </div>
       </Container>
-    </section>
+    </motion.section>
   );
 }

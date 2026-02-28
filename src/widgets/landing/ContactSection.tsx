@@ -1,11 +1,19 @@
 "use client";
 
+import { motion } from "framer-motion";
 import Container from "@/shared/ui/Container";
 import SectionHeading from "@/shared/ui/SectionHeading";
 
 export default function ContactSection() {
   return (
-    <section id="contact" className="bg-page py-20 md:py-28">
+    <motion.section
+      id="contact"
+      className="py-20 md:py-28"
+      initial={{ opacity: 0, y: 28 }}
+      whileInView={{ opacity: 1, y: 0 }}
+      viewport={{ once: true, amount: 0.2 }}
+      transition={{ duration: 0.65, ease: "easeOut" }}
+    >
       <Container className="grid gap-12 md:grid-cols-[1.1fr_0.9fr]">
         <div className="flex flex-col gap-6">
           <SectionHeading
@@ -58,6 +66,6 @@ export default function ContactSection() {
           </button>
         </form>
       </Container>
-    </section>
+    </motion.section>
   );
 }

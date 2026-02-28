@@ -1,50 +1,30 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useRef } from "react";
+import { motion, useScroll, useTransform } from "framer-motion";
 import Container from "@/shared/ui/Container";
 import Navbar from "@/widgets/landing/Navbar";
 import Link from "next/link";
 import { useAuth } from "@/features/auth/AuthProvider";
 
 export default function HeroSection() {
-  const [progress, setProgress] = useState(0);
+  const heroRef = useRef<HTMLElement>(null);
   const { user } = useAuth();
-
-  useEffect(() => {
-    let raf = 0;
-    const handleScroll = () => {
-      if (raf) return;
-      raf = globalThis.requestAnimationFrame(() => {
-        const hero = document.getElementById("top");
-        if (!hero) return;
-        const rect = hero.getBoundingClientRect();
-        const height = rect.height || 1;
-        const scrolled = Math.min(Math.max(-rect.top / height, 0), 1);
-        setProgress(scrolled);
-        raf = 0;
-      });
-    };
-
-    handleScroll();
-    globalThis.addEventListener("scroll", handleScroll, { passive: true });
-    globalThis.addEventListener("resize", handleScroll);
-    return () => {
-      globalThis.removeEventListener("scroll", handleScroll);
-      globalThis.removeEventListener("resize", handleScroll);
-      if (raf) globalThis.cancelAnimationFrame(raf);
-    };
-  }, []);
+  const { scrollYProgress } = useScroll({
+    target: heroRef,
+    offset: ["start start", "end start"],
+  });
+  const y = useTransform(scrollYProgress, [0, 1], [0, 52]);
+  const scale = useTransform(scrollYProgress, [0, 1], [1, 0.97]);
+  const opacity = useTransform(scrollYProgress, [0, 1], [1, 0.42]);
 
   return (
-    <section className="relative overflow-hidden border-b border-border bg-page" id="top">
+    <section ref={heroRef} className="relative overflow-hidden" id="top">
       <Navbar />
       <Container className="relative pb-28 pt-32 md:pt-36">
-        <div
+        <motion.div
           className="relative mx-auto flex h-105 w-full max-w-5xl items-center justify-center transition-[opacity,transform] duration-300"
-          style={{
-            transform: `translateY(${progress * 48}px) scale(${1 - progress * 0.03})`,
-            opacity: 1 - progress * 0.6,
-          }}
+          style={{ y, scale, opacity }}
         >
           <div className="relative z-10 w-full rounded-3xl border border-border bg-surface px-4 py-10 text-center shadow-soft md:px-8 md:py-14">
             <h1 className="mx-auto max-w-300 text-[56px] leading-[0.95] font-extrabold tracking-tight text-ink md:text-[96px]">
@@ -93,21 +73,8 @@ export default function HeroSection() {
               {user ? "You are logged in." : "Login to create and manage your forms."}
             </p>
           </div>
-        </div>
+        </motion.div>
       </Container>
-      <div className="pointer-events-none absolute inset-x-0 bottom-0">
-        <svg
-          viewBox="0 0 1440 220"
-          preserveAspectRatio="none"
-          className="h-32 w-full md:h-40"
-          aria-hidden="true"
-        >
-          <path
-            d="M0 140L120 120C240 100 480 60 720 80C960 100 1200 180 1320 190L1440 200V220H0Z"
-            fill="var(--page-bg)"
-          />
-        </svg>
-      </div>
     </section>
   );
 }
