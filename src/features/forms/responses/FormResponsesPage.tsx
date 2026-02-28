@@ -51,8 +51,6 @@ export default function FormResponsesPage({
 
   const form = data?.form ?? null;
   const responses = data?.data ?? [];
-  const meta = data?.meta;
-  const totalPages = meta?.totalPages ?? 1;
   const loadError =
     error ??
     (queryError

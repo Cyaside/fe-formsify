@@ -45,18 +45,36 @@ export default function ContactSection() {
             }
           />
           <div className="grid gap-4">
-            <div className="rounded-3xl border border-border bg-surface p-6 shadow-soft">
+            <motion.div
+              className="rounded-3xl border border-border bg-surface p-6 shadow-soft"
+              initial={{ opacity: 0, x: -32 }}
+              whileInView={{ opacity: 1, x: 0 }}
+              viewport={{ once: true, amount: 0.4 }}
+              transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
+            >
               <p className="text-sm text-ink-muted">Email</p>
               <p className="mt-2 text-base font-semibold text-ink">hello@formsify.id</p>
-            </div>
-            <div className="rounded-3xl border border-border bg-surface p-6 shadow-soft">
+            </motion.div>
+            <motion.div
+              className="rounded-3xl border border-border bg-surface p-6 shadow-soft"
+              initial={{ opacity: 0, x: -32 }}
+              whileInView={{ opacity: 1, x: 0 }}
+              viewport={{ once: true, amount: 0.4 }}
+              transition={{ duration: 0.5, delay: 0.1, ease: [0.22, 1, 0.36, 1] }}
+            >
               <p className="text-sm text-ink-muted">Office</p>
               <p className="mt-2 text-base font-semibold text-ink">Formsify Creative Lab, Jakarta</p>
-            </div>
+            </motion.div>
           </div>
         </div>
 
-        <form className="flex flex-col gap-4 rounded-[32px] border border-border bg-surface p-8 shadow-soft">
+        <motion.form
+          className="flex flex-col gap-4 rounded-[32px] border border-border bg-surface p-8 shadow-soft"
+          initial={{ opacity: 0, x: 36 }}
+          whileInView={{ opacity: 1, x: 0 }}
+          viewport={{ once: true, amount: 0.3 }}
+          transition={{ duration: 0.58, delay: 0.08, ease: [0.22, 1, 0.36, 1] }}
+        >
           <label className="text-xs font-semibold uppercase tracking-[0.28em] text-accent">
             Name
             <input
@@ -87,7 +105,7 @@ export default function ContactSection() {
           >
             Send Message
           </button>
-        </form>
+        </motion.form>
       </Container>
     </motion.section>
   );

@@ -34,6 +34,14 @@ const TextType = ({
   const containerRef = useRef(null);
 
   const textArray = useMemo(() => (Array.isArray(text) ? text : [text]), [text]);
+  const textSignature = useMemo(() => textArray.join('\u0000'), [textArray]);
+
+  useEffect(() => {
+    setDisplayedText('');
+    setCurrentCharIndex(0);
+    setIsDeleting(false);
+    setCurrentTextIndex(0);
+  }, [textSignature, reverseMode]);
 
   const getRandomSpeed = useCallback(() => {
     if (!variableSpeed) return typingSpeed;

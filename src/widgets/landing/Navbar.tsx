@@ -1,10 +1,10 @@
 "use client";
 
-import { AnimatePresence, motion } from "framer-motion";
+import { motion } from "framer-motion";
 import { useEffect, useState } from "react";
-import ThemeToggle from "@/shared/theme/ThemeToggle";
-import Container from "@/shared/ui/Container";
+import BubbleMenu from "@/components/BubbleMenu";
 import Link from "next/link";
+import ThemeToggle from "@/shared/theme/ThemeToggle";
 import { useAuth } from "@/features/auth/AuthProvider";
 
 const NAV_ITEMS = [
@@ -16,7 +16,6 @@ const NAV_ITEMS = [
 ];
 
 export default function Navbar() {
-  const [isOpen, setIsOpen] = useState(false);
   const [activeSection, setActiveSection] = useState<string>("top");
   const { user } = useAuth();
 
@@ -51,8 +50,53 @@ export default function Navbar() {
     const target = document.getElementById(sectionId);
     if (!target) return;
     target.scrollIntoView({ behavior: "smooth", block: "start" });
-    setIsOpen(false);
   };
+
+  const mobileMenuItems = [
+    ...NAV_ITEMS.map((item, index) => ({
+      label: item.label,
+      href: `#${item.id}`,
+      ariaLabel: item.label,
+      rotation: index % 2 === 0 ? -6 : 6,
+      hoverStyles: {
+        bgColor: "#6d28d9",
+        textColor: "#ffffff",
+      },
+      onClick: (event: React.MouseEvent<HTMLAnchorElement>) => {
+        event.preventDefault();
+        handleScrollToSection(item.id);
+      },
+    })),
+    ...(user
+      ? [
+          {
+            label: "Dashboard",
+            href: "/dashboard",
+            ariaLabel: "Dashboard",
+            rotation: -8,
+            baseStyles: { bgColor: "#14532d", textColor: "#dcfce7" },
+            hoverStyles: { bgColor: "#16a34a", textColor: "#ffffff" },
+          },
+        ]
+      : [
+          {
+            label: "Login",
+            href: "/login",
+            ariaLabel: "Login",
+            rotation: 8,
+            baseStyles: { bgColor: "#1f2937", textColor: "#f8fafc" },
+            hoverStyles: { bgColor: "#334155", textColor: "#ffffff" },
+          },
+          {
+            label: "Register",
+            href: "/register",
+            ariaLabel: "Register",
+            rotation: -8,
+            baseStyles: { bgColor: "#4c1d95", textColor: "#ede9fe" },
+            hoverStyles: { bgColor: "#6d28d9", textColor: "#ffffff" },
+          },
+        ]),
+  ];
 
   return (
     <>
@@ -117,99 +161,32 @@ export default function Navbar() {
         </motion.div>
       </nav>
 
-      <div className="fixed top-5 right-6 z-50 flex items-center gap-3 md:hidden">
-        <ThemeToggle />
-        <motion.button
-          initial={{ opacity: 0, scale: 0.8 }}
-          animate={{ opacity: 1, scale: 1 }}
-          onClick={() => setIsOpen((prev) => !prev)}
-          className="rounded-full border border-border bg-surface p-3 shadow-soft"
-          aria-label="Toggle navigation"
-        >
-          <div className="relative h-6 w-6">
-            <motion.span
-              animate={{ rotate: isOpen ? 45 : 0, y: isOpen ? 8 : 0 }}
-              className="absolute left-0 top-0 h-0.5 w-6 rounded-full bg-ink"
-            />
-            <motion.span
-              animate={{ opacity: isOpen ? 0 : 1 }}
-              className="absolute left-0 top-2.5 h-0.5 w-6 rounded-full bg-ink"
-            />
-            <motion.span
-              animate={{ rotate: isOpen ? -45 : 0, y: isOpen ? -8 : 0 }}
-              className="absolute left-0 top-5 h-0.5 w-6 rounded-full bg-ink"
-            />
-          </div>
-        </motion.button>
-      </div>
+      <div className="md:hidden">
+        <div className="fixed top-5 right-[5.5rem] z-[101]">
+          <ThemeToggle />
+        </div>
 
-      <AnimatePresence>
-        {isOpen ? (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="fixed inset-0 z-40 bg-page/95"
-            onClick={() => setIsOpen(false)}
-          >
-            <Container className="flex h-full flex-col items-center justify-center gap-8">
-              {NAV_ITEMS.map((item, index) => (
-                <motion.button
-                  key={item.id}
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: 20 }}
-                  transition={{ delay: index * 0.08 }}
-                  onClick={() => handleScrollToSection(item.id)}
-                  className={`text-2xl font-semibold transition ${
-                    activeSection === item.id
-                      ? "text-accent"
-                      : "text-ink-muted hover:text-ink"
-                  }`}
-                >
-                  {item.label}
-                </motion.button>
-              ))}
-              {user ? (
-                <motion.div
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: 20 }}
-                  transition={{ delay: NAV_ITEMS.length * 0.08 }}
-                >
-                  <Link
-                    href="/dashboard"
-                    className="rounded-full border border-accent/30 px-6 py-3 text-sm font-semibold uppercase tracking-[0.25em] text-accent"
-                  >
-                    Dashboard
-                  </Link>
-                </motion.div>
-              ) : (
-                <motion.div
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: 20 }}
-                  transition={{ delay: NAV_ITEMS.length * 0.08 }}
-                  className="flex flex-col gap-3"
-                >
-                  <Link
-                    href="/login"
-                    className="rounded-full border border-border px-6 py-3 text-sm font-semibold uppercase tracking-[0.25em] text-ink-muted"
-                  >
-                    Login
-                  </Link>
-                  <Link
-                    href="/register"
-                    className="rounded-full border border-accent/30 px-6 py-3 text-sm font-semibold uppercase tracking-[0.25em] text-accent"
-                  >
-                    Register
-                  </Link>
-                </motion.div>
-              )}
-            </Container>
-          </motion.div>
-        ) : null}
-      </AnimatePresence>
+        <BubbleMenu
+          useFixedPosition
+          menuAriaLabel="Open mobile navigation"
+          menuBg="var(--surface)"
+          menuContentColor="var(--ink)"
+          style={{ top: "1.25rem", padding: "0 1rem", zIndex: 100 }}
+          items={mobileMenuItems}
+          logo={
+            <Link
+              href="#top"
+              onClick={(event) => {
+                event.preventDefault();
+                handleScrollToSection("top");
+              }}
+              className="text-xs font-semibold uppercase tracking-[0.22em] text-ink"
+            >
+              Formsify
+            </Link>
+          }
+        />
+      </div>
     </>
   );
 }

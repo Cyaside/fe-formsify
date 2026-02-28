@@ -11,7 +11,7 @@ import { useAuth } from "@/features/auth/AuthProvider";
 
 export default function HeroSection() {
   const heroRef = useRef<HTMLElement>(null);
-  const { user } = useAuth();
+  const { user, loading } = useAuth();
   const { scrollYProgress } = useScroll({
     target: heroRef,
     offset: ["start start", "end start"],
@@ -19,6 +19,12 @@ export default function HeroSection() {
   const y = useTransform(scrollYProgress, [0, 1], [0, 52]);
   const scale = useTransform(scrollYProgress, [0, 1], [1, 0.97]);
   const opacity = useTransform(scrollYProgress, [0, 1], [1, 0.42]);
+
+  const welcomeText = user
+    ? `Welcome back, ${user.name?.trim() || user.email}!`
+    : loading
+      ? "Checking your session..."
+      : "Login to create and manage your forms.";
 
   return (
     <section ref={heroRef} className="relative overflow-hidden" id="top">
@@ -127,7 +133,7 @@ export default function HeroSection() {
 
             <TextType
               as="p"
-              text={user ? `Welcome back, ${user.name}!` : "Login to create and manage your forms."}
+              text={welcomeText}
               className="mt-3 block text-sm text-ink-muted"
               typingSpeed={24}
               deletingSpeed={8}

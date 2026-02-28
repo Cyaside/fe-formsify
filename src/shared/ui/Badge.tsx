@@ -13,7 +13,8 @@ const badgeStyles = cva(
         closed:
           "border border-rose/25 bg-rose/10 text-rose dark:border-rose/40 dark:bg-rose/10 dark:text-rose",
         muted: "border border-border bg-surface-2 text-ink-muted",
-        owned: "border border-accent/20 bg-accent/10 text-accent-900",
+        owned:
+          "border border-accent/30 bg-accent/10 text-accent-900 dark:border-accent-400/45 dark:bg-accent-500/22 dark:text-accent-100",
         collab: "border border-sky-500/25 bg-sky-500/10 text-sky-700",
       },
     },

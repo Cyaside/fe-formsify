@@ -173,10 +173,12 @@ export default function DashboardFormsPage() {
                 {displayedForms.map((form) => (
                   <Card key={form.id} className="flex h-full flex-col justify-between gap-4 p-5">
                     <div>
-                      <div className="mb-2 flex items-center justify-between gap-2">
-                        <h2 className="line-clamp-1 text-base font-semibold">{form.title}</h2>
-                        <div className="flex items-center gap-2">
-                          <Badge variant="owned">Owned</Badge>
+                      <div className="mb-2 space-y-2">
+                        <h2 className="line-clamp-1 min-w-0 text-base font-semibold">{form.title}</h2>
+                        <div className="flex flex-wrap items-center gap-1.5">
+                          <Badge variant="owned" className="px-2 py-0.5 text-[9px] tracking-[0.14em]">
+                            Owned
+                          </Badge>
                           <Badge
                             variant={
                               form.status === "closed"
@@ -185,6 +187,7 @@ export default function DashboardFormsPage() {
                                   ? "published"
                                   : "draft"
                             }
+                            className="px-2 py-0.5 text-[9px] tracking-[0.14em]"
                           >
                             {form.status}
                           </Badge>
@@ -192,7 +195,7 @@ export default function DashboardFormsPage() {
                             <Button
                               size="sm"
                               variant="ghost"
-                              className="gap-1"
+                              className="h-7 gap-1 px-2 text-[11px]"
                               onClick={() => handleCopyShareUrl(form.id)}
                             >
                               <Copy size={13} />
@@ -274,10 +277,12 @@ export default function DashboardFormsPage() {
                     {displayedSharedForms.map((form) => (
                       <Card key={`shared-${form.id}`} className="flex h-full flex-col justify-between gap-4 p-5">
                         <div>
-                          <div className="mb-2 flex items-center justify-between gap-2">
-                            <h2 className="line-clamp-1 text-base font-semibold">{form.title}</h2>
-                            <div className="flex items-center gap-2">
-                              <Badge variant="collab">Collaborator</Badge>
+                          <div className="mb-2 space-y-2">
+                            <h2 className="line-clamp-1 min-w-0 text-base font-semibold">{form.title}</h2>
+                            <div className="flex flex-wrap items-center gap-1.5">
+                              <Badge variant="collab" className="px-2 py-0.5 text-[9px] tracking-[0.14em]">
+                                Collaborator
+                              </Badge>
                               <Badge
                                 variant={
                                   form.status === "closed"
@@ -286,6 +291,7 @@ export default function DashboardFormsPage() {
                                       ? "published"
                                       : "draft"
                                 }
+                                className="px-2 py-0.5 text-[9px] tracking-[0.14em]"
                               >
                                 {form.status}
                               </Badge>
@@ -293,7 +299,7 @@ export default function DashboardFormsPage() {
                                 <Button
                                   size="sm"
                                   variant="ghost"
-                                  className="gap-1"
+                                  className="h-7 gap-1 px-2 text-[11px]"
                                   onClick={() => handleCopyShareUrl(form.id)}
                                 >
                                   <Copy size={13} />

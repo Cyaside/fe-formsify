@@ -81,7 +81,18 @@ export default function AboutSection() {
 
           <div className="mt-6 space-y-4">
             {highlights.map((item, index) => (
-              <div key={item.title} className="rounded-2xl border border-border bg-surface px-4 py-4 shadow-soft">
+              <motion.div
+                key={item.title}
+                className="rounded-2xl border border-border bg-surface px-4 py-4 shadow-soft"
+                initial={{ opacity: 0, x: -34 }}
+                whileInView={{ opacity: 1, x: 0 }}
+                viewport={{ once: true, amount: 0.35 }}
+                transition={{
+                  duration: 0.52,
+                  delay: 0.08 * index,
+                  ease: [0.22, 1, 0.36, 1],
+                }}
+              >
                 <div className="flex items-start gap-3">
                   <span className="mt-0.5 inline-flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-accent-100 text-xs font-bold text-accent">
                     {index + 1}
@@ -101,7 +112,7 @@ export default function AboutSection() {
                     />
                   </div>
                 </div>
-              </div>
+              </motion.div>
             ))}
           </div>
         </div>

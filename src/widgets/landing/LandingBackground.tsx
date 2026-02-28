@@ -6,7 +6,7 @@ export default function LandingBackground() {
   return (
     <div className="pointer-events-none absolute inset-0 overflow-hidden" aria-hidden="true">
       <DotGrid
-        className="absolute inset-0 opacity-55"
+        className="absolute inset-0 opacity-46"
         dotSize={3}
         gap={22}
         baseColor="#6d28d9"
@@ -19,7 +19,10 @@ export default function LandingBackground() {
       <div
         className="absolute inset-0"
         style={{
-          background: "radial-gradient(120% 90% at 50% 0%, transparent 0%, var(--page-bg) 78%)",
+          background: [
+            "radial-gradient(110% 68% at 50% 0%, transparent 0%, var(--landing-bg-tint) 100%)",
+            "linear-gradient(to bottom, transparent 0%, transparent 62%, color-mix(in srgb, var(--page-bg) 38%, transparent) 75%, color-mix(in srgb, var(--page-bg) 72%, transparent) 88%, var(--page-bg) 100%)",
+          ].join(","),
         }}
       />
     </div>
