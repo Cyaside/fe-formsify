@@ -1,6 +1,8 @@
 "use client";
 
 import { motion } from "framer-motion";
+import BlurText from "@/components/BlurText";
+import TextType from "@/components/TextType";
 import Container from "@/shared/ui/Container";
 import SectionHeading from "@/shared/ui/SectionHeading";
 
@@ -18,8 +20,29 @@ export default function ContactSection() {
         <div className="flex flex-col gap-6">
           <SectionHeading
             eyebrow="Contact"
-            title="Want to build a better form workflow?"
-            description="Send a message and tell us what kind of form experience you want to build with Formsify."
+            title={
+              <BlurText
+                as="span"
+                text="Want to build a better form workflow?"
+                delay={120}
+                animateBy="words"
+                direction="top"
+                className="justify-start"
+              />
+            }
+            description={
+              <TextType
+                as="span"
+                text="Send a message and tell us what kind of form experience you want to build with Formsify."
+                className="block"
+                typingSpeed={20}
+                deletingSpeed={8}
+                pauseDuration={1200}
+                loop={false}
+                showCursor={false}
+                startOnVisible={true}
+              />
+            }
           />
           <div className="grid gap-4">
             <div className="rounded-3xl border border-border bg-surface p-6 shadow-soft">

@@ -1,6 +1,8 @@
 "use client";
 
 import { motion } from "framer-motion";
+import BlurText from "@/components/BlurText";
+import TextType from "@/components/TextType";
 import Container from "@/shared/ui/Container";
 
 const testimonials = [
@@ -48,12 +50,35 @@ export default function TestimonialsSection() {
       <Container>
         <div className="relative z-10 mb-14 text-center">
           <p className="mb-3 text-sm font-semibold uppercase tracking-[0.2em] text-accent/80">Reviews</p>
-          <h2 className="font-extrabold leading-tight text-ink" style={{ fontSize: "clamp(2rem, 5vw, 3.25rem)" }}>
-            What teams say about <span className="text-accent">Formsify</span>
+          <h2 className="mx-auto flex flex-wrap items-center justify-center gap-x-3 text-[clamp(2rem,5vw,3.25rem)] font-extrabold leading-tight">
+            <BlurText
+              as="span"
+              text="What teams say about"
+              delay={120}
+              animateBy="words"
+              direction="top"
+              className="justify-center text-ink"
+            />
+            <BlurText
+              as="span"
+              text="Formsify"
+              delay={180}
+              animateBy="words"
+              direction="top"
+              className="justify-center text-accent"
+            />
           </h2>
-          <p className="mx-auto mt-5 max-w-2xl text-base leading-relaxed text-ink-muted">
-            Feedback from users who build forms, organize questions, and review responses with Formsify.
-          </p>
+          <TextType
+            as="p"
+            text="Feedback from users who build forms, organize questions, and review responses with Formsify."
+            className="mx-auto mt-5 block max-w-2xl text-base leading-relaxed text-ink-muted"
+            typingSpeed={18}
+            deletingSpeed={8}
+            pauseDuration={1200}
+            loop={false}
+            showCursor={false}
+            startOnVisible={true}
+          />
         </div>
 
         <div className="overflow-hidden">

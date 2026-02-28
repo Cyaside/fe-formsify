@@ -2,6 +2,8 @@
 
 import { useRef } from "react";
 import { motion, useScroll, useTransform } from "framer-motion";
+import BlurText from "@/components/BlurText";
+import TextType from "@/components/TextType";
 import Container from "@/shared/ui/Container";
 import Navbar from "@/widgets/landing/Navbar";
 import Link from "next/link";
@@ -26,14 +28,68 @@ export default function HeroSection() {
           className="relative mx-auto flex h-105 w-full max-w-5xl items-center justify-center transition-[opacity,transform] duration-300"
           style={{ y, scale, opacity }}
         >
-          <div className="relative z-10 w-full rounded-3xl border border-border bg-surface px-4 py-10 text-center shadow-soft md:px-8 md:py-14">
-            <h1 className="mx-auto max-w-300 text-[56px] leading-[0.95] font-extrabold tracking-tight text-ink md:text-[96px]">
-              Create forms in the simplest way
+          <div className="relative z-10 w-full px-4 py-10 text-center md:px-8 md:py-14">
+            <h1 className="mx-auto flex max-w-300 flex-wrap items-center justify-center gap-x-4 text-[56px] leading-[0.95] font-extrabold tracking-tight md:text-[96px]">
+              <BlurText
+                as="span"
+                text="Create"
+                delay={120}
+                animateBy="words"
+                direction="top"
+                className="justify-center text-ink"
+              />
+              <BlurText
+                as="span"
+                text="forms"
+                delay={140}
+                animateBy="words"
+                direction="top"
+                className="justify-center text-accent"
+              />
+              <BlurText
+                as="span"
+                text="in"
+                delay={160}
+                animateBy="words"
+                direction="top"
+                className="justify-center text-ink"
+              />
+              <BlurText
+                as="span"
+                text="the"
+                delay={180}
+                animateBy="words"
+                direction="top"
+                className="justify-center text-ink"
+              />
+              <BlurText
+                as="span"
+                text="simplest"
+                delay={200}
+                animateBy="words"
+                direction="top"
+                className="justify-center text-ink"
+              />
+              <BlurText
+                as="span"
+                text="way"
+                delay={220}
+                animateBy="words"
+                direction="top"
+                className="justify-center text-ink"
+              />
             </h1>
-            <p className="mt-6 mx-auto max-w-2xl text-lg text-ink-muted">
-              Build, publish, and manage forms in one place with a clean workflow for questions,
-              sections, and responses.
-            </p>
+            <TextType
+              as="p"
+              text="Build, publish, and manage forms in one place with a clean workflow for questions, sections, and responses."
+              className="mx-auto mt-6 block max-w-2xl text-lg text-ink-muted"
+              typingSpeed={18}
+              deletingSpeed={8}
+              pauseDuration={1200}
+              loop={false}
+              showCursor={false}
+              startOnVisible={true}
+            />
 
             <div className="mt-8 flex items-center justify-center gap-3">
               {user ? (
@@ -69,9 +125,17 @@ export default function HeroSection() {
               </Link>
             </div>
 
-            <p className="mt-3 text-sm text-ink-muted">
-              {user ? "You are logged in." : "Login to create and manage your forms."}
-            </p>
+            <TextType
+              as="p"
+              text={user ? `Welcome back, ${user.name}!` : "Login to create and manage your forms."}
+              className="mt-3 block text-sm text-ink-muted"
+              typingSpeed={24}
+              deletingSpeed={8}
+              pauseDuration={1200}
+              loop={false}
+              showCursor={false}
+              startOnVisible={true}
+            />
           </div>
         </motion.div>
       </Container>

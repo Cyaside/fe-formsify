@@ -2,6 +2,8 @@
 
 import Image from "next/image";
 import { motion } from "framer-motion";
+import BlurText from "@/components/BlurText";
+import TextType from "@/components/TextType";
 import Container from "@/shared/ui/Container";
 import SectionHeading from "@/shared/ui/SectionHeading";
 
@@ -34,8 +36,47 @@ export default function AboutSection() {
         <div className="order-2 md:order-1">
           <SectionHeading
             eyebrow="About"
-            title="A form builder for creating, publishing, and reviewing results"
-            description="Formsify supports a clear workflow from draft form setup, question management, and public sharing to submission review and response summaries."
+            title={
+              <span className="flex flex-wrap items-center gap-x-2">
+                <BlurText
+                  as="span"
+                  text="A"
+                  delay={120}
+                  animateBy="words"
+                  direction="top"
+                  className="justify-start text-ink"
+                />
+                <BlurText
+                  as="span"
+                  text="form builder"
+                  delay={140}
+                  animateBy="words"
+                  direction="top"
+                  className="justify-start text-accent"
+                />
+                <BlurText
+                  as="span"
+                  text="for creating, publishing, and reviewing results"
+                  delay={160}
+                  animateBy="words"
+                  direction="top"
+                  className="justify-start text-ink"
+                />
+              </span>
+            }
+            description={
+              <TextType
+                as="span"
+                text="Formsify supports a clear workflow from draft form setup, question management, and public sharing to submission review and response summaries."
+                className="block"
+                typingSpeed={20}
+                deletingSpeed={8}
+                pauseDuration={1200}
+                loop={false}
+                showCursor={false}
+                startOnVisible={true}
+              />
+            }
           />
 
           <div className="mt-6 space-y-4">
@@ -47,7 +88,17 @@ export default function AboutSection() {
                   </span>
                   <div>
                     <h3 className="text-base font-semibold text-ink">{item.title}</h3>
-                    <p className="mt-1 text-sm leading-6 text-ink-muted">{item.desc}</p>
+                    <TextType
+                      as="p"
+                      text={item.desc}
+                      className="mt-1 block text-sm leading-6 text-ink-muted"
+                      typingSpeed={20}
+                      deletingSpeed={8}
+                      pauseDuration={1200}
+                      loop={false}
+                      showCursor={false}
+                      startOnVisible={true}
+                    />
                   </div>
                 </div>
               </div>

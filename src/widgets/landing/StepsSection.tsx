@@ -1,6 +1,8 @@
 "use client";
 
 import { motion } from "framer-motion";
+import BlurText from "@/components/BlurText";
+import TextType from "@/components/TextType";
 import Container from "@/shared/ui/Container";
 
 const steps = [
@@ -43,22 +45,65 @@ export default function StepsSection() {
       <Container>
         <div className="relative z-10 mb-6 text-center">
           <p className="mb-3 text-sm font-semibold uppercase tracking-[0.2em] text-accent/80">Workflow</p>
-          <h2 className="font-extrabold leading-tight text-ink" style={{ fontSize: "clamp(2rem, 5vw, 3.25rem)" }}>
-            From <span className="text-accent">draft</span> to <span className="text-accent">insights</span>
+          <h2 className="mx-auto flex flex-wrap items-center justify-center gap-x-3 text-[clamp(2rem,5vw,3.25rem)] font-extrabold leading-tight">
+            <BlurText
+              as="span"
+              text="From"
+              delay={120}
+              animateBy="words"
+              direction="top"
+              className="justify-center text-ink"
+            />
+            <BlurText
+              as="span"
+              text="draft"
+              delay={140}
+              animateBy="words"
+              direction="top"
+              className="justify-center text-ink"
+            />
+            <BlurText
+              as="span"
+              text="to"
+              delay={160}
+              animateBy="words"
+              direction="top"
+              className="justify-center text-ink"
+            />
+            <BlurText
+              as="span"
+              text="insights"
+              delay={180}
+              animateBy="words"
+              direction="top"
+              className="justify-center text-accent"
+            />
           </h2>
-          <p className="mx-auto mt-5 max-w-2xl text-base leading-relaxed text-ink-muted">
-            A simple flow that matches the core Formsify experience: build, structure, publish, and review.
-          </p>
+          <TextType
+            as="p"
+            text="A simple flow that matches the core Formsify experience: build, structure, publish, and review."
+            className="mx-auto mt-5 block max-w-2xl text-base leading-relaxed text-ink-muted"
+            typingSpeed={18}
+            deletingSpeed={8}
+            pauseDuration={1200}
+            loop={false}
+            showCursor={false}
+            startOnVisible={true}
+          />
         </div>
 
         <div className="mt-12 flex flex-col gap-4 md:flex-row md:items-stretch md:gap-0">
           {steps.map((step, index) => (
             <motion.div
               key={step.title}
-              initial={{ opacity: 0, y: 24 }}
-              whileInView={{ opacity: 1, y: 0 }}
+              initial={{ opacity: 0, x: -56, y: 10 }}
+              whileInView={{ opacity: 1, x: 0, y: 0 }}
               viewport={{ once: true, amount: 0.32 }}
-              transition={{ duration: 0.5, delay: index * 0.08, ease: "easeOut" }}
+              transition={{
+                duration: 0.68,
+                delay: index * 0.22,
+                ease: [0.22, 1, 0.36, 1],
+              }}
               className={`step-card relative flex-1 rounded-[28px] border border-border px-8 py-6 text-ink shadow-soft transition md:px-12 md:first:ml-0 md:-ml-6 ${
                 index === 0 ? "z-40" : index === 1 ? "z-30" : index === 2 ? "z-20" : "z-10"
               }`}
