@@ -46,13 +46,23 @@ const groupAnswers = (answers: ResponseAnswer[]): GroupedAnswer[] => {
 type ResponseAnswerCardsProps = Readonly<{
   answers: ResponseAnswer[];
   emptyMessage?: string;
+  questionOrderById?: Record<string, number>;
 }>;
 
 export default function ResponseAnswerCards({
   answers,
   emptyMessage = "No answers in this response.",
+  questionOrderById,
 }: ResponseAnswerCardsProps) {
-  const groupedAnswers = useMemo(() => groupAnswers(answers), [answers]);
+  const groupedAnswers = useMemo(() => {
+    const grouped = groupAnswers(answers);
+    return grouped.toSorted((a, b) => {
+      const orderA = questionOrderById?.[a.questionId] ?? Number.MAX_SAFE_INTEGER;
+      const orderB = questionOrderById?.[b.questionId] ?? Number.MAX_SAFE_INTEGER;
+      if (orderA !== orderB) return orderA - orderB;
+      return a.questionTitle.localeCompare(b.questionTitle);
+    });
+  }, [answers, questionOrderById]);
 
   if (groupedAnswers.length === 0) {
     return <Card className="text-sm text-ink-muted">{emptyMessage}</Card>;

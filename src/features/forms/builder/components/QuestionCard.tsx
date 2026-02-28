@@ -21,6 +21,8 @@ import Textarea from "@/shared/ui/Textarea";
 import Select from "@/shared/ui/Select";
 import Button from "@/shared/ui/Button";
 
+const TEXT_ANSWER_MAX_CHAR = 5000;
+
 type QuestionCardProps = {
   index: number;
   question: EditorQuestion;
@@ -72,6 +74,7 @@ export default function QuestionCard({
   readOnly = false,
 }: QuestionCardProps) {
   const optionsRequired = requiresOptions(question.type);
+  const isTextAnswerType = question.type === "SHORT_ANSWER" || question.type === "PARAGRAPH";
   const [bulkPasteOpen, setBulkPasteOpen] = useState(false);
   const [bulkPasteValue, setBulkPasteValue] = useState("");
 
@@ -148,6 +151,13 @@ export default function QuestionCard({
               ))}
             </Select>
           </div>
+          {isTextAnswerType ? (
+            <p className="text-xs text-ink-muted">
+              {question.type === "PARAGRAPH"
+                ? `Paragraph answer (multi-line), max ${TEXT_ANSWER_MAX_CHAR.toLocaleString()} characters.`
+                : `Short answer (single-line), max ${TEXT_ANSWER_MAX_CHAR.toLocaleString()} characters.`}
+            </p>
+          ) : null}
           <Select
             value={question.sectionId}
             onChange={(event) =>

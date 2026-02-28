@@ -54,7 +54,7 @@ type FormBuilderPageProps = {
 };
 
 export default function FormBuilderPage({ initialFormId }: Readonly<FormBuilderPageProps>) {
-  const { user } = useAuth();
+  const { user, token } = useAuth();
   const {
     formId,
     title,
@@ -132,6 +132,7 @@ export default function FormBuilderPage({ initialFormId }: Readonly<FormBuilderP
   const collab = useFormCollaboration({
     enabled: enableRealtimeCollab && hydrated && !loading && !error && Boolean(formId),
     formId,
+    authToken: token,
   });
   const savePayload = useMemo<BuilderSaveSnapshot>(
     () => ({
@@ -539,6 +540,7 @@ export default function FormBuilderPage({ initialFormId }: Readonly<FormBuilderP
           <CollaboratorManagerCard
             enabled={collabFlagEnabled}
             formId={formId}
+            role={collab.role}
           />
 
           <BuilderToolbar

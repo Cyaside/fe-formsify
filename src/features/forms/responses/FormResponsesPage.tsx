@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import Link from "next/link";
 import { ChevronLeft, ChevronRight, Trash2 } from "lucide-react";
@@ -9,6 +9,7 @@ import Card from "@/shared/ui/Card";
 import Container from "@/shared/ui/Container";
 import Modal from "@/shared/ui/Modal";
 import ResponseAnswerCards from "@/features/forms/responses/components/ResponseAnswerCards";
+import { buildResponseSectionPages } from "@/features/forms/responses/lib/responseSections";
 import { ApiError } from "@/shared/api/client";
 import {
   formsApi,
@@ -33,6 +34,7 @@ export default function FormResponsesPage({
   const [error, setError] = useState<string | null>(null);
   const [deleteOpen, setDeleteOpen] = useState(false);
   const [deleting, setDeleting] = useState(false);
+  const [sectionIndex, setSectionIndex] = useState(0);
 
   const {
     data,
@@ -50,7 +52,6 @@ export default function FormResponsesPage({
   const form = data?.form ?? null;
   const responses = data?.data ?? [];
   const meta = data?.meta;
-  const totalResponses = meta?.total ?? responses.length;
   const totalPages = meta?.totalPages ?? 1;
   const loadError =
     error ??
@@ -63,6 +64,28 @@ export default function FormResponsesPage({
   const activeResponse = responses[activeIndex] ?? null;
   const activeResponseDetailHref =
     formId && activeResponse ? `/forms/${formId}/responses/${activeResponse.id}` : null;
+
+  const { data: questionData } = useQuery({
+    queryKey: ["form-questions", formId],
+    queryFn: () => formsApi.questions(formId!),
+    enabled: Boolean(formId),
+  });
+  const { data: sectionData } = useQuery({
+    queryKey: ["form-sections", formId],
+    queryFn: () => formsApi.sections(formId!),
+    enabled: Boolean(formId),
+  });
+
+  const sectionPages = useMemo(
+    () =>
+      buildResponseSectionPages({
+        answers: activeResponse?.answers ?? [],
+        sections: sectionData?.data ?? [],
+        questions: questionData?.data ?? [],
+      }),
+    [activeResponse?.answers, questionData?.data, sectionData?.data],
+  );
+  const activeSectionPage = sectionPages[sectionIndex] ?? null;
 
   useEffect(() => {
     setActiveIndex(0);
@@ -77,6 +100,14 @@ export default function FormResponsesPage({
   useEffect(() => {
     setActiveIndex((prev) => Math.min(prev, Math.max(0, responses.length - 1)));
   }, [responses.length]);
+
+  useEffect(() => {
+    setSectionIndex(0);
+  }, [activeResponse?.id]);
+
+  useEffect(() => {
+    setSectionIndex((prev) => Math.min(prev, Math.max(0, sectionPages.length - 1)));
+  }, [sectionPages.length]);
 
   const handleDeleteCurrent = async () => {
     if (!formId || !activeResponse) return;
@@ -154,35 +185,40 @@ export default function FormResponsesPage({
 
         {activeResponse ? (
           <>
-            <Card className="flex flex-wrap items-center gap-3 p-4">
-              <div className="flex shrink-0 items-center gap-2">
-                <Button
-                  variant="secondary"
-                  size="sm"
-                  className="gap-1"
-                  onClick={() => setActiveIndex((prev) => Math.max(0, prev - 1))}
-                  disabled={activeIndex === 0}
-                >
-                  <ChevronLeft size={14} />
-                  Prev
-                </Button>
-                <Button
-                  variant="secondary"
-                  size="sm"
-                  className="gap-1"
-                  onClick={() =>
-                    setActiveIndex((prev) => Math.min(responses.length - 1, prev + 1))
-                  }
-                  disabled={activeIndex >= responses.length - 1}
-                >
-                  Next
-                  <ChevronRight size={14} />
-                </Button>
+            <Card className="space-y-2 p-3">
+              <div className="flex flex-wrap items-center justify-between gap-2">
+                <div className="flex items-center gap-2">
+                  <Button
+                    variant="secondary"
+                    size="sm"
+                    className="gap-1"
+                    onClick={() => setActiveIndex((prev) => Math.max(0, prev - 1))}
+                    disabled={activeIndex === 0}
+                  >
+                    <ChevronLeft size={14} />
+                    Prev
+                  </Button>
+                  <Button
+                    variant="secondary"
+                    size="sm"
+                    className="gap-1"
+                    onClick={() =>
+                      setActiveIndex((prev) => Math.min(responses.length - 1, prev + 1))
+                    }
+                    disabled={activeIndex >= responses.length - 1}
+                  >
+                    Next
+                    <ChevronRight size={14} />
+                  </Button>
+                </div>
+                <p className="text-xs text-ink-muted">
+                  Submitted: {formatDate(activeResponse.createdAt)}
+                </p>
               </div>
 
-              <div className="min-w-0 flex-1 space-y-1">
-                <p className="text-sm font-medium">
-                  {activeIndex + 1} of {responses.length} (page {page} of {totalPages})
+              <div className="space-y-1">
+                <p className="text-xs font-medium text-ink">
+                  {activeIndex + 1} of {responses.length}
                 </p>
                 {activeResponseDetailHref ? (
                   <div className="flex min-w-0 flex-wrap items-center gap-2">
@@ -199,37 +235,53 @@ export default function FormResponsesPage({
                   </div>
                 ) : null}
               </div>
-              <p className="shrink-0 whitespace-nowrap text-xs text-ink-muted">
-                Submitted: {formatDate(activeResponse.createdAt)}
-              </p>
+
             </Card>
 
-            <Card className="flex flex-wrap items-center justify-between gap-3 p-4">
-              <div className="flex items-center gap-2">
+            <Card className="flex flex-wrap items-center justify-between gap-2 p-3">
+              <div className="space-y-1">
+                <p className="text-xs font-semibold uppercase tracking-[0.18em] text-ink-muted">
+                  Section
+                </p>
+                <p className="text-xs font-medium text-ink">
+                  Section {sectionIndex + 1} of {Math.max(1, sectionPages.length)}
+                </p>
+                {activeSectionPage ? (
+                  <div>
+                    <p className="text-sm text-ink">{activeSectionPage.title}</p>
+                    {activeSectionPage.description ? (
+                      <p className="text-xs text-ink-muted">{activeSectionPage.description}</p>
+                    ) : null}
+                  </div>
+                ) : null}
+              </div>
+              <div className="flex w-full items-center justify-end gap-2 sm:w-auto">
                 <Button
                   variant="secondary"
                   size="sm"
-                  onClick={() => setPage((prev) => Math.max(1, prev - 1))}
-                  disabled={page <= 1}
+                  onClick={() => setSectionIndex((prev) => Math.max(0, prev - 1))}
+                  disabled={sectionIndex <= 0}
                 >
                   <ChevronLeft size={14} />
-                  Prev Page
+                  Prev Section
                 </Button>
                 <Button
                   variant="secondary"
                   size="sm"
-                  onClick={() => setPage((prev) => Math.min(totalPages, prev + 1))}
-                  disabled={page >= totalPages}
+                  onClick={() =>
+                    setSectionIndex((prev) => Math.min(Math.max(0, sectionPages.length - 1), prev + 1))
+                  }
+                  disabled={sectionIndex >= sectionPages.length - 1}
                 >
-                  Next Page
+                  Next Section
                   <ChevronRight size={14} />
                 </Button>
               </div>
-              <p className="text-sm text-ink-muted">Total responses: {totalResponses}</p>
             </Card>
 
             <ResponseAnswerCards
-              answers={activeResponse.answers}
+              answers={activeSectionPage?.answers ?? []}
+              questionOrderById={activeSectionPage?.questionOrderById}
               emptyMessage="No answers in this response."
             />
           </>

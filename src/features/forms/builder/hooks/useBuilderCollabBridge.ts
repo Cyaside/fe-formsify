@@ -425,13 +425,6 @@ export function useBuilderCollabBridge({
     if (!hydrated || loading || error) return;
     if (publishing || savingDraft || savingRef.current) return;
 
-    const localDirty =
-      lastSavedSnapshotKeyRef.current !== null && lastSavedSnapshotKeyRef.current !== savePayloadKey;
-    if (localDirty) {
-      setSaveMessage(`Live update skipped due to local edits (${payload.actor.email}).`);
-      return;
-    }
-
     const parsed = parseCollabPreviewReplacePayload(payload.op.payload);
     if (!parsed) {
       setSaveMessage("Received invalid collaboration update payload.");

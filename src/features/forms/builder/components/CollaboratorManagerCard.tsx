@@ -16,6 +16,7 @@ import Input from "@/shared/ui/Input";
 type CollaboratorManagerCardProps = Readonly<{
   enabled: boolean;
   formId: string | null;
+  role?: "OWNER" | "EDITOR" | "NONE" | null;
 }>;
 
 type AccessState = "idle" | "allowed" | "forbidden" | "unsupported";
@@ -51,6 +52,7 @@ function UserLine({
 export default function CollaboratorManagerCard({
   enabled,
   formId,
+  role = null,
 }: CollaboratorManagerCardProps) {
   const [accessState, setAccessState] = useState<AccessState>("idle");
   const [owner, setOwner] = useState<FormOwnerCollaborator | null>(null);
@@ -64,6 +66,20 @@ export default function CollaboratorManagerCard({
   useEffect(() => {
     if (!enabled || !formId) {
       setAccessState("idle");
+      setOwner(null);
+      setCollaborators([]);
+      setLoading(false);
+      return;
+    }
+    if (role === null) {
+      setAccessState("idle");
+      setOwner(null);
+      setCollaborators([]);
+      setLoading(false);
+      return;
+    }
+    if (role !== "OWNER") {
+      setAccessState("forbidden");
       setOwner(null);
       setCollaborators([]);
       setLoading(false);
@@ -110,7 +126,7 @@ export default function CollaboratorManagerCard({
     return () => {
       cancelled = true;
     };
-  }, [enabled, formId, refreshTick]);
+  }, [enabled, formId, refreshTick, role]);
 
   const refresh = () => {
     setRefreshTick((value) => value + 1);

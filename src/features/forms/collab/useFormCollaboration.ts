@@ -19,6 +19,7 @@ import {
 type UseFormCollaborationParams = {
   enabled: boolean;
   formId: string | null;
+  authToken?: string | null;
 };
 
 type UseFormCollaborationResult = {
@@ -257,6 +258,7 @@ const collabReducer = (state: CollabState, action: CollabAction): CollabState =>
 export function useFormCollaboration({
   enabled,
   formId,
+  authToken,
 }: UseFormCollaborationParams): UseFormCollaborationResult {
   const socketRef = useRef<CollabSocket | null>(null);
   const joinedFormIdRef = useRef<string | null>(null);
@@ -282,7 +284,7 @@ export function useFormCollaboration({
       return;
     }
 
-    const socket = createCollabSocket();
+    const socket = createCollabSocket(authToken);
     socketRef.current = socket;
     dispatch({ type: "connecting", value: true });
 
@@ -420,7 +422,7 @@ export function useFormCollaboration({
       }
       joinedFormIdRef.current = null;
     };
-  }, [enabled, formId]);
+  }, [authToken, enabled, formId]);
 
   const actions = useMemo(
     () => ({

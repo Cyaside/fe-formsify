@@ -24,6 +24,7 @@ type SectionPage = {
 
 const DEFAULT_THANK_YOU_TITLE = "Thank you!";
 const DEFAULT_THANK_YOU_MESSAGE = "Your response has been recorded.";
+const TEXT_ANSWER_MAX_CHAR = 5000;
 
 const sortByOrder = <T extends { order: number }>(items: T[]) =>
   [...items].sort((a, b) => a.order - b.order);
@@ -86,11 +87,17 @@ function QuestionInputField({
   switch (question.type) {
     case "SHORT_ANSWER":
       return (
-        <Input
-          value={(answer as string) ?? ""}
-          onChange={(event) => onSetAnswer(question.id, event.target.value)}
-          placeholder="Your answer"
-        />
+        <div className="space-y-1">
+          <Input
+            value={(answer as string) ?? ""}
+            onChange={(event) => onSetAnswer(question.id, event.target.value)}
+            placeholder="Your answer"
+            maxLength={TEXT_ANSWER_MAX_CHAR}
+          />
+          <p className="text-xs text-ink-muted">
+            Short answer / paragraph: max {TEXT_ANSWER_MAX_CHAR.toLocaleString()} characters.
+          </p>
+        </div>
       );
 
     case "DROPDOWN":
