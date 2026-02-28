@@ -1,6 +1,11 @@
 import { apiRequest } from "@/shared/api/client";
 
-export type QuestionType = "SHORT_ANSWER" | "MCQ" | "CHECKBOX" | "DROPDOWN";
+export type QuestionType =
+  | "SHORT_ANSWER"
+  | "PARAGRAPH"
+  | "MCQ"
+  | "CHECKBOX"
+  | "DROPDOWN";
 
 export type QuestionOption = {
   id: string;

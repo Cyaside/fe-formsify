@@ -12,7 +12,7 @@ type GroupedAnswer = {
 };
 
 const resolveAnswerEntry = (answer: ResponseAnswer) => {
-  if (answer.question.type === "SHORT_ANSWER") {
+  if (answer.question.type === "SHORT_ANSWER" || answer.question.type === "PARAGRAPH") {
     return answer.text?.trim() || "(empty)";
   }
   if (answer.optionId) {

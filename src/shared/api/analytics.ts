@@ -18,6 +18,7 @@ export type GlobalAnalyticsResponse = {
       responses: number;
     };
     responseTrend: AnalyticsTrendPoint[];
+    latestResponseAt: string | null;
     range: AnalyticsRange;
   };
 };

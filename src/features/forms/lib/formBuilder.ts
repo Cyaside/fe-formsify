@@ -36,7 +36,7 @@ export const isOptionType = (type: QuestionType) =>
   type === "MCQ" || type === "CHECKBOX" || type === "DROPDOWN";
 
 export const mapQuestionTypeForApi = (type: QuestionType) =>
-  type === "PARAGRAPH" ? "SHORT_ANSWER" : type;
+  type;
 
 export const getQuestionTypeLabel = (type: QuestionType) =>
   QUESTION_TYPE_OPTIONS.find((option) => option.value === type)?.label ?? type;

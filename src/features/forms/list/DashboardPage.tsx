@@ -97,8 +97,8 @@ export default function DashboardPage() {
 
   const formMetrics = useMemo(() => {
     const totalForms = forms.length;
-    const activeForms = forms.filter((form) => form.isPublished).length;
-    const draftForms = totalForms - activeForms;
+    const activeForms = forms.filter((form) => form.isPublished && !form.isClosed).length;
+    const draftForms = forms.filter((form) => !form.isPublished).length;
     const newFormsThisMonth = forms.filter((form) => {
       if (!form.createdAt) return false;
       const createdAt = new Date(form.createdAt);
@@ -155,6 +155,13 @@ export default function DashboardPage() {
     return null;
   }, [analyticsData?.data.responseTrend]);
 
+  const latestResponseTime = useMemo(() => {
+    const timestamp = analyticsData?.data.latestResponseAt;
+    if (!timestamp) return null;
+    const parsed = new Date(timestamp);
+    return Number.isNaN(parsed.getTime()) ? null : parsed;
+  }, [analyticsData?.data.latestResponseAt]);
+
   const activityItems = useMemo(() => {
     const items: Array<{ title: string; detail: string; time: string }> = [];
 
@@ -163,7 +170,9 @@ export default function DashboardPage() {
         items.push({
           title: "Latest Responses",
           detail: `${formatNumber(latestResponse.count)} responses received`,
-          time: formatRelativeTime(new Date(latestResponse.date)),
+          time: latestResponseTime
+            ? formatRelativeTime(latestResponseTime)
+            : formatRelativeTime(new Date(latestResponse.date)),
         });
       } else {
         items.push({
@@ -200,6 +209,7 @@ export default function DashboardPage() {
     latestResponse,
     monthRange.label,
     sortedForms,
+    latestResponseTime,
   ]);
 
   return (

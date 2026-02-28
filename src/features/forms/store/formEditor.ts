@@ -1,6 +1,11 @@
 import { create } from "zustand";
 
-export type ApiQuestionType = "SHORT_ANSWER" | "MCQ" | "CHECKBOX" | "DROPDOWN";
+export type ApiQuestionType =
+  | "SHORT_ANSWER"
+  | "PARAGRAPH"
+  | "MCQ"
+  | "CHECKBOX"
+  | "DROPDOWN";
 
 export type QuestionType =
   | "SHORT_ANSWER"

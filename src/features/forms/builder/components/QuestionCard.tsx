@@ -21,7 +21,8 @@ import Textarea from "@/shared/ui/Textarea";
 import Select from "@/shared/ui/Select";
 import Button from "@/shared/ui/Button";
 
-const TEXT_ANSWER_MAX_CHAR = 5000;
+const SHORT_ANSWER_MAX_CHAR = 100;
+const PARAGRAPH_MAX_CHAR = 1000;
 
 type QuestionCardProps = {
   index: number;
@@ -154,8 +155,8 @@ export default function QuestionCard({
           {isTextAnswerType ? (
             <p className="text-xs text-ink-muted">
               {question.type === "PARAGRAPH"
-                ? `Paragraph answer (multi-line), max ${TEXT_ANSWER_MAX_CHAR.toLocaleString()} characters.`
-                : `Short answer (single-line), max ${TEXT_ANSWER_MAX_CHAR.toLocaleString()} characters.`}
+                ? `Paragraph answer (multi-line), max ${PARAGRAPH_MAX_CHAR.toLocaleString()} characters.`
+                : `Short answer (single-line), max ${SHORT_ANSWER_MAX_CHAR.toLocaleString()} characters.`}
             </p>
           ) : null}
           <Select

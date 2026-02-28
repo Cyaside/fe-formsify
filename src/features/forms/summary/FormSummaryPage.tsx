@@ -108,7 +108,7 @@ export default function FormSummaryPage({
 
   const questionSummaries = useMemo<QuestionSummary[]>(() => {
     return questions
-      .filter((question) => question.type !== "SHORT_ANSWER")
+      .filter((question) => question.type !== "SHORT_ANSWER" && question.type !== "PARAGRAPH")
       .map((question) => {
         const optionCounts = new Map<string, number>();
         question.options.forEach((option) => optionCounts.set(option.id, 0));
@@ -148,7 +148,7 @@ export default function FormSummaryPage({
 
   const shortAnswerSummary = useMemo(() => {
     return questions
-      .filter((question) => question.type === "SHORT_ANSWER")
+      .filter((question) => question.type === "SHORT_ANSWER" || question.type === "PARAGRAPH")
       .map((question) => {
         const entries = responses
           .flatMap((response) => response.answers)

@@ -6,6 +6,7 @@ import Card from "@/shared/ui/Card";
 import Container from "@/shared/ui/Container";
 import Input from "@/shared/ui/Input";
 import Select from "@/shared/ui/Select";
+import Textarea from "@/shared/ui/Textarea";
 import { ApiError } from "@/shared/api/client";
 import {
   formsApi,
@@ -24,7 +25,8 @@ type SectionPage = {
 
 const DEFAULT_THANK_YOU_TITLE = "Thank you!";
 const DEFAULT_THANK_YOU_MESSAGE = "Your response has been recorded.";
-const TEXT_ANSWER_MAX_CHAR = 5000;
+const SHORT_ANSWER_MAX_CHAR = 100;
+const PARAGRAPH_MAX_CHAR = 1000;
 
 const sortByOrder = <T extends { order: number }>(items: T[]) =>
   [...items].sort((a, b) => a.order - b.order);
@@ -56,7 +58,7 @@ const buildSubmitAnswers = (questions: Question[], answers: AnswerState): Submit
   return questions.flatMap<SubmitAnswer>((question) => {
     const value = answers[question.id];
 
-    if (question.type === "SHORT_ANSWER") {
+    if (question.type === "SHORT_ANSWER" || question.type === "PARAGRAPH") {
       const text = typeof value === "string" ? value.trim() : "";
       return text ? [{ questionId: question.id, text }] : [];
     }
@@ -92,10 +94,26 @@ function QuestionInputField({
             value={(answer as string) ?? ""}
             onChange={(event) => onSetAnswer(question.id, event.target.value)}
             placeholder="Your answer"
-            maxLength={TEXT_ANSWER_MAX_CHAR}
+            maxLength={SHORT_ANSWER_MAX_CHAR}
           />
           <p className="text-xs text-ink-muted">
-            Short answer / paragraph: max {TEXT_ANSWER_MAX_CHAR.toLocaleString()} characters.
+            Short answer: max {SHORT_ANSWER_MAX_CHAR.toLocaleString()} characters.
+          </p>
+        </div>
+      );
+
+    case "PARAGRAPH":
+      return (
+        <div className="space-y-1">
+          <Textarea
+            value={(answer as string) ?? ""}
+            onChange={(event) => onSetAnswer(question.id, event.target.value)}
+            placeholder="Your answer"
+            maxLength={PARAGRAPH_MAX_CHAR}
+            className="min-h-[120px]"
+          />
+          <p className="text-xs text-ink-muted">
+            Paragraph: max {PARAGRAPH_MAX_CHAR.toLocaleString()} characters.
           </p>
         </div>
       );

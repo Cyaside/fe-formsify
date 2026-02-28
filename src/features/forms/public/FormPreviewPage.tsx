@@ -15,7 +15,8 @@ export default function FormPreviewPage({
 }: Readonly<{
   initialFormId?: string;
 }>) {
-  const textAnswerMaxChar = 5000;
+  const shortAnswerMaxChar = 100;
+  const paragraphMaxChar = 1000;
   const searchParams = useSearchParams();
   const formId = initialFormId;
   const returnTo = searchParams.get("returnTo") === "builder" && formId
@@ -146,8 +147,10 @@ export default function FormPreviewPage({
                           ) : (
                             <p className="text-sm text-ink-muted">
                               {question.type === "SHORT_ANSWER"
-                                ? `Short answer / paragraph (max ${textAnswerMaxChar.toLocaleString()} characters)`
-                                : "Text response"}
+                                ? `Short answer (max ${shortAnswerMaxChar.toLocaleString()} characters)`
+                                : question.type === "PARAGRAPH"
+                                  ? `Paragraph (max ${paragraphMaxChar.toLocaleString()} characters)`
+                                  : "Text response"}
                             </p>
                           )}
                         </Card>

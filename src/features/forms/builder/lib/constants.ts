@@ -18,6 +18,5 @@ export const requiresOptions = (type: QuestionType) =>
   type === "MCQ" || type === "CHECKBOX" || type === "DROPDOWN";
 
 export const mapUiTypeToApiType = (type: QuestionType): ApiQuestionType => {
-  if (type === "PARAGRAPH") return "SHORT_ANSWER";
   return type;
 };
