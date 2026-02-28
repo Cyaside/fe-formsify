@@ -1,5 +1,5 @@
 import { ApiError } from "@/shared/api/client";
-import type { Question, Section } from "@/shared/api/forms";
+import type { BuilderSnapshot, Question, Section } from "@/shared/api/forms";
 import type {
   EditorQuestion,
   EditorSection,
@@ -53,6 +53,30 @@ export const mapApiQuestionToEditor = (
   required: question.required,
   order: index,
   options: mapOptionLabels(question.options),
+});
+
+export const mapBuilderSnapshotSectionToEditor = (
+  section: BuilderSnapshot["sections"][number],
+  index: number,
+): EditorSection => ({
+  id: section.id,
+  title: section.title,
+  description: section.description ?? "",
+  order: typeof section.order === "number" ? section.order : index,
+});
+
+export const mapBuilderSnapshotQuestionToEditor = (
+  question: BuilderSnapshot["questions"][number],
+  index: number,
+): EditorQuestion => ({
+  id: question.id,
+  sectionId: question.sectionId,
+  title: question.title,
+  description: question.description ?? "",
+  type: question.type,
+  required: question.required,
+  order: typeof question.order === "number" ? question.order : index,
+  options: [...question.options],
 });
 
 export const getPublishValidationMessage = (payload: {

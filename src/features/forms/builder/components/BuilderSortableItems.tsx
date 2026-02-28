@@ -23,6 +23,17 @@ type SortableQuestionItemProps = Readonly<{
   onUpdateOption: (id: string, optionIndex: number, label: string) => void;
   onRemoveOption: (id: string, optionIndex: number) => void;
   onMoveOption: (id: string, fromIndex: number, toIndex: number) => void;
+  onFieldFocus?: (target: {
+    kind: "question" | "option";
+    id?: string;
+    field?: string;
+  }) => void;
+  onFieldBlur?: () => void;
+  getEditorsLabel?: (target: {
+    kind: "question" | "option";
+    id?: string;
+    field?: string;
+  }) => string | null;
   readOnly?: boolean;
 }>;
 
@@ -37,6 +48,9 @@ export function SortableQuestionItem({
   onUpdateOption,
   onRemoveOption,
   onMoveOption,
+  onFieldFocus,
+  onFieldBlur,
+  getEditorsLabel,
   readOnly = false,
 }: SortableQuestionItemProps) {
   const { attributes, listeners, setNodeRef, transform, transition } = useSortable({
@@ -65,6 +79,9 @@ export function SortableQuestionItem({
         onUpdateOption={onUpdateOption}
         onRemoveOption={onRemoveOption}
         onMoveOption={onMoveOption}
+        onFieldFocus={onFieldFocus}
+        onFieldBlur={onFieldBlur}
+        getEditorsLabel={getEditorsLabel}
         readOnly={readOnly}
       />
     </div>

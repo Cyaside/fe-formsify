@@ -34,8 +34,24 @@ type QuestionCardProps = {
   onUpdateOption: (id: string, index: number, label: string) => void;
   onRemoveOption: (id: string, index: number) => void;
   onMoveOption: (id: string, fromIndex: number, toIndex: number) => void;
+  onFieldFocus?: (target: {
+    kind: "question" | "option";
+    id?: string;
+    field?: string;
+  }) => void;
+  onFieldBlur?: () => void;
+  getEditorsLabel?: (target: {
+    kind: "question" | "option";
+    id?: string;
+    field?: string;
+  }) => string | null;
   readOnly?: boolean;
 };
+
+function PresenceBadge({ label }: Readonly<{ label: string | null | undefined }>) {
+  if (!label) return null;
+  return <p className="text-xs font-medium text-sky-700">Being edited by: {label}</p>;
+}
 
 export default function QuestionCard({
   index,
@@ -50,6 +66,9 @@ export default function QuestionCard({
   onUpdateOption,
   onRemoveOption,
   onMoveOption,
+  onFieldFocus,
+  onFieldBlur,
+  getEditorsLabel,
   readOnly = false,
 }: QuestionCardProps) {
   const optionsRequired = requiresOptions(question.type);
@@ -96,17 +115,26 @@ export default function QuestionCard({
         </button>
         <div className="w-full space-y-3">
           <div className="flex flex-col gap-3 md:flex-row md:items-start">
-            <Input
-              value={question.title}
-              onChange={(event) =>
-                onUpdate(question.id, {
-                  title: event.target.value,
-                })
-              }
-              placeholder={`Question ${index + 1}`}
-              className="md:flex-1"
-              disabled={readOnly}
-            />
+            <div className="md:flex-1">
+              <Input
+                value={question.title}
+                onChange={(event) =>
+                  onUpdate(question.id, {
+                    title: event.target.value,
+                  })
+                }
+                onFocus={() =>
+                  onFieldFocus?.({ kind: "question", id: question.id, field: "title" })
+                }
+                onBlur={onFieldBlur}
+                placeholder={`Question ${index + 1}`}
+                className="md:flex-1"
+                disabled={readOnly}
+              />
+              <PresenceBadge
+                label={getEditorsLabel?.({ kind: "question", id: question.id, field: "title" })}
+              />
+            </div>
             <Select
               value={question.type}
               onChange={(event) => ensureType(event.target.value as QuestionType)}
@@ -144,9 +172,16 @@ export default function QuestionCard({
                 description: event.target.value,
               })
             }
+            onFocus={() =>
+              onFieldFocus?.({ kind: "question", id: question.id, field: "description" })
+            }
+            onBlur={onFieldBlur}
             placeholder="Question description (optional)"
             className="min-h-[78px]"
             disabled={readOnly}
+          />
+          <PresenceBadge
+            label={getEditorsLabel?.({ kind: "question", id: question.id, field: "description" })}
           />
 
           {optionsRequired ? (
@@ -158,9 +193,26 @@ export default function QuestionCard({
                     onChange={(event) =>
                       onUpdateOption(question.id, optionIndex, event.target.value)
                     }
+                    onFocus={() =>
+                      onFieldFocus?.({
+                        kind: "option",
+                        id: `${question.id}:${optionIndex}`,
+                        field: "label",
+                      })
+                    }
+                    onBlur={onFieldBlur}
                     placeholder={`Option ${optionIndex + 1}`}
                     disabled={readOnly}
                   />
+                  <div className="min-w-0 max-w-[14rem]">
+                    <PresenceBadge
+                      label={getEditorsLabel?.({
+                        kind: "option",
+                        id: `${question.id}:${optionIndex}`,
+                        field: "label",
+                      })}
+                    />
+                  </div>
                   <Button
                     variant="ghost"
                     size="sm"
@@ -223,6 +275,10 @@ export default function QuestionCard({
                   <Textarea
                     value={bulkPasteValue}
                     onChange={(event) => setBulkPasteValue(event.target.value)}
+                    onFocus={() =>
+                      onFieldFocus?.({ kind: "question", id: question.id, field: "options-bulk" })
+                    }
+                    onBlur={onFieldBlur}
                     className="min-h-[110px]"
                     placeholder={"Option 1\nOption 2\nOption 3"}
                     disabled={readOnly}

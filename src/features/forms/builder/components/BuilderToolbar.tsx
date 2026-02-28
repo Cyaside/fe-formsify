@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import Link from "next/link";
 import { Eye, Loader2, Plus, Save, Send } from "lucide-react";
 import type { QuestionType } from "@/features/forms/store/formEditor";
@@ -41,10 +41,6 @@ export default function BuilderToolbar({
 }: BuilderToolbarProps) {
   const [addMenuOpen, setAddMenuOpen] = useState(false);
 
-  useEffect(() => {
-    if (questionsLocked) setAddMenuOpen(false);
-  }, [questionsLocked]);
-
   return (
     <nav className="sticky top-3 z-20 mb-4 rounded-2xl border border-border bg-surface p-3 shadow-soft">
       <div className="space-y-3">
@@ -62,7 +58,9 @@ export default function BuilderToolbar({
             <Button
               variant="secondary"
               className="min-w-0 gap-2"
+              disabled={questionsLocked}
               onClick={() => {
+                if (questionsLocked) return;
                 setAddMenuOpen((prev) => !prev);
               }}
             >
@@ -71,7 +69,7 @@ export default function BuilderToolbar({
             </Button>
           </div>
 
-          {addMenuOpen ? (
+          {addMenuOpen && !questionsLocked ? (
             <div className="absolute left-0 top-12 z-30 w-[min(20rem,calc(100vw-2rem))] rounded-xl border border-border bg-surface p-2 shadow-soft">
               {QUESTION_TYPE_OPTIONS.map((type) => (
                 <button

@@ -20,7 +20,7 @@ export const authApi = {
       body: payload,
       showGlobalLoading: true,
     }),
-  register: (payload: { email: string; password: string; name?: string }) =>
+  register: (payload: { name: string; email: string; password: string }) =>
     apiRequest<AuthResponse>("/api/auth/register", {
       method: "POST",
       body: payload,

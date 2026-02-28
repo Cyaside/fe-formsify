@@ -177,6 +177,90 @@ export type ResponsesListParams = {
   limit?: number;
 };
 
+export type BuilderSnapshotSection = {
+  id: string;
+  title: string;
+  description?: string | null;
+  order: number;
+};
+
+export type BuilderSnapshotQuestion = {
+  id: string;
+  sectionId: string;
+  title: string;
+  description?: string | null;
+  type: QuestionType;
+  required: boolean;
+  order: number;
+  options: string[];
+};
+
+export type BuilderSnapshot = {
+  title: string;
+  description?: string | null;
+  thankYouTitle: string;
+  thankYouMessage: string;
+  isClosed: boolean;
+  responseLimit: number | null;
+  sections: BuilderSnapshotSection[];
+  questions: BuilderSnapshotQuestion[];
+};
+
+export type BuilderSnapshotResponse = {
+  data: {
+    formId: string;
+    version: number;
+    snapshot: BuilderSnapshot;
+  };
+};
+
+export type UpdateBuilderSnapshotPayload = {
+  baseVersion: number;
+  snapshot: BuilderSnapshot;
+};
+
+export type CollaboratorRole = "OWNER" | "EDITOR";
+
+export type CollaboratorUser = {
+  id: string;
+  email: string;
+  name?: string | null;
+};
+
+export type FormCollaborator = {
+  formId: string;
+  userId: string;
+  role: "EDITOR";
+  createdAt: string;
+  updatedAt: string;
+  user: CollaboratorUser;
+};
+
+export type FormOwnerCollaborator = {
+  userId: string;
+  role: "OWNER";
+  user: CollaboratorUser;
+};
+
+export type FormCollaboratorsResponse = {
+  owner: FormOwnerCollaborator | null;
+  data: FormCollaborator[];
+};
+
+export type CreateCollaboratorPayload =
+  | {
+      email: string;
+      role: "EDITOR";
+    }
+  | {
+      userId: string;
+      role: "EDITOR";
+    };
+
+export type UpdateCollaboratorPayload = {
+  role: "EDITOR";
+};
+
 type RequestOptions = {
   showGlobalLoading?: boolean;
 };
@@ -195,6 +279,8 @@ const buildQuery = (params?: Record<string, string | number | undefined>) => {
 export const formsApi = {
   list: (params?: FormsListParams) =>
     apiRequest<{ data: FormSummary[] }>(`/api/forms${buildQuery(params)}`),
+  listCollaborations: (params?: FormsListParams) =>
+    apiRequest<{ data: FormSummary[] }>(`/api/forms/collaborations${buildQuery(params)}`),
   listPublic: (params?: { page?: number; limit?: number }) =>
     apiRequest<{ data: FormSummary[] }>(`/api/forms/public${buildQuery(params)}`),
   detail: (formId: string) =>
@@ -203,6 +289,36 @@ export const formsApi = {
     apiRequest<{ data: Question[] }>(`/api/forms/${formId}/questions`),
   sections: (formId: string) =>
     apiRequest<{ data: Section[] }>(`/api/forms/${formId}/sections`),
+  builderSnapshot: (formId: string) =>
+    apiRequest<BuilderSnapshotResponse>(`/api/forms/${formId}/builder-snapshot`),
+  collaborators: (formId: string) =>
+    apiRequest<FormCollaboratorsResponse>(`/api/forms/${formId}/collaborators`),
+  addCollaborator: (
+    formId: string,
+    payload: CreateCollaboratorPayload,
+    options?: RequestOptions,
+  ) =>
+    apiRequest<{ data: FormCollaborator }>(`/api/forms/${formId}/collaborators`, {
+      method: "POST",
+      body: payload,
+      showGlobalLoading: options?.showGlobalLoading,
+    }),
+  updateCollaborator: (
+    formId: string,
+    userId: string,
+    payload: UpdateCollaboratorPayload,
+    options?: RequestOptions,
+  ) =>
+    apiRequest<{ data: FormCollaborator }>(`/api/forms/${formId}/collaborators/${userId}`, {
+      method: "PATCH",
+      body: payload,
+      showGlobalLoading: options?.showGlobalLoading,
+    }),
+  removeCollaborator: (formId: string, userId: string, options?: RequestOptions) =>
+    apiRequest(`/api/forms/${formId}/collaborators/${userId}`, {
+      method: "DELETE",
+      showGlobalLoading: options?.showGlobalLoading,
+    }),
   create: (payload: CreateFormPayload, options?: RequestOptions) =>
     apiRequest<{ data: { id: string } }>("/api/forms", {
       method: "POST",
@@ -236,6 +352,16 @@ export const formsApi = {
     }),
   update: (formId: string, payload: UpdateFormPayload, options?: RequestOptions) =>
     apiRequest(`/api/forms/${formId}`, {
+      method: "PUT",
+      body: payload,
+      showGlobalLoading: options?.showGlobalLoading,
+    }),
+  updateBuilderSnapshot: (
+    formId: string,
+    payload: UpdateBuilderSnapshotPayload,
+    options?: RequestOptions,
+  ) =>
+    apiRequest<BuilderSnapshotResponse>(`/api/forms/${formId}/builder-snapshot`, {
       method: "PUT",
       body: payload,
       showGlobalLoading: options?.showGlobalLoading,

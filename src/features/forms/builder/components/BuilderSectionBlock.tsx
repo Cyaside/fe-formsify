@@ -36,7 +36,23 @@ type BuilderSectionBlockProps = Readonly<{
   onUpdateOption: (id: string, optionIndex: number, label: string) => void;
   onRemoveOption: (id: string, optionIndex: number) => void;
   onMoveOption: (id: string, fromIndex: number, toIndex: number) => void;
+  onFieldFocus: (target: {
+    kind: "section" | "question" | "option";
+    id?: string;
+    field?: string;
+  }) => void;
+  onFieldBlur: () => void;
+  getEditorsLabel: (target: {
+    kind: "section" | "question" | "option";
+    id?: string;
+    field?: string;
+  }) => string | null;
 }>;
+
+function PresenceBadge({ label }: Readonly<{ label: string | null }>) {
+  if (!label) return null;
+  return <p className="text-xs font-medium text-sky-700">Being edited by: {label}</p>;
+}
 
 function SectionHeaderCard({
   section,
@@ -50,6 +66,9 @@ function SectionHeaderCard({
   onDuplicateSection,
   onRemoveSection,
   onAddQuestionToSection,
+  onFieldFocus,
+  onFieldBlur,
+  getEditorsLabel,
   dragAttributes,
   dragListeners,
 }: Readonly<{
@@ -64,6 +83,9 @@ function SectionHeaderCard({
   onDuplicateSection: (id: string) => void;
   onRemoveSection: (id: string) => void;
   onAddQuestionToSection: (sectionId: string) => void;
+  onFieldFocus: (target: { kind: "section"; id?: string; field?: string }) => void;
+  onFieldBlur: () => void;
+  getEditorsLabel: (target: { kind: "section"; id?: string; field?: string }) => string | null;
   dragAttributes?: DraggableAttributes;
   dragListeners?: SyntheticListenerMap;
 }>) {
@@ -89,17 +111,29 @@ function SectionHeaderCard({
               onChange={(event) =>
                 onUpdateSection(section.id, { title: event.target.value })
               }
+              onFocus={() => onFieldFocus({ kind: "section", id: section.id, field: "title" })}
+              onBlur={onFieldBlur}
               placeholder={`Section ${sectionIndex + 1}`}
               disabled={sectionReadOnly}
+            />
+            <PresenceBadge
+              label={getEditorsLabel({ kind: "section", id: section.id, field: "title" })}
             />
             <Textarea
               value={section.description}
               onChange={(event) =>
                 onUpdateSection(section.id, { description: event.target.value })
               }
+              onFocus={() =>
+                onFieldFocus({ kind: "section", id: section.id, field: "description" })
+              }
+              onBlur={onFieldBlur}
               placeholder="Section description (optional)"
               className="min-h-[68px]"
               disabled={sectionReadOnly}
+            />
+            <PresenceBadge
+              label={getEditorsLabel({ kind: "section", id: section.id, field: "description" })}
             />
           </div>
         </div>
@@ -177,6 +211,9 @@ export default function BuilderSectionBlock({
   onUpdateOption,
   onRemoveOption,
   onMoveOption,
+  onFieldFocus,
+  onFieldBlur,
+  getEditorsLabel,
 }: BuilderSectionBlockProps) {
   const canDeleteSection =
     totalSections > 1 &&
@@ -199,6 +236,9 @@ export default function BuilderSectionBlock({
             onDuplicateSection={onDuplicateSection}
             onRemoveSection={onRemoveSection}
             onAddQuestionToSection={onAddQuestionToSection}
+            onFieldFocus={onFieldFocus}
+            onFieldBlur={onFieldBlur}
+            getEditorsLabel={getEditorsLabel}
             dragAttributes={dragAttributes}
             dragListeners={dragListeners}
           />
@@ -227,6 +267,9 @@ export default function BuilderSectionBlock({
                     onUpdateOption={onUpdateOption}
                     onRemoveOption={onRemoveOption}
                     onMoveOption={onMoveOption}
+                    onFieldFocus={onFieldFocus}
+                    onFieldBlur={onFieldBlur}
+                    getEditorsLabel={getEditorsLabel}
                     readOnly={questionReadOnly}
                   />
                 );

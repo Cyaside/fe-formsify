@@ -32,6 +32,17 @@ type BuilderCanvasProps = Readonly<{
   onUpdateOption: (id: string, optionIndex: number, label: string) => void;
   onRemoveOption: (id: string, optionIndex: number) => void;
   onMoveOption: (id: string, fromIndex: number, toIndex: number) => void;
+  onFieldFocus: (target: {
+    kind: "section" | "question" | "option";
+    id?: string;
+    field?: string;
+  }) => void;
+  onFieldBlur: () => void;
+  getEditorsLabel: (target: {
+    kind: "section" | "question" | "option";
+    id?: string;
+    field?: string;
+  }) => string | null;
 }>;
 
 export default function BuilderCanvas({
@@ -57,6 +68,9 @@ export default function BuilderCanvas({
   onUpdateOption,
   onRemoveOption,
   onMoveOption,
+  onFieldFocus,
+  onFieldBlur,
+  getEditorsLabel,
 }: BuilderCanvasProps) {
   if (loading) {
     return <Card className="text-sm text-ink-muted">Loading form builder...</Card>;
@@ -111,6 +125,9 @@ export default function BuilderCanvas({
                 onUpdateOption={onUpdateOption}
                 onRemoveOption={onRemoveOption}
                 onMoveOption={onMoveOption}
+                onFieldFocus={onFieldFocus}
+                onFieldBlur={onFieldBlur}
+                getEditorsLabel={getEditorsLabel}
               />
             );
           })}
