@@ -42,20 +42,22 @@ const DEFAULT_ITEMS = [
   }
 ];
 
-export default function BubbleMenu({
-  logo,
-  onMenuClick,
-  className,
-  style,
-  menuAriaLabel = 'Toggle menu',
-  menuBg = '#fff',
-  menuContentColor = '#111',
-  useFixedPosition = false,
-  items,
-  animationEase = 'back.out(1.5)',
-  animationDuration = 0.5,
-  staggerDelay = 0.12
-}) {
+export default function BubbleMenu(props) {
+  const {
+    logo,
+    onMenuClick = () => {},
+    className = '',
+    style = {},
+    menuAriaLabel = 'Toggle menu',
+    menuBg = '#fff',
+    menuContentColor = '#111',
+    useFixedPosition = false,
+    items,
+    animationEase = 'back.out(1.5)',
+    animationDuration = 0.5,
+    staggerDelay = 0.12
+  } = props;
+
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [showOverlay, setShowOverlay] = useState(false);
 
