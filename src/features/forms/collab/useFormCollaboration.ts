@@ -329,6 +329,17 @@ export function useFormCollaboration({
       dispatch({ type: "disconnected" });
     });
 
+    socket.on("connect_error", (error) => {
+      dispatch({ type: "connecting", value: false });
+      dispatch({
+        type: "set-error",
+        payload: {
+          message: error.message || "Failed to connect to collaboration server",
+          code: "UNKNOWN",
+        },
+      });
+    });
+
     socket.on(COLLAB_EVENTS.error, (payload) => {
       dispatch({ type: "set-error", payload });
     });

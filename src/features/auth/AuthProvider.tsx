@@ -23,19 +23,38 @@ type AuthContextValue = {
 };
 
 const AuthContext = createContext<AuthContextValue | undefined>(undefined);
+const AUTH_TOKEN_STORAGE_KEY = "formsify.auth.token";
+
+const getStoredToken = () => {
+  if (typeof window === "undefined") return null;
+  const value = window.localStorage.getItem(AUTH_TOKEN_STORAGE_KEY);
+  return value && value.trim().length > 0 ? value : null;
+};
+
+const storeToken = (token: string) => {
+  if (typeof window === "undefined") return;
+  window.localStorage.setItem(AUTH_TOKEN_STORAGE_KEY, token);
+};
+
+const clearStoredToken = () => {
+  if (typeof window === "undefined") return;
+  window.localStorage.removeItem(AUTH_TOKEN_STORAGE_KEY);
+};
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<AuthUser | null>(null);
-  const [token, setToken] = useState<string | null>(null);
+  const [token, setToken] = useState<string | null>(() => getStoredToken());
   const [loading, setLoading] = useState(true);
 
   const saveSession = useCallback((nextToken: string, nextUser: AuthUser) => {
     setToken(nextToken);
+    storeToken(nextToken);
     setUser(nextUser);
   }, []);
 
   const clearSession = useCallback(() => {
     setToken(null);
+    clearStoredToken();
     setUser(null);
   }, []);
 
