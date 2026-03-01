@@ -410,7 +410,6 @@ export function useBuilderCollabBridge({
     const event = latestOpAppliedEvent;
     if (!event) return;
     if (collabAppliedOpSequenceRef.current >= event.sequence) return;
-    collabAppliedOpSequenceRef.current = event.sequence;
 
     const { payload } = event;
     if (collabSeenOpIdsRef.current.has(payload.opId)) return;
@@ -418,20 +417,23 @@ export function useBuilderCollabBridge({
 
     if (collabPendingLocalOpIdsRef.current.has(payload.opId)) {
       collabPendingLocalOpIdsRef.current.delete(payload.opId);
+      collabAppliedOpSequenceRef.current = event.sequence;
       return;
     }
 
     if (payload.op.type !== "builder.preview.replace") return;
     if (!hydrated || loading || error) return;
-    if (publishing || savingDraft || savingRef.current) return;
+    if (publishing || savingDraft) return;
 
     const parsed = parseCollabPreviewReplacePayload(payload.op.payload);
     if (!parsed) {
       setSaveMessage("Received invalid collaboration update payload.");
+      collabAppliedOpSequenceRef.current = event.sequence;
       return;
     }
 
     applyRemotePreviewReplacePayload(payload.formId, parsed, payload.actor.email);
+    collabAppliedOpSequenceRef.current = event.sequence;
   }, [
     applyRemotePreviewReplacePayload,
     error,

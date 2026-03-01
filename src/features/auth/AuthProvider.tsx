@@ -59,37 +59,56 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const refresh = useCallback(async () => {
-    try {
-      const data = await authApi.me();
-      if (data.token && data.token.trim().length > 0) {
+    const applySessionFromMe = (data: { token: string; user: AuthUser }) => {
+      if (typeof data.token === "string" && data.token.trim().length > 0) {
         setToken(data.token);
         storeToken(data.token);
-      } else {
-        setToken(null);
-        clearStoredToken();
       }
       setUser(data.user);
       return data.user;
+    };
+
+    try {
+      const data = await authApi.me();
+      return applySessionFromMe(data);
     } catch {
-      clearSession();
-      return null;
+      try {
+        const fallbackToken = getStoredToken();
+        if (!fallbackToken) throw new Error("no fallback token");
+        const data = await authApi.me(fallbackToken);
+        return applySessionFromMe(data);
+      } catch {
+        clearSession();
+        return null;
+      }
     }
   }, [clearSession]);
 
   useEffect(() => {
+    const applySessionFromMe = (data: { token: string; user: AuthUser }) => {
+      if (typeof data.token === "string" && data.token.trim().length > 0) {
+        setToken(data.token);
+        storeToken(data.token);
+      }
+      setUser(data.user);
+    };
+
     authApi.me()
       .then((data) => {
-        if (data.token && data.token.trim().length > 0) {
-          setToken(data.token);
-          storeToken(data.token);
-        } else {
-          setToken(null);
-          clearStoredToken();
-        }
-        setUser(data.user);
+        applySessionFromMe(data);
       })
-      .catch(() => {
-        clearSession();
+      .catch(async () => {
+        const fallbackToken = getStoredToken();
+        if (!fallbackToken) {
+          clearSession();
+          return;
+        }
+        try {
+          const data = await authApi.me(fallbackToken);
+          applySessionFromMe(data);
+        } catch {
+          clearSession();
+        }
       })
       .finally(() => {
         setLoading(false);
