@@ -124,14 +124,14 @@ export default function DashboardPage() {
       meta: formsReady ? `${totalFormsLabel} total` : "Loading...",
     },
     {
-      label: "Responses This Month",
+      label: "Total Responses (All Time)",
       value: analyticsReady
         ? formatNumber(analyticsData?.data.totals.responses ?? 0, {
             notation: "compact",
             maximumFractionDigits: 1,
           })
         : "-",
-      meta: analyticsReady ? monthRange.label : "Loading...",
+      meta: analyticsReady ? "All time" : "Loading...",
     },
     {
       label: "New Forms This Month",
