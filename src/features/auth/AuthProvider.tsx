@@ -23,121 +23,60 @@ type AuthContextValue = {
 };
 
 const AuthContext = createContext<AuthContextValue | undefined>(undefined);
-const AUTH_TOKEN_STORAGE_KEY = "formsify.auth.token";
-
-const getStoredToken = () => {
-  if (typeof window === "undefined") return null;
-  const value = window.localStorage.getItem(AUTH_TOKEN_STORAGE_KEY);
-  return value && value.trim().length > 0 ? value : null;
-};
-
-const storeToken = (token: string) => {
-  if (typeof window === "undefined") return;
-  window.localStorage.setItem(AUTH_TOKEN_STORAGE_KEY, token);
-};
-
-const clearStoredToken = () => {
-  if (typeof window === "undefined") return;
-  window.localStorage.removeItem(AUTH_TOKEN_STORAGE_KEY);
-};
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<AuthUser | null>(null);
-  const [token, setToken] = useState<string | null>(() => getStoredToken());
+  const [token, setToken] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
 
-  const saveSession = useCallback((nextToken: string, nextUser: AuthUser) => {
-    setToken(nextToken);
-    storeToken(nextToken);
-    setUser(nextUser);
-  }, []);
+  const applySessionFromMe = useCallback(
+    (data: { token?: string; user: AuthUser }) => {
+      const resolvedToken =
+        typeof data.token === "string" && data.token.trim().length > 0
+          ? data.token
+          : null;
+      setToken(resolvedToken);
+      setUser(data.user);
+      return data.user;
+    },
+    [],
+  );
+
+  const saveSession = useCallback(
+    (nextToken: string, nextUser: AuthUser) => {
+      setToken(nextToken);
+      setUser(nextUser);
+    },
+    [],
+  );
 
   const clearSession = useCallback(() => {
     setToken(null);
-    clearStoredToken();
     setUser(null);
   }, []);
 
   const refresh = useCallback(async () => {
-    const applySessionFromMe = (
-      data: { token?: string; user: AuthUser },
-      fallbackToken?: string | null,
-    ) => {
-      const resolvedToken =
-        typeof data.token === "string" && data.token.trim().length > 0
-          ? data.token
-          : typeof fallbackToken === "string" && fallbackToken.trim().length > 0
-            ? fallbackToken
-            : null;
-      if (resolvedToken) {
-        setToken(resolvedToken);
-        storeToken(resolvedToken);
-      } else {
-        setToken(null);
-        clearStoredToken();
-      }
-      setUser(data.user);
-      return data.user;
-    };
-
     try {
       const data = await authApi.me();
-      return applySessionFromMe(data, null);
+      return applySessionFromMe(data);
     } catch {
-      try {
-        const fallbackToken = getStoredToken();
-        if (!fallbackToken) throw new Error("no fallback token");
-        const data = await authApi.me(fallbackToken);
-        return applySessionFromMe(data, fallbackToken);
-      } catch {
-        clearSession();
-        return null;
-      }
+      clearSession();
+      return null;
     }
-  }, [clearSession]);
+  }, [applySessionFromMe, clearSession]);
 
   useEffect(() => {
-    const applySessionFromMe = (
-      data: { token?: string; user: AuthUser },
-      fallbackToken?: string | null,
-    ) => {
-      const resolvedToken =
-        typeof data.token === "string" && data.token.trim().length > 0
-          ? data.token
-          : typeof fallbackToken === "string" && fallbackToken.trim().length > 0
-            ? fallbackToken
-            : null;
-      if (resolvedToken) {
-        setToken(resolvedToken);
-        storeToken(resolvedToken);
-      } else {
-        setToken(null);
-        clearStoredToken();
-      }
-      setUser(data.user);
-    };
-
     authApi.me()
       .then((data) => {
-        applySessionFromMe(data, null);
+        applySessionFromMe(data);
       })
-      .catch(async () => {
-        const fallbackToken = getStoredToken();
-        if (!fallbackToken) {
-          clearSession();
-          return;
-        }
-        try {
-          const data = await authApi.me(fallbackToken);
-          applySessionFromMe(data, fallbackToken);
-        } catch {
-          clearSession();
-        }
+      .catch(() => {
+        clearSession();
       })
       .finally(() => {
         setLoading(false);
       });
-  }, [clearSession]);
+  }, [applySessionFromMe, clearSession]);
 
   const login = useCallback(async (email: string, password: string) => {
     const data = await authApi.login({ email, password });
