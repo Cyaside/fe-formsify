@@ -2,8 +2,8 @@
 
 import { useRef } from "react";
 import { motion, useScroll, useTransform } from "framer-motion";
-import BlurText from "@/components/BlurText";
-import TextType from "@/components/TextType";
+import BlurText from "@/widgets/landing/components/reactbits/BlurText";
+import TextType from "@/widgets/landing/components/reactbits/TextType";
 import Container from "@/shared/ui/Container";
 import Navbar from "@/widgets/landing/Navbar";
 import Link from "next/link";

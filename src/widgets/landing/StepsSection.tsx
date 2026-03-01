@@ -1,8 +1,8 @@
 "use client";
 
 import { motion } from "framer-motion";
-import BlurText from "@/components/BlurText";
-import TextType from "@/components/TextType";
+import BlurText from "@/widgets/landing/components/reactbits/BlurText";
+import TextType from "@/widgets/landing/components/reactbits/TextType";
 import Container from "@/shared/ui/Container";
 
 const steps = [

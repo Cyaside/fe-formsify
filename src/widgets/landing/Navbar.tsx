@@ -2,7 +2,7 @@
 
 import { motion } from "framer-motion";
 import { useEffect, useState } from "react";
-import BubbleMenu from "@/components/BubbleMenu";
+import BubbleMenu from "@/widgets/landing/components/reactbits/BubbleMenu";
 import Link from "next/link";
 import ThemeToggle from "@/shared/theme/ThemeToggle";
 import { useAuth } from "@/features/auth/AuthProvider";

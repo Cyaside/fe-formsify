@@ -1,6 +1,6 @@
 "use client";
 
-import DotGrid from "@/components/DotGrid";
+import DotGrid from "@/widgets/landing/components/reactbits/DotGrid";
 
 export default function LandingBackground() {
   return (
