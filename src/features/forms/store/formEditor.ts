@@ -309,10 +309,15 @@ export const useFormEditorStore = create<EditorState>((set) => ({
   clearRemovedQuestionIds: () => set({ removedQuestionIds: [] }),
   addOption: (id, label = "") =>
     set((state) => ({
-      questions: mapQuestions(state.questions, id, (question) => ({
-        ...question,
-        options: [...question.options, label],
-      })),
+      questions: mapQuestions(state.questions, id, (question) => {
+        const trimmed = label.trim();
+        const nextLabel =
+          trimmed.length > 0 ? trimmed : `Option ${question.options.length + 1}`;
+        return {
+          ...question,
+          options: [...question.options, nextLabel],
+        };
+      }),
     })),
   updateOption: (id, index, label) =>
     set((state) => ({
