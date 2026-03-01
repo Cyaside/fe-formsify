@@ -99,10 +99,14 @@ export default function DashboardPage() {
     const totalForms = forms.length;
     const activeForms = forms.filter((form) => form.isPublished && !form.isClosed).length;
     const draftForms = forms.filter((form) => !form.isPublished).length;
+    const monthStart = new Date(Date.UTC(monthRange.start.getUTCFullYear(), monthRange.start.getUTCMonth(), 1));
+    const monthEndExclusive = new Date(
+      Date.UTC(monthRange.start.getUTCFullYear(), monthRange.start.getUTCMonth() + 1, 1),
+    );
     const newFormsThisMonth = forms.filter((form) => {
       if (!form.createdAt) return false;
       const createdAt = new Date(form.createdAt);
-      return createdAt >= monthRange.start && createdAt <= monthRange.end;
+      return createdAt >= monthStart && createdAt < monthEndExclusive;
     }).length;
 
     return {
@@ -111,7 +115,7 @@ export default function DashboardPage() {
       draftForms,
       newFormsThisMonth,
     };
-  }, [forms, monthRange.end, monthRange.start]);
+  }, [forms, monthRange.start]);
 
   const formsReady = !formsLoading && !formsErrorMessage;
   const analyticsReady = !analyticsLoading && !analyticsErrorMessage;
