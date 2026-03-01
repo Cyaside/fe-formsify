@@ -22,7 +22,8 @@ export const createCollabSocket = (token?: string | null) =>
     path: "/socket.io",
     autoConnect: false,
     withCredentials: true,
-    transports: ["websocket"],
+    transports: ["websocket", "polling"],
+    tryAllTransports: true,
     timeout: 10000,
     auth:
       typeof token === "string" && token.trim().length > 0

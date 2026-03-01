@@ -59,10 +59,22 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const refresh = useCallback(async () => {
-    const applySessionFromMe = (data: { token: string; user: AuthUser }) => {
-      if (typeof data.token === "string" && data.token.trim().length > 0) {
-        setToken(data.token);
-        storeToken(data.token);
+    const applySessionFromMe = (
+      data: { token?: string; user: AuthUser },
+      fallbackToken?: string | null,
+    ) => {
+      const resolvedToken =
+        typeof data.token === "string" && data.token.trim().length > 0
+          ? data.token
+          : typeof fallbackToken === "string" && fallbackToken.trim().length > 0
+            ? fallbackToken
+            : null;
+      if (resolvedToken) {
+        setToken(resolvedToken);
+        storeToken(resolvedToken);
+      } else {
+        setToken(null);
+        clearStoredToken();
       }
       setUser(data.user);
       return data.user;
@@ -70,13 +82,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     try {
       const data = await authApi.me();
-      return applySessionFromMe(data);
+      return applySessionFromMe(data, null);
     } catch {
       try {
         const fallbackToken = getStoredToken();
         if (!fallbackToken) throw new Error("no fallback token");
         const data = await authApi.me(fallbackToken);
-        return applySessionFromMe(data);
+        return applySessionFromMe(data, fallbackToken);
       } catch {
         clearSession();
         return null;
@@ -85,17 +97,29 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, [clearSession]);
 
   useEffect(() => {
-    const applySessionFromMe = (data: { token: string; user: AuthUser }) => {
-      if (typeof data.token === "string" && data.token.trim().length > 0) {
-        setToken(data.token);
-        storeToken(data.token);
+    const applySessionFromMe = (
+      data: { token?: string; user: AuthUser },
+      fallbackToken?: string | null,
+    ) => {
+      const resolvedToken =
+        typeof data.token === "string" && data.token.trim().length > 0
+          ? data.token
+          : typeof fallbackToken === "string" && fallbackToken.trim().length > 0
+            ? fallbackToken
+            : null;
+      if (resolvedToken) {
+        setToken(resolvedToken);
+        storeToken(resolvedToken);
+      } else {
+        setToken(null);
+        clearStoredToken();
       }
       setUser(data.user);
     };
 
     authApi.me()
       .then((data) => {
-        applySessionFromMe(data);
+        applySessionFromMe(data, null);
       })
       .catch(async () => {
         const fallbackToken = getStoredToken();
@@ -105,7 +129,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         }
         try {
           const data = await authApi.me(fallbackToken);
-          applySessionFromMe(data);
+          applySessionFromMe(data, fallbackToken);
         } catch {
           clearSession();
         }

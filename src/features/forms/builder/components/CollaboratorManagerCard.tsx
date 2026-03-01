@@ -71,20 +71,6 @@ export default function CollaboratorManagerCard({
       setLoading(false);
       return;
     }
-    if (role === null) {
-      setAccessState("idle");
-      setOwner(null);
-      setCollaborators([]);
-      setLoading(false);
-      return;
-    }
-    if (role !== "OWNER") {
-      setAccessState("forbidden");
-      setOwner(null);
-      setCollaborators([]);
-      setLoading(false);
-      return;
-    }
 
     let cancelled = false;
     const run = async () => {
