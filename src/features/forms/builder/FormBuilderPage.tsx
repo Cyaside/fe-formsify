@@ -476,10 +476,27 @@ export default function FormBuilderPage({ initialFormId }: Readonly<FormBuilderP
     />
   );
 
+  const isExistingFormRoute = Boolean(initialFormId);
+  const shouldBlockBuilderUi = isExistingFormRoute && (loading || Boolean(error));
+  const accessDeniedMessage =
+    error && /forbidden|not found/i.test(error)
+      ? "You do not have access to this form."
+      : error;
+
   return (
     <RequireAuth>
       <div className="min-h-screen bg-page text-ink">
         <Container className="max-w-4xl py-6 md:py-8">
+          {shouldBlockBuilderUi ? (
+            <Card className="border-rose/30 bg-rose/5 p-6 text-sm">
+              {loading ? (
+                <p className="text-ink-muted">Loading form...</p>
+              ) : (
+                <p className="text-rose">{accessDeniedMessage ?? "Failed to load form"}</p>
+              )}
+            </Card>
+          ) : (
+            <>
           <BuilderFormMetaCard
             title={title}
             description={description}
@@ -560,6 +577,8 @@ export default function FormBuilderPage({ initialFormId }: Readonly<FormBuilderP
           />
 
           {content}
+            </>
+          )}
         </Container>
       </div>
     </RequireAuth>
