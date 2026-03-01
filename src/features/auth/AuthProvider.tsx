@@ -61,6 +61,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const refresh = useCallback(async () => {
     try {
       const data = await authApi.me();
+      if (data.token && data.token.trim().length > 0) {
+        setToken(data.token);
+        storeToken(data.token);
+      } else {
+        setToken(null);
+        clearStoredToken();
+      }
       setUser(data.user);
       return data.user;
     } catch {
@@ -72,6 +79,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     authApi.me()
       .then((data) => {
+        if (data.token && data.token.trim().length > 0) {
+          setToken(data.token);
+          storeToken(data.token);
+        } else {
+          setToken(null);
+          clearStoredToken();
+        }
         setUser(data.user);
       })
       .catch(() => {

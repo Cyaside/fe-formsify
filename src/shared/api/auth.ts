@@ -13,7 +13,7 @@ export type AuthResponse = {
 };
 
 export const authApi = {
-  me: () => apiRequest<{ user: AuthUser }>("/api/auth/me"),
+  me: () => apiRequest<AuthResponse>("/api/auth/me"),
   login: (payload: { email: string; password: string }) =>
     apiRequest<AuthResponse>("/api/auth/login", {
       method: "POST",
