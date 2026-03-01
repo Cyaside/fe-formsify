@@ -85,11 +85,13 @@ export function useFormBuilderBootstrap({
         return;
       }
 
-      let formResponse: Awaited<ReturnType<typeof formsApi.detail>> | null = null;
+      let builderBootstrapResponse:
+        | Awaited<ReturnType<typeof formsApi.builderBootstrap>>
+        | null = null;
       try {
-        formResponse = await formsApi.detail(initialFormId);
+        builderBootstrapResponse = await formsApi.builderBootstrap(initialFormId);
         if (!active) return;
-        if ((formResponse.data.responseCount ?? 0) > 0) {
+        if ((builderBootstrapResponse.data.form.responseCount ?? 0) > 0) {
           clearDraft(draftKey);
           setQuestionsLocked(true);
           setQuestionsLockNote(QUESTION_LOCK_MESSAGE);
@@ -101,14 +103,16 @@ export function useFormBuilderBootstrap({
         setLoading(false);
         return;
       }
-      if (!formResponse) {
+      if (!builderBootstrapResponse) {
         setError("Failed to load form");
         setLoading(false);
         return;
       }
 
       const localDraft =
-        (formResponse.data.responseCount ?? 0) > 0 ? null : loadDraft(draftKey);
+        (builderBootstrapResponse.data.form.responseCount ?? 0) > 0
+          ? null
+          : loadDraft(draftKey);
       if (localDraft) {
         // Prevent a previously-created form (saved under legacy "new" draft key)
         // from polluting the next fresh "new form" page.
@@ -155,13 +159,11 @@ export function useFormBuilderBootstrap({
       }
 
       try {
-        const [questionsResponse, sectionsResponse] = await Promise.all([
-          formsApi.questions(initialFormId),
-          formsApi.sections(initialFormId),
-        ]);
         if (!active) return;
 
-        const sortedSections = sectionsResponse.data.toSorted((a, b) => a.order - b.order);
+        const sortedSections = builderBootstrapResponse.data.sections.toSorted(
+          (a, b) => a.order - b.order,
+        );
         const mappedSections: EditorSection[] = sortedSections.map((section, index) =>
           mapApiSectionToEditor(section, index),
         );
@@ -171,7 +173,7 @@ export function useFormBuilderBootstrap({
         const sectionOrderMap = new Map(
           mappedSections.map((section) => [section.id, section.order]),
         );
-        const sortedQuestions = questionsResponse.data.toSorted((a, b) => {
+        const sortedQuestions = builderBootstrapResponse.data.questions.toSorted((a, b) => {
           const sectionOrderA = sectionOrderMap.get(a.sectionId) ?? 0;
           const sectionOrderB = sectionOrderMap.get(b.sectionId) ?? 0;
           if (sectionOrderA !== sectionOrderB) return sectionOrderA - sectionOrderB;
@@ -183,22 +185,27 @@ export function useFormBuilderBootstrap({
           sectionId: question.sectionId || fallbackSectionId,
         }));
 
-        setThankYouTitle(formResponse.data.thankYouTitle || DEFAULT_THANK_YOU_TITLE);
-        setThankYouMessage(formResponse.data.thankYouMessage || DEFAULT_THANK_YOU_MESSAGE);
+        setThankYouTitle(
+          builderBootstrapResponse.data.form.thankYouTitle || DEFAULT_THANK_YOU_TITLE,
+        );
+        setThankYouMessage(
+          builderBootstrapResponse.data.form.thankYouMessage || DEFAULT_THANK_YOU_MESSAGE,
+        );
         setIsResponseClosed(
-          Boolean(formResponse.data.isPublished) && Boolean(formResponse.data.isClosed),
+          Boolean(builderBootstrapResponse.data.form.isPublished) &&
+            Boolean(builderBootstrapResponse.data.form.isClosed),
         );
         setResponseLimit(
-          typeof formResponse.data.responseLimit === "number"
-            ? String(formResponse.data.responseLimit)
+          typeof builderBootstrapResponse.data.form.responseLimit === "number"
+            ? String(builderBootstrapResponse.data.form.responseLimit)
             : "",
         );
-        setIsPublished(Boolean(formResponse.data.isPublished));
+        setIsPublished(Boolean(builderBootstrapResponse.data.form.isPublished));
 
         setSnapshot({
-          formId: formResponse.data.id,
-          title: formResponse.data.title,
-          description: formResponse.data.description ?? "",
+          formId: builderBootstrapResponse.data.form.id,
+          title: builderBootstrapResponse.data.form.title,
+          description: builderBootstrapResponse.data.form.description ?? "",
           sections: mappedSections.length > 0 ? mappedSections : [fallbackSection],
           questions:
             mappedQuestions.length > 0

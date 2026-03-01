@@ -219,6 +219,15 @@ export type BuilderSnapshotResponse = {
   };
 };
 
+export type BuilderBootstrapResponse = {
+  data: {
+    form: FormDetail;
+    sections: Section[];
+    questions: Question[];
+    role: "OWNER" | "EDITOR";
+  };
+};
+
 export type UpdateBuilderSnapshotPayload = {
   baseVersion: number;
   snapshot: BuilderSnapshot;
@@ -290,6 +299,8 @@ export const formsApi = {
     apiRequest<{ data: FormSummary[] }>(`/api/forms/public${buildQuery(params)}`),
   detail: (formId: string) =>
     apiRequest<{ data: FormDetail }>(`/api/forms/${formId}`),
+  builderBootstrap: (formId: string) =>
+    apiRequest<BuilderBootstrapResponse>(`/api/forms/${formId}/builder-bootstrap`),
   questions: (formId: string) =>
     apiRequest<{ data: Question[] }>(`/api/forms/${formId}/questions`),
   sections: (formId: string) =>
