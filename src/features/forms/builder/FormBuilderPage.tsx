@@ -297,7 +297,7 @@ export default function FormBuilderPage({ initialFormId }: Readonly<FormBuilderP
   };
 
   const ensureSectionIdForQuestion = () => {
-    if (orderedSections.length > 0) return orderedSections[0].id;
+    if (orderedSections.length > 0) return orderedSections[orderedSections.length - 1].id;
     const nextSection = createDefaultSection(0);
     addSection(nextSection);
     return nextSection.id;
