@@ -124,7 +124,7 @@ export default function DashboardPage() {
       meta: formsReady ? `${totalFormsLabel} total` : "Loading...",
     },
     {
-      label: "Total Responses (All Time)",
+      label: "Total Responses",
       value: analyticsReady
         ? formatNumber(analyticsData?.data.totals.responses ?? 0, {
             notation: "compact",

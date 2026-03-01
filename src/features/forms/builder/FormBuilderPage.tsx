@@ -526,7 +526,7 @@ export default function FormBuilderPage({ initialFormId }: Readonly<FormBuilderP
           {collabFlagEnabled ? (
             <Card className="mb-4 border-sky-500/30 bg-sky-500/5 text-sm text-ink">
               <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
-                <span className="font-medium">Collab beta</span>
+                <span className="font-medium">Collab</span>
                 <span className="text-ink-muted">
                   {collab.connecting
                     ? "Connecting..."
